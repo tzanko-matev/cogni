@@ -24,6 +24,7 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		specPath := fs.String("spec", ".cogni.yml", "Path to .cogni.yml")
 		agentOverride := fs.String("agent", "", "Agent id override")
 		outputDir := fs.String("output-dir", "", "Override output directory")
+		repeat := fs.Int("repeat", 1, "Repeat count")
 		if err := fs.Parse(args); err != nil {
 			return ExitUsage
 		}
@@ -52,6 +53,7 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			OutputDir:     *outputDir,
 			AgentOverride: *agentOverride,
 			Selectors:     selectors,
+			Repeat:        *repeat,
 		})
 		if err != nil {
 			fmt.Fprintf(stderr, "Run failed: %v\n", err)

@@ -33,6 +33,7 @@ type RunParams struct {
 	OutputDir     string
 	AgentOverride string
 	Selectors     []TaskSelector
+	Repeat        int
 	Deps          RunDependencies
 }
 
@@ -94,7 +95,11 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 
 	for _, taskRun := range taskRuns {
 		usedAgents[taskRun.Agent.ID] = taskRun.Agent
-		taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter))
+		repeat := params.Repeat
+		if repeat <= 0 {
+			repeat = 1
+		}
+		taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, repeat))
 	}
 
 	agents := make([]AgentInfo, 0, len(usedAgents))
@@ -218,82 +223,89 @@ func runTask(
 	executor agent.ToolExecutor,
 	providerFactory ProviderFactory,
 	tokenCounter agent.TokenCounter,
+	repeat int,
 ) TaskResult {
 	result := TaskResult{TaskID: task.Task.ID, Type: task.Task.Type}
-	provider, err := providerFactory(task.Agent, task.Model)
-	if err != nil {
-		reason := "runtime_error"
-		result.Status = "error"
-		result.FailureReason = &reason
-		return result
-	}
-	session := newSession(task, repoRoot, toolsDefs)
-	runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, task.Task.Prompt, agent.RunOptions{
-		TokenCounter:    tokenCounter,
-		CompactionLimit: task.Task.Budget.MaxTokens,
-		Limits: agent.RunLimits{
-			MaxSteps:   limitOrDefault(task.Task.Budget.MaxSteps, task.Agent.MaxSteps),
-			MaxSeconds: time.Duration(task.Task.Budget.MaxSeconds) * time.Second,
-			MaxTokens:  task.Task.Budget.MaxTokens,
-		},
-	})
+	attempts := make([]AttemptResult, 0, repeat)
+	var failureReason *string
 
-	output, ok := latestAssistantMessage(session.History)
-	if !ok {
-		output = ""
-	}
-
-	evalResult := eval.QAResult{
-		Status:        "error",
-		FailureReason: "runtime_error",
-		SchemaValid:   false,
-		CitationValid: false,
-	}
-	if runErr == nil && task.Task.Type == "qa" {
-		evalResult = eval.EvaluateQA(output, eval.QAConfig{
-			JSONSchemaPath:    task.Task.Eval.JSONSchema,
-			MustContain:       task.Task.Eval.MustContainStrings,
-			ValidateCitations: task.Task.Eval.ValidateCitations,
-			RepoRoot:          repoRoot,
-		})
-	}
-
-	attempt := AttemptResult{
-		Attempt:         1,
-		Status:          evalResult.Status,
-		AgentID:         task.AgentID,
-		Model:           task.Model,
-		TokensIn:        0,
-		TokensOut:       0,
-		TokensTotal:     runMetrics.Tokens,
-		WallTimeSeconds: runMetrics.WallTime.Seconds(),
-		AgentSteps:      runMetrics.Steps,
-		ToolCalls:       runMetrics.ToolCalls,
-		UniqueFilesRead: 0,
-		Eval: EvalResult{
-			SchemaValid:   evalResult.SchemaValid,
-			CitationValid: evalResult.CitationValid,
-		},
-	}
-	result.Attempts = []AttemptResult{attempt}
-
-	if runErr != nil {
-		reason := "runtime_error"
-		if runErr == agent.ErrBudgetExceeded {
-			reason = "budget_exceeded"
+	for attemptIndex := 1; attemptIndex <= repeat; attemptIndex++ {
+		provider, err := providerFactory(task.Agent, task.Model)
+		if err != nil {
+			reason := "runtime_error"
+			result.Status = "error"
+			result.FailureReason = &reason
+			return result
 		}
-		result.Status = "fail"
-		result.FailureReason = &reason
-		return result
+		session := newSession(task, repoRoot, toolsDefs)
+		runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, task.Task.Prompt, agent.RunOptions{
+			TokenCounter:    tokenCounter,
+			CompactionLimit: task.Task.Budget.MaxTokens,
+			Limits: agent.RunLimits{
+				MaxSteps:   limitOrDefault(task.Task.Budget.MaxSteps, task.Agent.MaxSteps),
+				MaxSeconds: time.Duration(task.Task.Budget.MaxSeconds) * time.Second,
+				MaxTokens:  task.Task.Budget.MaxTokens,
+			},
+		})
+
+		output, ok := latestAssistantMessage(session.History)
+		if !ok {
+			output = ""
+		}
+
+		evalResult := eval.QAResult{
+			Status:        "error",
+			FailureReason: "runtime_error",
+			SchemaValid:   false,
+			CitationValid: false,
+		}
+		if runErr == nil && task.Task.Type == "qa" {
+			evalResult = eval.EvaluateQA(output, eval.QAConfig{
+				JSONSchemaPath:    task.Task.Eval.JSONSchema,
+				MustContain:       task.Task.Eval.MustContainStrings,
+				ValidateCitations: task.Task.Eval.ValidateCitations,
+				RepoRoot:          repoRoot,
+			})
+		}
+
+		attempt := AttemptResult{
+			Attempt:         attemptIndex,
+			Status:          evalResult.Status,
+			AgentID:         task.AgentID,
+			Model:           task.Model,
+			TokensIn:        0,
+			TokensOut:       0,
+			TokensTotal:     runMetrics.Tokens,
+			WallTimeSeconds: runMetrics.WallTime.Seconds(),
+			AgentSteps:      runMetrics.Steps,
+			ToolCalls:       runMetrics.ToolCalls,
+			UniqueFilesRead: 0,
+			Eval: EvalResult{
+				SchemaValid:   evalResult.SchemaValid,
+				CitationValid: evalResult.CitationValid,
+			},
+		}
+		attempts = append(attempts, attempt)
+
+		if runErr != nil {
+			reason := "runtime_error"
+			if runErr == agent.ErrBudgetExceeded {
+				reason = "budget_exceeded"
+			}
+			failureReason = &reason
+		} else if evalResult.Status != "pass" {
+			reason := evalResult.FailureReason
+			failureReason = &reason
+		}
 	}
 
-	if evalResult.Status == "pass" {
+	result.Attempts = attempts
+	if failureReason == nil {
 		result.Status = "pass"
 		return result
 	}
 	result.Status = "fail"
-	reason := evalResult.FailureReason
-	result.FailureReason = &reason
+	result.FailureReason = failureReason
 	return result
 }
 
