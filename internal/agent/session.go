@@ -42,6 +42,7 @@ type ToolConfig struct {
 type ToolDefinition struct {
 	Name        string
 	Description string
+	Parameters  any
 }
 
 type ModelFamily struct {
