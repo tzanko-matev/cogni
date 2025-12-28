@@ -100,6 +100,7 @@
   - Fail fast when `LLM_API_KEY` is missing or provider config is unsupported.
   - Enforce budgets (steps, time, tokens) and surface `budget_exceeded`.
   - Support per-task agent selection and `--agent` override.
+  - Implement history compaction and environment diff updates per spec.
   - Capture token usage, tool counts, and wall time metrics.
 - Verification:
   - Unit tests for initial context, prompt building, and compaction rules.
