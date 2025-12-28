@@ -10,6 +10,32 @@ We are building a tool for "Cognitive benchmarking" (aka "Cognitive tests"). It 
 
 ---
 
+## 0.1) User tutorial (from a user's point of view)
+This is how cogni looks in day-to-day use for a repo owner.
+
+1) Add questions
+   - Start with `cogni init` to scaffold `.cogni.yml` and a `schemas/` folder.
+   - Define `qa` tasks with prompts tied to key product features and stakeholder concerns.
+   - Require citations so answers are traceable to code.
+
+2) Validate the spec
+   - `cogni validate` ensures YAML and JSON schemas are correct before running.
+
+3) Run the benchmark
+   - `cogni run --repo . --commit <sha>`
+   - Produces `results.json` and `report.html` under `./cogni-results/<commit>/<run-id>/`
+   - Prints a terminal summary with pass rate and resource usage.
+
+4) Compare runs in the CLI
+   - `cogni compare --input ./cogni-results --base <commit|run-id> --head <commit|run-id>`
+   - Shows deltas in pass rate, tokens, and time, plus any questions that regressed.
+
+5) Produce and view a report
+   - `cogni report --input ./cogni-results/<commit>/ --output report.html --open`
+   - Use a directory with multiple runs to render trend charts.
+
+---
+
 ## 1) MVP outcome
 By the end of the MVP, a developer should be able to:
 
@@ -390,7 +416,24 @@ MVP report must include:
 * per-task table
 * charts if multiple runs included
 
-### 12.4 `cogni init`
+### 12.4 `cogni compare`
+
+Compares two runs and prints a CLI summary.
+
+Flags:
+
+* `--input PATH` (directory of runs, default `./cogni-results`)
+* `--base <commit|run-id>`
+* `--head <commit|run-id>`
+
+Output must include:
+
+* pass rate delta
+* tokens_total delta
+* wall_time delta
+* list of questions that regressed (pass -> fail) and improved (fail -> pass)
+
+### 12.5 `cogni init`
 
 Creates starter config and example tasks.
 
