@@ -114,8 +114,8 @@ func command(name, summary string, usage []string, runner func(cmd *Command) fun
 
 var commands = []*Command{
 	command("init", "Scaffold .cogni.yml and schemas", []string{
-		"cogni init",
-	}, nil),
+		"cogni init --spec <path>",
+	}, runInit),
 	command("validate", "Validate .cogni.yml and schemas", []string{
 		"cogni validate --spec <path>",
 	}, runValidate),
