@@ -2,8 +2,10 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"cogni/internal/tools"
 )
@@ -44,28 +46,75 @@ type ToolExecutor interface {
 	Execute(ctx context.Context, call ToolCall) tools.CallResult
 }
 
-func RunTurn(ctx context.Context, session *Session, provider Provider, executor ToolExecutor, userText string, counter TokenCounter, limit int) error {
+var ErrBudgetExceeded = errors.New("budget_exceeded")
+
+type RunLimits struct {
+	MaxSteps   int
+	MaxSeconds time.Duration
+	MaxTokens  int
+}
+
+type RunOptions struct {
+	TokenCounter    TokenCounter
+	CompactionLimit int
+	Limits          RunLimits
+}
+
+type RunMetrics struct {
+	ToolCalls map[string]int
+	WallTime  time.Duration
+	Tokens    int
+	Steps     int
+}
+
+func RunTurn(ctx context.Context, session *Session, provider Provider, executor ToolExecutor, userText string, opts RunOptions) (RunMetrics, error) {
+	start := time.Now()
+	metrics := RunMetrics{ToolCalls: map[string]int{}}
+
 	session.History = append(session.History, HistoryItem{Role: "user", Content: userText})
-	if counter != nil && limit > 0 && counter(session.History) > limit {
-		session.History = CompactHistory(session.History, counter, limit)
+	if opts.TokenCounter != nil && opts.CompactionLimit > 0 && opts.TokenCounter(session.History) > opts.CompactionLimit {
+		session.History = CompactHistory(session.History, opts.TokenCounter, opts.CompactionLimit)
 	}
 	for {
+		if exceededLimits(start, opts.Limits, opts.TokenCounter, session.History, metrics.Steps) {
+			metrics.WallTime = time.Since(start)
+			if opts.TokenCounter != nil {
+				metrics.Tokens = opts.TokenCounter(session.History)
+			}
+			return metrics, ErrBudgetExceeded
+		}
+
 		prompt := BuildPrompt(session.Ctx, session.History)
 		stream, err := provider.Stream(ctx, prompt)
 		if err != nil {
-			return err
+			metrics.WallTime = time.Since(start)
+			if opts.TokenCounter != nil {
+				metrics.Tokens = opts.TokenCounter(session.History)
+			}
+			return metrics, err
 		}
-		needsFollowUp, err := HandleResponseStream(ctx, session, stream, executor)
+		metrics.Steps++
+		needsFollowUp, err := HandleResponseStream(ctx, session, stream, executor, &metrics)
 		if err != nil {
-			return err
+			metrics.WallTime = time.Since(start)
+			if opts.TokenCounter != nil {
+				metrics.Tokens = opts.TokenCounter(session.History)
+			}
+			return metrics, err
 		}
 		if !needsFollowUp {
-			return nil
+			break
 		}
 	}
+
+	metrics.WallTime = time.Since(start)
+	if opts.TokenCounter != nil {
+		metrics.Tokens = opts.TokenCounter(session.History)
+	}
+	return metrics, nil
 }
 
-func HandleResponseStream(ctx context.Context, session *Session, stream Stream, executor ToolExecutor) (bool, error) {
+func HandleResponseStream(ctx context.Context, session *Session, stream Stream, executor ToolExecutor, metrics *RunMetrics) (bool, error) {
 	needsFollowUp := false
 	for {
 		event, err := stream.Recv()
@@ -88,10 +137,29 @@ func HandleResponseStream(ctx context.Context, session *Session, stream Stream, 
 				ToolCallID: event.ToolCall.ID,
 				Result:     result,
 			}})
+			if metrics != nil {
+				if metrics.ToolCalls == nil {
+					metrics.ToolCalls = map[string]int{}
+				}
+				metrics.ToolCalls[event.ToolCall.Name]++
+			}
 			needsFollowUp = true
 		default:
 			return needsFollowUp, fmt.Errorf("unknown stream event type: %d", event.Type)
 		}
 	}
 	return needsFollowUp, nil
+}
+
+func exceededLimits(start time.Time, limits RunLimits, counter TokenCounter, history []HistoryItem, steps int) bool {
+	if limits.MaxSeconds > 0 && time.Since(start) > limits.MaxSeconds {
+		return true
+	}
+	if limits.MaxSteps > 0 && steps >= limits.MaxSteps {
+		return true
+	}
+	if limits.MaxTokens > 0 && counter != nil && counter(history) > limits.MaxTokens {
+		return true
+	}
+	return false
 }

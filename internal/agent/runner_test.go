@@ -60,7 +60,8 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 	}
 	executor := &fakeExecutor{}
 
-	if err := RunTurn(context.Background(), session, provider, executor, "run", nil, 0); err != nil {
+	metrics, err := RunTurn(context.Background(), session, provider, executor, "run", RunOptions{})
+	if err != nil {
 		t.Fatalf("run turn: %v", err)
 	}
 	if provider.calls != 2 {
@@ -94,5 +95,32 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 	}
 	if session.History[3].Content != "done" {
 		t.Fatalf("expected assistant message, got %v", session.History[3].Content)
+	}
+	if metrics.Steps != 2 {
+		t.Fatalf("expected 2 steps, got %d", metrics.Steps)
+	}
+	if metrics.ToolCalls["list_files"] != 1 {
+		t.Fatalf("expected tool call count, got %v", metrics.ToolCalls)
+	}
+}
+
+func TestRunTurnBudgetExceeded(t *testing.T) {
+	session := &Session{
+		Ctx: TurnContext{
+			ModelFamily: ModelFamily{BaseInstructionsTemplate: "base"},
+		},
+	}
+	provider := &fakeProvider{
+		streams: [][]StreamEvent{
+			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: map[string]any{}}}},
+		},
+	}
+	executor := &fakeExecutor{}
+
+	_, err := RunTurn(context.Background(), session, provider, executor, "run", RunOptions{
+		Limits: RunLimits{MaxSteps: 1},
+	})
+	if err != ErrBudgetExceeded {
+		t.Fatalf("expected budget exceeded, got %v", err)
 	}
 }
