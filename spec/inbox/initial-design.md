@@ -17,18 +17,25 @@ This is how cogni looks in day-to-day use for a repo owner.
    - Start with `cogni init` to scaffold `.cogni.yml` and a `schemas/` folder.
    - Define `qa` tasks with prompts tied to key product features and stakeholder concerns.
    - Require citations so answers are traceable to code.
+   - Define one or more agents and assign each question to an agent (or rely on the default agent).
    - Set the output folder once in `.cogni.yml` so CLI commands stay short.
    - Example questions for the future cogni codebase:
 
      ```yaml
      repo:
        output_dir: "./cogni-results"
-     agent:
-       max_steps: 25
-       temperature: 0.0
+     agents:
+       - id: default
+         type: builtin
+         provider: "openrouter"
+         model: "gpt-4.1-mini"
+         max_steps: 25
+         temperature: 0.0
+     default_agent: "default"
      tasks:
        - id: cli_command_map
          type: qa
+         agent: "default"
          prompt: >
            List the CLI commands supported by cogni and where each is implemented.
            Return JSON with keys:
@@ -71,6 +78,7 @@ This is how cogni looks in day-to-day use for a repo owner.
 3) Run the benchmark
    - `cogni run` (runs the whole benchmark at the current commit)
    - `cogni run question-id1 question-id2` (run a subset)
+   - `cogni run --agent default` (override agent for all tasks in this run)
    - Produces `results.json` and `report.html` under `<output_dir>/<commit>/<run-id>/`
    - Prints a terminal summary with pass rate and resource usage.
 
@@ -121,8 +129,8 @@ By the end of the MVP, a developer should be able to:
 These integrations are out of scope for MVP, but the design should anticipate them.
 
 * VCS providers: MVP supports **git only**. Design repo operations (range resolution, commit checkout, file reads) behind a small interface so jujutsu and other VCSs can be added later. Record VCS type and commit IDs in results.
-* Agents: MVP uses a **built-in agent**. Define an agent adapter interface so external agents (Codex, Claude Code, Gemini) can be added later. Record agent type and version in results.
-* Models: MVP uses a **single default model** configured globally. Store model metadata per task in results so future per-task model selection can be compared over time.
+* Agents: MVP uses a **built-in agent**. Define agents in `.cogni.yml` and select per task via agent ID. Keep an adapter interface so external agents (Codex, Claude Code, Gemini) can be added later. Record agent ID, type, and version in results.
+* Models: MVP uses a **single default model** per agent. Store model metadata per task/attempt so future per-task model selection can be compared over time.
 * LLM providers: MVP uses **OpenRouter only**. Keep provider selection abstract so OpenAI, Anthropic, and others can be added later.
 
 ---
@@ -198,6 +206,7 @@ The CLI is the product in MVP; no separate backend or SaaS components.
 * Per-task budgets/limits (tokens/time/steps)
 * Deterministic-ish evaluation (no LLM judge in MVP)
 * Configurable output folder for results and reports
+* Agents defined in the spec; tasks reference an agent ID (or use the default)
 * Optional per-task model override (future; record model per task in results)
 
 ### Minimal schema (v1)
@@ -212,16 +221,20 @@ repo:
   # Where to write results and reports
   output_dir: "./cogni-results"
 
-agent:
-  # Model/provider configured via env vars; set defaults here for reproducibility
-  provider: "openrouter"
-  model: "gpt-4.1-mini"
-  max_steps: 25
-  temperature: 0.0
+agents:
+  - id: default
+    type: builtin
+    # Model/provider configured via env vars; set defaults here for reproducibility
+    provider: "openrouter"
+    model: "gpt-4.1-mini"
+    max_steps: 25
+    temperature: 0.0
+default_agent: "default"
 
 tasks:
   - id: auth_flow_summary
     type: qa
+    agent: "default"
     # Optional per-task model override (future)
     # model: "gpt-4.1-mini"
     prompt: >
@@ -266,6 +279,8 @@ Implement a `CodingAgent` that can:
 * receive a task prompt
 * use tools iteratively
 * output a final JSON answer (`qa` task)
+
+Each run instantiates the configured agent (selected by task agent ID or CLI override).
 
 ### Required tools (MVP)
 
@@ -366,6 +381,7 @@ MVP evaluation rules:
 * `unique_files_read`
 * `search_calls`
 * `model` (model used for the attempt; supports future per-task overrides)
+* `agent_id` (agent used for the attempt)
 
 ### 10.3 Re-run stability (optional but recommended)
 
@@ -395,13 +411,17 @@ Runner must emit a single `results.json` per run.
     "commit": "abcdef123",
     "branch": "main"
   },
-  "agent": {
-    "provider": "openrouter",
-    "model": "string",
-    "temperature": 0.0,
-    "max_steps": 25,
-    "tooling_version": "cogni/0.1.0"
-  },
+  "agents": [
+    {
+      "id": "default",
+      "type": "builtin",
+      "provider": "openrouter",
+      "model": "string",
+      "temperature": 0.0,
+      "max_steps": 25,
+      "tooling_version": "cogni/0.1.0"
+    }
+  ],
   "started_at": "2025-12-27T12:34:56Z",
   "finished_at": "2025-12-27T12:40:12Z",
   "tasks": [
@@ -414,6 +434,7 @@ Runner must emit a single `results.json` per run.
         {
           "attempt": 1,
           "status": "pass",
+          "agent_id": "default",
           "model": "gpt-4.1-mini",
           "tokens_in": 3500,
           "tokens_out": 900,
@@ -462,6 +483,7 @@ Flags (minimum):
 * `--repeat N` (default 1)
 * `--output-dir PATH` (optional; overrides `repo.output_dir`)
 * task IDs as positional args (optional; when provided, only those tasks run)
+* `--agent <id>` (optional; override agent for all tasks in this run)
 
 Behavior:
 
@@ -710,6 +732,7 @@ This product reads source code and uses LLMs. Treat it like CI.
 * “files opened” is defined as “files read via `read_file` tool”
 * Runner is local and read-only; sandboxed runners come later
 * MVP supports git only, a built-in agent only, and OpenRouter as the only LLM provider
+* Agents are defined in `.cogni.yml` and selected per task (or overridden via CLI)
 * Model/provider selection is configured via env vars and pinned per run (stored in results)
 
 ---
