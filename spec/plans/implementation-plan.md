@@ -92,20 +92,32 @@
 
 ## Phase 4 - Built-in agent runtime
 
-- Implement session init, prompt building, and tool loop per `spec/engineering/builtin-agent.md`.
-- Enforce budgets (steps, time, tokens) and capture token usage if available.
-- Support per-task agent selection and `--agent` override.
+- Inputs: `spec/engineering/builtin-agent.md`, `spec/engineering/configuration.md`,
+  `spec/requirements/functional.md`.
+- Work:
+  - Implement session initialization, prompt building, and tool loop as specified.
+  - Integrate OpenRouter request/stream handling for the built-in agent.
+  - Enforce budgets (steps, time, tokens) and surface `budget_exceeded`.
+  - Support per-task agent selection and `--agent` override.
+  - Capture token usage, tool counts, and wall time metrics.
+- Verification:
+  - Unit tests for initial context, prompt building, and compaction rules.
+  - Fake provider tests for tool-call loops and streaming sequences.
+  - Integration test that runs a QA task and produces JSON output.
 - Deliverable: a QA task runs end-to-end with tool usage and final JSON output.
 
 ## Phase 5 - Evaluation and metrics
 
-- Implement QA evaluation pipeline:
-  - JSON parse
-  - JSON schema validation
-  - must_contain checks
-  - citation validation
-- Define failure reasons and persist evaluation artifacts.
-- Aggregate per-attempt metrics and run summary.
+- Inputs: `spec/design/data-model.md`, `spec/requirements/functional.md`,
+  `spec/engineering/testing.md`.
+- Work:
+  - Implement QA evaluation pipeline: JSON parse, schema validation,
+    must_contain checks, and citation validation.
+  - Define failure reasons and persist evaluation artifacts per attempt.
+  - Aggregate per-attempt metrics and run summaries for `results.json`.
+- Verification:
+  - Unit tests for each evaluation step and failure reason mapping.
+  - Fixture tests that compare evaluation outputs to expected results.
 - Deliverable: tasks report pass/fail with concrete failure reasons.
 
 ## Phase 6 - Runner pipeline
