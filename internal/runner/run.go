@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -124,6 +125,11 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 }
 
 func RunAndWrite(ctx context.Context, cfg spec.Config, params RunParams) (Results, OutputPaths, error) {
+	repoRoot, err := resolveRepoRoot(ctx, params.RepoRoot)
+	if err != nil {
+		return Results{}, OutputPaths{}, err
+	}
+	params.RepoRoot = repoRoot
 	results, err := Run(ctx, cfg, params)
 	if err != nil {
 		return Results{}, OutputPaths{}, err
@@ -132,6 +138,7 @@ func RunAndWrite(ctx context.Context, cfg spec.Config, params RunParams) (Result
 	if strings.TrimSpace(outputDir) == "" {
 		outputDir = cfg.Repo.OutputDir
 	}
+	outputDir = resolveOutputDir(repoRoot, outputDir)
 	paths, err := WriteRunOutputs(results, outputDir)
 	if err != nil {
 		return results, OutputPaths{}, err
@@ -364,6 +371,13 @@ func resolveRepoRoot(ctx context.Context, repoRoot string) (string, error) {
 		repoRoot = wd
 	}
 	return vcs.DiscoverRepoRoot(ctx, repoRoot)
+}
+
+func resolveOutputDir(repoRoot, outputDir string) string {
+	if outputDir == "" || filepath.IsAbs(outputDir) {
+		return outputDir
+	}
+	return filepath.Join(repoRoot, outputDir)
 }
 
 func loadRepoMetadata(ctx context.Context, repoRoot string) (vcs.Metadata, error) {
