@@ -17,6 +17,7 @@ type RepoMetadata struct {
 	VCS    string `json:"vcs"`
 	Commit string `json:"commit"`
 	Branch string `json:"branch"`
+	Dirty  bool   `json:"dirty"`
 }
 
 type AgentInfo struct {
