@@ -304,7 +304,11 @@ func runTask(
 		result.Status = "pass"
 		return result
 	}
-	result.Status = "fail"
+	if *failureReason == "runtime_error" {
+		result.Status = "error"
+	} else {
+		result.Status = "fail"
+	}
 	result.FailureReason = failureReason
 	return result
 }
