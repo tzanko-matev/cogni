@@ -117,6 +117,16 @@ By the end of the MVP, a developer should be able to:
 
 ---
 
+## 2.1) External integrations (future) and MVP implications
+These integrations are out of scope for MVP, but the design should anticipate them.
+
+* VCS providers: MVP supports **git only**. Design repo operations (range resolution, commit checkout, file reads) behind a small interface so jujutsu and other VCSs can be added later. Record VCS type and commit IDs in results.
+* Agents: MVP uses a **built-in agent**. Define an agent adapter interface so external agents (Codex, Claude Code, Gemini) can be added later. Record agent type and version in results.
+* Models: MVP uses a **single default model** configured globally. Store model metadata per task in results so future per-task model selection can be compared over time.
+* LLM providers: MVP uses **OpenRouter only**. Keep provider selection abstract so OpenAI, Anthropic, and others can be added later.
+
+---
+
 ## 3) High-level architecture
 For MVP, build two parts:
 
@@ -145,6 +155,7 @@ These are suggestions; dev can swap if preferred.
 * **Reporting**: HTML templates rendered by the CLI
 * **Charts**: Chart.js or ECharts (static assets)
 * **Storage**: local `results.json` + `report.html` (no DB in MVP)
+* **LLM provider**: OpenRouter (MVP only)
 
 ---
 
@@ -187,6 +198,7 @@ The CLI is the product in MVP; no separate backend or SaaS components.
 * Per-task budgets/limits (tokens/time/steps)
 * Deterministic-ish evaluation (no LLM judge in MVP)
 * Configurable output folder for results and reports
+* Optional per-task model override (future; record model per task in results)
 
 ### Minimal schema (v1)
 
@@ -201,13 +213,17 @@ repo:
   output_dir: "./cogni-results"
 
 agent:
-  # Model/provider configured via env vars; keep a stable default here
+  # Model/provider configured via env vars; set defaults here for reproducibility
+  provider: "openrouter"
+  model: "gpt-4.1-mini"
   max_steps: 25
   temperature: 0.0
 
 tasks:
   - id: auth_flow_summary
     type: qa
+    # Optional per-task model override (future)
+    # model: "gpt-4.1-mini"
     prompt: >
       Explain how authorization is enforced for API requests.
       Return JSON with keys:
@@ -349,6 +365,7 @@ MVP evaluation rules:
 * `tool_calls_total` + breakdown by tool name
 * `unique_files_read`
 * `search_calls`
+* `model` (model used for the attempt; supports future per-task overrides)
 
 ### 10.3 Re-run stability (optional but recommended)
 
@@ -374,11 +391,12 @@ Runner must emit a single `results.json` per run.
   "run_id": "uuid",
   "repo": {
     "name": "org/repo",
+    "vcs": "git",
     "commit": "abcdef123",
     "branch": "main"
   },
   "agent": {
-    "provider": "openai|anthropic|local",
+    "provider": "openrouter",
     "model": "string",
     "temperature": 0.0,
     "max_steps": 25,
@@ -396,6 +414,7 @@ Runner must emit a single `results.json` per run.
         {
           "attempt": 1,
           "status": "pass",
+          "model": "gpt-4.1-mini",
           "tokens_in": 3500,
           "tokens_out": 900,
           "tokens_total": 4400,
@@ -690,6 +709,7 @@ This product reads source code and uses LLMs. Treat it like CI.
 * MVP uses **objective evaluators** (schema + citations) rather than subjective judging
 * “files opened” is defined as “files read via `read_file` tool”
 * Runner is local and read-only; sandboxed runners come later
+* MVP supports git only, a built-in agent only, and OpenRouter as the only LLM provider
 * Model/provider selection is configured via env vars and pinned per run (stored in results)
 
 ---
@@ -749,8 +769,8 @@ Default output (configured via `repo.output_dir` in `.cogni.yml`):
 
 Runner:
 
-* `LLM_PROVIDER` (e.g., `openai`, `anthropic`, `local`)
-* `LLM_API_KEY`
+* `LLM_PROVIDER` (MVP: `openrouter`)
+* `LLM_API_KEY` (OpenRouter key in MVP)
 * `LLM_MODEL`
 
 ---
