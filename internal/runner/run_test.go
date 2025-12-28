@@ -81,6 +81,43 @@ func TestRunExecutesTask(t *testing.T) {
 	}
 }
 
+func TestRunAndWriteOutputs(t *testing.T) {
+	repoRoot := initGitRepo(t)
+	outputDir := t.TempDir()
+	cfg := spec.Config{
+		Repo: spec.RepoConfig{OutputDir: outputDir},
+		Agents: []spec.AgentConfig{
+			{ID: "agent-1", Type: "builtin", Provider: "openrouter", Model: "model"},
+		},
+		DefaultAgent: "agent-1",
+		Tasks: []spec.TaskConfig{
+			{ID: "task-1", Type: "qa", Agent: "agent-1", Prompt: "prompt"},
+		},
+	}
+	_, paths, err := RunAndWrite(context.Background(), cfg, RunParams{
+		RepoRoot: repoRoot,
+		Deps: RunDependencies{
+			ProviderFactory: func(_ spec.AgentConfig, _ string) (agent.Provider, error) {
+				return fakeProvider{message: `{"ok":true}`}, nil
+			},
+			ToolRunnerFactory: func(root string) (*tools.Runner, error) {
+				return tools.NewRunner(root)
+			},
+			RunID: func() (string, error) { return "run-1", nil },
+			Now:   func() time.Time { return time.Now() },
+		},
+	})
+	if err != nil {
+		t.Fatalf("run and write: %v", err)
+	}
+	if _, err := os.Stat(paths.ResultsPath()); err != nil {
+		t.Fatalf("missing results: %v", err)
+	}
+	if _, err := os.Stat(paths.ReportPath()); err != nil {
+		t.Fatalf("missing report: %v", err)
+	}
+}
+
 func initGitRepo(t *testing.T) string {
 	t.Helper()
 	requireGit(t)

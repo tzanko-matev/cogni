@@ -123,6 +123,22 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 	return results, nil
 }
 
+func RunAndWrite(ctx context.Context, cfg spec.Config, params RunParams) (Results, OutputPaths, error) {
+	results, err := Run(ctx, cfg, params)
+	if err != nil {
+		return Results{}, OutputPaths{}, err
+	}
+	outputDir := params.OutputDir
+	if strings.TrimSpace(outputDir) == "" {
+		outputDir = cfg.Repo.OutputDir
+	}
+	paths, err := WriteRunOutputs(results, outputDir)
+	if err != nil {
+		return results, OutputPaths{}, err
+	}
+	return results, paths, nil
+}
+
 type taskRun struct {
 	Task    spec.TaskConfig
 	Agent   spec.AgentConfig
