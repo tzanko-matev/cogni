@@ -11,8 +11,27 @@
 
 - Requirements: `spec/requirements/functional.md`, `spec/requirements/non-functional.md`.
 - Architecture: `spec/architecture/logical-architecture.md`, `spec/architecture/data-flow.md`.
+- Design: `spec/design/api.md`, `spec/design/data-model.md`, `spec/design/ui-ux.md`.
+- Engineering: `spec/engineering/repo-structure.md`, `spec/engineering/configuration.md`,
+  `spec/engineering/testing.md`, `spec/engineering/build-and-run.md`,
+  `spec/engineering/observability.md`, `spec/engineering/ci-cd.md`.
 - Built-in agent behavior: `spec/engineering/builtin-agent.md`.
 - Acceptance criteria: `spec/requirements/acceptance-criteria.md`.
+
+## Plan conventions
+
+- Phases are sequential; map to milestones as: M1 (Phases 0-1), M2 (Phases 2-5),
+  M3 (Phases 6-7), M4 (Phase 8).
+- Each phase lists key work items, verification steps, and exit criteria.
+- Build/test gates: use `go build ./cmd/cogni` and `go test ./...` once code exists.
+
+## Cross-cutting requirements (MVP)
+
+- Read-only tools; no repository writes.
+- Deterministic task order and stable output paths.
+- Use `rg` for search and enforce file/tool output limits.
+- Enforce budgets (tokens, steps, wall time) with `budget_exceeded` failures.
+- Local-only outputs under `<output_dir>/<commit>/<run-id>/`.
 
 ## Phase 0 - Repository and CLI scaffolding
 
