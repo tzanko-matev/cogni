@@ -35,17 +35,31 @@
 
 ## Phase 0 - Repository and CLI scaffolding
 
-- Create Go module layout per `spec/engineering/repo-structure.md`.
-- Add CLI skeleton with subcommands and flags; wire help text and exit codes.
-- Define shared config structs for `.cogni.yml` and results output.
+- Inputs: `spec/engineering/repo-structure.md`, `spec/design/api.md`,
+  `spec/engineering/build-and-run.md`.
+- Work:
+  - Initialize Go module and directory layout (`cmd/cogni`, `internal/*`).
+  - Create CLI entrypoint with subcommands and help text; define exit codes.
+  - Add shared config/result structs for `.cogni.yml` and output artifacts.
+- Verification:
+  - `go build ./cmd/cogni`.
+  - `cogni --help` lists all commands with usage text.
 - Deliverable: `cogni` builds and prints help for all commands.
 
 ## Phase 1 - Spec parsing and validation
 
-- Implement YAML loading for `.cogni.yml` with defaults and validation.
-- Validate task IDs, agent IDs, budgets, and referenced JSON schemas.
-- Implement `cogni init` to scaffold a starter `.cogni.yml` and `schemas/`.
-- Implement `cogni validate` with clear, actionable error messages.
+- Inputs: `spec/engineering/configuration.md`, `spec/design/data-model.md`,
+  `spec/requirements/functional.md`.
+- Work:
+  - Load `.cogni.yml` into config structs with defaults and normalization.
+  - Validate unique task/agent IDs, default agent references, budgets, and
+    schema file paths.
+  - Validate referenced JSON schemas are syntactically valid and loadable.
+  - Implement `cogni init` to scaffold `.cogni.yml` plus `schemas/` examples.
+  - Implement `cogni validate` with actionable errors (file, field, reason).
+- Verification:
+  - Unit tests for parsing defaults, invalid YAML, duplicate IDs, bad schemas.
+  - CLI tests for `cogni init` output and `cogni validate` error text.
 - Deliverable: sample config validates; invalid config fails fast.
 
 ## Phase 2 - VCS and workspace handling
