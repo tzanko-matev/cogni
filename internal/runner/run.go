@@ -281,8 +281,11 @@ func runTask(
 			ToolCalls:       runMetrics.ToolCalls,
 			UniqueFilesRead: 0,
 			Eval: EvalResult{
-				SchemaValid:   evalResult.SchemaValid,
-				CitationValid: evalResult.CitationValid,
+				SchemaValid:        evalResult.SchemaValid,
+				CitationValid:      evalResult.CitationValid,
+				SchemaErrors:       evalResult.Artifacts.SchemaErrors,
+				CitationErrors:     evalResult.Artifacts.CitationErrors,
+				MustContainMissing: evalResult.Artifacts.MustContainMissing,
 			},
 		}
 		attempts = append(attempts, attempt)

@@ -54,8 +54,11 @@ type AttemptResult struct {
 }
 
 type EvalResult struct {
-	SchemaValid   bool `json:"schema_valid"`
-	CitationValid bool `json:"citation_valid"`
+	SchemaValid        bool     `json:"schema_valid"`
+	CitationValid      bool     `json:"citation_valid"`
+	SchemaErrors       []string `json:"schema_errors,omitempty"`
+	CitationErrors     []string `json:"citation_errors,omitempty"`
+	MustContainMissing []string `json:"must_contain_missing,omitempty"`
 }
 
 type RunSummary struct {
