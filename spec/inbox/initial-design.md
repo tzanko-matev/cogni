@@ -77,7 +77,7 @@ This is how cogni looks in day-to-day use for a repo owner.
 
 3) Run the benchmark
    - `cogni run` (runs the whole benchmark at the current commit)
-   - `cogni run question-id1 question-id2` (run a subset)
+   - `cogni run question-id1 question-id2@my-agent` (run a subset, choose an agent for a specific question)
    - `cogni run --agent default` (override agent for all tasks in this run)
    - Produces `results.json` and `report.html` under `<output_dir>/<commit>/<run-id>/`
    - Prints a terminal summary with pass rate and resource usage.
@@ -102,6 +102,7 @@ By the end of the MVP, a developer should be able to:
 2. Run a single command (locally or in CI) to execute the suite against a commit:
    - `cogni run`
    - `cogni run question-id1 question-id2`
+   - `cogni run question-id2@my-agent`
 3. Automatically collect metrics per question:
    - **correctness**: pass/fail (objective checks)
    - **effort/cost**: tokens, wall time, tool calls, unique files read, search calls
@@ -482,7 +483,9 @@ Flags (minimum):
 * `--spec PATH` (default `.cogni.yml`)
 * `--repeat N` (default 1)
 * `--output-dir PATH` (optional; overrides `repo.output_dir`)
-* task IDs as positional args (optional; when provided, only those tasks run)
+* task selectors as positional args (optional; when provided, only those tasks run)
+  * `task-id` runs that task using its configured agent
+  * `task-id@agent-id` overrides the agent for that task
 * `--agent <id>` (optional; override agent for all tasks in this run)
 
 Behavior:
@@ -522,9 +525,9 @@ Compares two runs and prints a CLI summary.
 Flags:
 
 * `--input PATH` (directory of runs, default `repo.output_dir`)
-* `--base <commit|run-id>`
-* `--head <commit|run-id>` (optional; default current commit)
-* `--repo PATH` (default `.`; required when using `--range` outside a repo)
+* `--base <commit|run-id|ref>`
+* `--head <commit|run-id|ref>` (optional; default current commit)
+* `--repo PATH` (default `.`; required when resolving refs or using `--range` outside a repo)
 * `--range <start>..<end>` (optional; when set, `--repo` is required and commits are resolved from the repo)
 
 Output must include:
@@ -533,6 +536,7 @@ Output must include:
 * tokens_total delta
 * wall_time delta
 * list of questions that regressed (pass -> fail) and improved (fail -> pass)
+* if `--base/--head` are refs, resolve them through the repo before comparing
 
 ### 12.5 `cogni init`
 
