@@ -128,12 +128,15 @@
   `spec/engineering/observability.md`, `spec/requirements/functional.md`.
 - Work:
   - Orchestrate task selection, execution, repeats (`--repeat`), and aggregation.
+  - Validate task selectors (`task-id`, `task-id@agent-id`) and fail on unknown IDs.
   - Run repo setup commands from config (if provided) before task execution.
+  - Define `results.json` schema fields (VCS metadata, agent/model, per-attempt metrics).
   - Write `results.json`, `report.html`, and per-task logs to output dir.
   - Ensure results are written even when some tasks fail.
   - Emit CLI summary output per run.
 - Verification:
   - Integration test on a fixture repo with partial failures and repeats.
+  - CLI tests for invalid task/agent selectors and missing defaults.
   - Assert outputs are written with stable paths and summary fields.
 - Deliverable: `cogni run` produces stable outputs and CLI summary.
 
