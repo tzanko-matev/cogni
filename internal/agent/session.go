@@ -66,7 +66,7 @@ type TurnContext struct {
 
 type HistoryItem struct {
 	Role    string
-	Content string
+	Content any
 }
 
 type Prompt struct {
