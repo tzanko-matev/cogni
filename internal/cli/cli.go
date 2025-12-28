@@ -98,31 +98,35 @@ func runNotImplemented(cmd *Command) func(args []string, stdout, stderr io.Write
 	}
 }
 
-func command(name, summary string, usage []string) *Command {
+func command(name, summary string, usage []string, runner func(cmd *Command) func(args []string, stdout, stderr io.Writer) int) *Command {
 	cmd := &Command{
 		Name:    name,
 		Summary: summary,
 		Usage:   usage,
 	}
-	cmd.Run = runNotImplemented(cmd)
+	if runner == nil {
+		cmd.Run = runNotImplemented(cmd)
+	} else {
+		cmd.Run = runner(cmd)
+	}
 	return cmd
 }
 
 var commands = []*Command{
 	command("init", "Scaffold .cogni.yml and schemas", []string{
 		"cogni init",
-	}),
+	}, nil),
 	command("validate", "Validate .cogni.yml and schemas", []string{
-		"cogni validate",
-	}),
+		"cogni validate --spec <path>",
+	}, runValidate),
 	command("run", "Execute benchmark tasks", []string{
 		"cogni run [task-id|task-id@agent-id]...",
-	}),
+	}, nil),
 	command("compare", "Compare runs between commits", []string{
 		"cogni compare --base <commit|run-id|ref> [--head <commit|run-id|ref>]",
 		"cogni compare --range <start>..<end>",
-	}),
+	}, nil),
 	command("report", "Generate HTML reports", []string{
 		"cogni report --range <start>..<end>",
-	}),
+	}, nil),
 }
