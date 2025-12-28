@@ -97,12 +97,14 @@
 - Work:
   - Implement session initialization, prompt building, and tool loop as specified.
   - Integrate OpenRouter request/stream handling for the built-in agent.
+  - Fail fast when `LLM_API_KEY` is missing or provider config is unsupported.
   - Enforce budgets (steps, time, tokens) and surface `budget_exceeded`.
   - Support per-task agent selection and `--agent` override.
   - Capture token usage, tool counts, and wall time metrics.
 - Verification:
   - Unit tests for initial context, prompt building, and compaction rules.
   - Fake provider tests for tool-call loops and streaming sequences.
+  - Preflight tests for missing API keys and provider selection errors.
   - Integration test that runs a QA task and produces JSON output.
 - Deliverable: a QA task runs end-to-end with tool usage and final JSON output.
 
