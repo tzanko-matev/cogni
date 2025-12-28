@@ -64,17 +64,30 @@
 
 ## Phase 2 - VCS and workspace handling
 
-- Detect git repo root; resolve current commit and branch.
-- Implement ref and range resolution for `compare` and `report`.
-- Define run ID generation and output directory layout.
-- Ensure deterministic task ordering for a run.
+- Inputs: `spec/architecture/system-context.md`, `spec/architecture/data-flow.md`,
+  `spec/requirements/functional.md`.
+- Work:
+  - Detect git repo root; capture commit SHA, branch, and dirty state metadata.
+  - Resolve refs for `compare`/`report` (base/head and range syntax).
+  - Define run ID generation and output directory layout conventions.
+  - Ensure deterministic task ordering (stable by config order or ID).
+- Verification:
+  - Unit tests for ref/range parsing and run ID formatting.
+  - Fixture-based tests that resolve commit ranges and output paths.
 - Deliverable: stable commit metadata and output paths.
 
 ## Phase 3 - Tool layer and instrumentation
 
-- Implement read-only tools: `list_files`, `search` (rg), `read_file`.
-- Enforce output size limits and file read bounds.
-- Log tool calls and timings for metrics aggregation.
+- Inputs: `spec/requirements/non-functional.md`, `spec/engineering/observability.md`,
+  `spec/engineering/builtin-agent.md`.
+- Work:
+  - Implement read-only tools: `list_files`, `search` (rg), `read_file`.
+  - Enforce file read limits, output truncation, and error surfaces.
+  - Record tool call timings, errors, and output sizes for metrics.
+  - Define structured tool outputs for downstream evaluation and logging.
+- Verification:
+  - Unit tests for file limits, truncation behavior, and error cases.
+  - Integration tests that exercise `rg` search and file reads on fixtures.
 - Deliverable: tool registry returns structured outputs with metrics hooks.
 
 ## Phase 4 - Built-in agent runtime
