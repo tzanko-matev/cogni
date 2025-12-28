@@ -125,8 +125,8 @@ var commands = []*Command{
 	command("compare", "Compare runs between commits", []string{
 		"cogni compare --base <commit|run-id|ref> [--head <commit|run-id|ref>]",
 		"cogni compare --range <start>..<end>",
-	}, nil),
+	}, runCompare),
 	command("report", "Generate HTML reports", []string{
 		"cogni report --range <start>..<end>",
-	}, nil),
+	}, runReport),
 }
