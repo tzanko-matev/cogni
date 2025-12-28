@@ -17,6 +17,47 @@ This is how cogni looks in day-to-day use for a repo owner.
    - Start with `cogni init` to scaffold `.cogni.yml` and a `schemas/` folder.
    - Define `qa` tasks with prompts tied to key product features and stakeholder concerns.
    - Require citations so answers are traceable to code.
+   - Example questions for the future cogni codebase:
+
+     ```yaml
+     tasks:
+       - id: cli_command_map
+         type: qa
+         prompt: >
+           List the CLI commands supported by cogni and where each is implemented.
+           Return JSON with keys:
+           {"commands":[{"name":...,"file":...,"description":...}],"citations":[{"path":...,"lines":[start,end]}]}
+         eval:
+           must_contain_strings: ["commands", "citations"]
+           validate_citations: true
+         budget:
+           max_tokens: 8000
+           max_seconds: 120
+       - id: report_generation_flow
+         type: qa
+         prompt: >
+           Explain how cogni generates report.html, including which inputs it reads and how it
+           summarizes results. Return JSON with keys:
+           {"inputs":[...],"outputs":[...],"steps":[...],"citations":[{"path":...,"lines":[start,end]}]}
+         eval:
+           must_contain_strings: ["inputs", "outputs", "citations"]
+           validate_citations: true
+         budget:
+           max_tokens: 9000
+           max_seconds: 120
+       - id: results_json_summary
+         type: qa
+         prompt: >
+           Describe how results.json is structured and where summary metrics are computed.
+           Return JSON with keys:
+           {"summary_fields":[...],"computation":[...],"citations":[{"path":...,"lines":[start,end]}]}
+         eval:
+           must_contain_strings: ["summary_fields", "citations"]
+           validate_citations: true
+         budget:
+           max_tokens: 9000
+           max_seconds: 120
+     ```
 
 2) Validate the spec
    - `cogni validate` ensures YAML and JSON schemas are correct before running.
