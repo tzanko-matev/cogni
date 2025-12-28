@@ -30,8 +30,14 @@ type Provider interface {
 }
 
 type ToolCall struct {
+	ID   string
 	Name string
 	Args map[string]any
+}
+
+type ToolOutput struct {
+	ToolCallID string
+	Result     tools.CallResult
 }
 
 type ToolExecutor interface {
@@ -73,9 +79,15 @@ func HandleResponseStream(ctx context.Context, session *Session, stream Stream, 
 		case StreamEventMessage:
 			session.History = append(session.History, HistoryItem{Role: "assistant", Content: event.Message})
 		case StreamEventToolCall:
+			if event.ToolCall.ID == "" {
+				event.ToolCall.ID = fmt.Sprintf("call-%d", len(session.History))
+			}
 			session.History = append(session.History, HistoryItem{Role: "assistant", Content: event.ToolCall})
 			result := executor.Execute(ctx, event.ToolCall)
-			session.History = append(session.History, HistoryItem{Role: "tool", Content: result})
+			session.History = append(session.History, HistoryItem{Role: "tool", Content: ToolOutput{
+				ToolCallID: event.ToolCall.ID,
+				Result:     result,
+			}})
 			needsFollowUp = true
 		default:
 			return needsFollowUp, fmt.Errorf("unknown stream event type: %d", event.Type)

@@ -78,8 +78,19 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 			t.Fatalf("unexpected role at %d: %s", i, session.History[i].Role)
 		}
 	}
-	if _, ok := session.History[1].Content.(ToolCall); !ok {
+	call, ok := session.History[1].Content.(ToolCall)
+	if !ok {
 		t.Fatalf("expected tool call content")
+	}
+	if call.Name != "list_files" || call.ID == "" {
+		t.Fatalf("unexpected tool call: %+v", call)
+	}
+	output, ok := session.History[2].Content.(ToolOutput)
+	if !ok {
+		t.Fatalf("expected tool output content")
+	}
+	if output.ToolCallID != call.ID {
+		t.Fatalf("expected tool output to reference call id")
 	}
 	if session.History[3].Content != "done" {
 		t.Fatalf("expected assistant message, got %v", session.History[3].Content)
