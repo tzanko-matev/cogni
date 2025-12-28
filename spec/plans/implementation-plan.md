@@ -146,8 +146,10 @@
   `spec/requirements/functional.md`.
 - Work:
   - Implement results loader and comparison logic (base/head or range).
+  - Load reports from stored run artifacts; avoid rerunning tasks.
   - Generate `report.html` with summary, task table, and trend charts.
   - Implement `cogni report` and `cogni compare` output and error handling.
+  - Support `--open` to launch the rendered report when available.
   - Warn on missing runs in ranges while rendering remaining data.
 - Verification:
   - Golden tests for report HTML and summary outputs.
