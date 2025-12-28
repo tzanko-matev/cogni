@@ -65,17 +65,32 @@ func setupTestRepo(t *testing.T) testRepo {
 	root := t.TempDir()
 	runGitTest(t, root, "-c", "init.defaultBranch=main", "init")
 
-	path := filepath.Join(root, "README.md")
-	if err := os.WriteFile(path, []byte("initial"), 0o644); err != nil {
+	readmePath := filepath.Join(root, "README.md")
+	if err := os.WriteFile(readmePath, []byte("initial"), 0o644); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 	runGitTest(t, root, "add", "README.md")
 	runGitTest(t, root, "commit", "-m", "initial")
-	commit := runGitTest(t, root, "rev-parse", "HEAD")
+	commit1 := runGitTest(t, root, "rev-parse", "HEAD")
+
+	if err := os.WriteFile(readmePath, []byte("second"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+	runGitTest(t, root, "add", "README.md")
+	runGitTest(t, root, "commit", "-m", "second")
+	commit2 := runGitTest(t, root, "rev-parse", "HEAD")
+
+	notesPath := filepath.Join(root, "notes.txt")
+	if err := os.WriteFile(notesPath, []byte("third"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+	runGitTest(t, root, "add", "notes.txt")
+	runGitTest(t, root, "commit", "-m", "third")
+	commit3 := runGitTest(t, root, "rev-parse", "HEAD")
 
 	return testRepo{
 		Root:    root,
-		Commits: []string{commit},
+		Commits: []string{commit1, commit2, commit3},
 	}
 }
 
