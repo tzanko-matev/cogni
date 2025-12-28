@@ -69,10 +69,14 @@ This is how cogni looks in day-to-day use for a repo owner.
 
 4) Compare runs in the CLI
    - `cogni compare --input ./cogni-results --base <commit|run-id> --head <commit|run-id>`
+   - `cogni compare --repo . --input ./cogni-results --range <start>..<end>`
+   - For `--range`, cogni queries the repo to expand the commit list, then compares the runs in that window.
    - Shows deltas in pass rate, tokens, and time, plus any questions that regressed.
 
 5) Produce and view a report
    - `cogni report --input ./cogni-results/<commit>/ --output report.html --open`
+   - `cogni report --repo . --input ./cogni-results --range <start>..<end> --output report.html --open`
+   - For `--range`, cogni queries the repo to expand the commit list and renders trends for that window.
    - Use a directory with multiple runs to render trend charts.
 
 ---
@@ -450,6 +454,8 @@ Flags:
 * `--input PATH` (file or directory)
 * `--output report.html`
 * `--open` (optional; open the report in the default browser)
+* `--repo PATH` (required when using `--range`)
+* `--range <start>..<end>` (optional; when set, `--repo` is required and commits are resolved from the repo)
 
 MVP report must include:
 
@@ -466,6 +472,8 @@ Flags:
 * `--input PATH` (directory of runs, default `./cogni-results`)
 * `--base <commit|run-id>`
 * `--head <commit|run-id>`
+* `--repo PATH` (required when using `--range`)
+* `--range <start>..<end>` (optional; when set, `--repo` is required and commits are resolved from the repo)
 
 Output must include:
 
@@ -503,6 +511,7 @@ These are intentionally out of scope for the initial MVP.
      * pass rate vs commit
      * tokens_total vs commit (median if repeated)
      * wall_time vs commit
+   * Trend charts reflect the selected input set or `--range` window
 2. **Run detail**
 
    * per-task table with pass/fail
