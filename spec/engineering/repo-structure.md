@@ -2,8 +2,17 @@
 
 ## Top-level layout
 
-- TBD
+- `cmd/cogni`: CLI entrypoint
+- `internal/config`: config loading and validation
+- `internal/spec`: `.cogni.yml` parsing
+- `internal/runner`: task execution pipeline
+- `internal/agent`: built-in agent implementation
+- `internal/tools`: list/search/read tooling
+- `internal/eval`: QA evaluation logic
+- `internal/metrics`: metrics collection
+- `internal/report`: HTML report generation
 
 ## Key directories
 
-- TBD
+- `examples/`: demo repo with sample `.cogni.yml`
+- `spec/`: project documentation

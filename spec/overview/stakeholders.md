@@ -2,15 +2,20 @@
 
 ## Primary users
 
-- TBD
+- Repo owners and maintainers
+- Engineers and tech leads
+- Product managers who need understandable probes
 
 ## Internal stakeholders
 
-- TBD
+- Engineering
+- Product
+- Leadership
 
 ## External stakeholders
 
-- TBD
+- Open-source maintainers
+- Customers evaluating maintainability
 
 ## Ownership
 

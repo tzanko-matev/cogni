@@ -2,12 +2,16 @@
 
 ## Pipeline overview
 
-- TBD
+- Run `go test ./...`.
+- Build the `cogni` binary.
+- Optionally run `cogni validate` and a demo `cogni run`.
+- Upload `results.json` and `report.html` artifacts.
 
 ## Checks and gates
 
-- TBD
+- Tests must pass before build artifacts are published.
 
 ## Release process
 
-- TBD
+- Build binaries for target OS/arch.
+- Publish via GitHub Releases.

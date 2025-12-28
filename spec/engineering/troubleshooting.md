@@ -2,8 +2,13 @@
 
 ## Common issues
 
-- TBD
+- Missing `LLM_API_KEY` or invalid provider configuration.
+- Invalid `.cogni.yml` or missing schema files.
+- Unknown task ID or agent ID.
+- No results found for a commit range.
 
 ## Diagnostics
 
-- TBD
+- Run `cogni validate` to check config.
+- Inspect `results.json` and per-task logs.
+- Confirm `rg` is installed and on PATH.

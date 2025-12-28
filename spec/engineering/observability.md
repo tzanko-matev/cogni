@@ -2,16 +2,17 @@
 
 ## Logging
 
-- TBD
+- CLI summary output for each run.
+- Optional per-task logs in the run output directory.
 
 ## Metrics
 
-- TBD
+- Tokens, wall time, tool calls, and files read per task.
 
 ## Tracing
 
-- TBD
+- Not required in MVP.
 
 ## Alerts
 
-- TBD
+- Not required in MVP.

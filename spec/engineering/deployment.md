@@ -2,12 +2,14 @@
 
 ## Environments
 
-- TBD
+- Local developer machines
+- CI runners
 
 ## Deployment steps
 
-- TBD
+- Build and distribute the CLI binary.
+- No server-side deployment in MVP.
 
 ## Rollback plan
 
-- TBD
+- Revert to a previous binary release.

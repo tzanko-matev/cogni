@@ -2,12 +2,18 @@
 
 ## Context diagram
 
-- TBD (add a diagram or ASCII sketch)
+- User or CI invokes the `cogni` CLI in a git repo.
+- `cogni` reads repo files, sends questions to the LLM provider, and writes results locally.
 
 ## External systems
 
-- TBD
+- Git repository (local workspace)
+- OpenRouter API (LLM provider in MVP)
+- Local filesystem for outputs
+- CI runner (optional)
 
 ## Interfaces
 
-- TBD
+- CLI commands (`cogni init|validate|run|compare|report`)
+- `.cogni.yml` configuration and JSON schemas
+- Environment variables (`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`)

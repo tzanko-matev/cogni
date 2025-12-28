@@ -2,16 +2,21 @@
 
 ## Build steps
 
-- TBD
+- `go build ./cmd/cogni`
 
 ## Run locally
 
-- TBD
+- `./cogni init`
+- `./cogni validate`
+- `./cogni run`
+- `./cogni run task-id@agent-id`
+- `./cogni compare --base main`
+- `./cogni report --range main..HEAD --open`
 
 ## Common commands
 
-- `jj status` - show working copy status
-- `jj log` - show change history
-- `jj diff` - show local diff
-- `jj new` - start a new change
-- `jj describe -m "message"` - set the change description
+- `cogni init` - scaffold config
+- `cogni validate` - validate config
+- `cogni run` - execute benchmark
+- `cogni compare` - compare runs
+- `cogni report` - generate report

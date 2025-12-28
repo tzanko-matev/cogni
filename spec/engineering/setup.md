@@ -2,11 +2,19 @@
 
 ## Prerequisites
 
-- Jujutsu (`jj`) installed and available on PATH.
+- Go 1.22+
+- git
+- Jujutsu (`jj`) for local version control
+- ripgrep (`rg`)
+- OpenRouter API key (`LLM_API_KEY`)
 
 ## Local setup steps
 
-- TBD
+- `go mod download`
+- Set env vars:
+  - `LLM_PROVIDER=openrouter`
+  - `LLM_MODEL=<model>`
+  - `LLM_API_KEY=<key>`
 
 ## Version control workflow
 
