@@ -35,6 +35,7 @@ fill-in template. Replace placeholders with real project details as they become 
   - `design/ui-ux.md`
 - Engineering
   - `engineering/repo-structure.md`
+  - `engineering/builtin-agent.md`
   - `engineering/setup.md`
   - `engineering/configuration.md`
   - `engineering/build-and-run.md`
