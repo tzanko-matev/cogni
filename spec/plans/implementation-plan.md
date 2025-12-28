@@ -122,36 +122,69 @@
 
 ## Phase 6 - Runner pipeline
 
-- Orchestrate tasks: selection, execution, retries (`--repeat`), and aggregation.
-- Write `results.json`, `report.html`, and per-task logs to output dir.
-- Ensure results are written even when some tasks fail.
+- Inputs: `spec/architecture/logical-architecture.md`, `spec/design/data-model.md`,
+  `spec/engineering/observability.md`, `spec/requirements/functional.md`.
+- Work:
+  - Orchestrate task selection, execution, repeats (`--repeat`), and aggregation.
+  - Run repo setup commands from config (if provided) before task execution.
+  - Write `results.json`, `report.html`, and per-task logs to output dir.
+  - Ensure results are written even when some tasks fail.
+  - Emit CLI summary output per run.
+- Verification:
+  - Integration test on a fixture repo with partial failures and repeats.
+  - Assert outputs are written with stable paths and summary fields.
 - Deliverable: `cogni run` produces stable outputs and CLI summary.
 
 ## Phase 7 - Reporting and compare
 
-- Implement results loader and comparison logic (base/head or range).
-- Generate `report.html` with summary, task table, and trend charts.
-- Implement `cogni report` and `cogni compare` outputs and error handling.
+- Inputs: `spec/design/ui-ux.md`, `spec/design/api.md`,
+  `spec/requirements/functional.md`.
+- Work:
+  - Implement results loader and comparison logic (base/head or range).
+  - Generate `report.html` with summary, task table, and trend charts.
+  - Implement `cogni report` and `cogni compare` output and error handling.
+  - Warn on missing runs in ranges while rendering remaining data.
+- Verification:
+  - Golden tests for report HTML and summary outputs.
+  - Fixture tests for compare/report with missing runs and invalid ranges.
 - Deliverable: compare/report works over commit ranges with warnings for missing runs.
 
 ## Phase 8 - Docs, examples, and CI
 
-- Provide example configs and sample question suite under `examples/`.
-- Update docs for setup/build/run, troubleshooting, and CI workflow.
-- Add a CI smoke test with a fixture repo and golden report.
+- Inputs: `spec/engineering/setup.md`, `spec/engineering/ci-cd.md`,
+  `spec/engineering/build-and-run.md`, `spec/engineering/troubleshooting.md`,
+  `spec/engineering/deployment.md`.
+- Work:
+  - Provide example configs and sample question suite under `examples/`.
+  - Update docs for setup/build/run, troubleshooting, and CI workflow.
+  - Add a CI smoke test with a fixture repo and a golden report.
+  - Document release steps for local/CI distribution.
+- Verification:
+  - CI runs `go test ./...` and `go build ./cmd/cogni` plus the smoke test.
+  - Documentation walkthrough completes a benchmark in under 15 minutes.
 - Deliverable: a new repo can run a benchmark in under 15 minutes.
 
-## Testing plan (by phase)
+## Testing and quality gates
 
-- Unit tests: config parsing, schema validation, citation checks, metrics aggregation.
-- Integration tests: end-to-end run on a fixture repo producing `results.json`.
-- CLI tests: flag parsing, error messages, and range resolution.
+- Unit tests: config parsing, tool limits, prompt building, eval checks, metrics.
+- Integration tests: fixture repo run producing `results.json` and `report.html`.
+- CLI tests: help text, exit codes, error messages, and range resolution.
+- Golden tests: report HTML and summary outputs.
+
+## Acceptance criteria traceability
+
+- `.cogni.yml` support and validation: Phases 1 and 6.
+- `cogni validate` behavior: Phase 1.
+- `cogni run` outputs (`results.json`, `report.html`): Phase 6.
+- `cogni compare` and `cogni report`: Phase 7.
+- QA failure cases (JSON/schema/citations/budget): Phases 3-5.
 
 ## Definition of done (MVP)
 
 - All acceptance criteria in `spec/requirements/acceptance-criteria.md` pass.
-- `go test ./...` passes locally.
+- `go test ./...` and `go build ./cmd/cogni` pass locally.
 - `cogni run`, `cogni compare`, and `cogni report` work on a demo repo.
+- CI smoke test passes with `results.json` and `report.html` artifacts.
 
 ## Post-MVP follow-ups
 
