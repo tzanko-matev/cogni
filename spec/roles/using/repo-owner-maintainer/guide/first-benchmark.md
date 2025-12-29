@@ -26,6 +26,6 @@ Set up a repeatable benchmark for your repo with clear outputs you can share.
 - Reports show pass rate, tokens, and wall time trends.
 
 ## See also
-- `spec/roles/working/core-cli-runner-engineer/engineering/configuration.md`
-- `spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md`
-- `spec/roles/working/customer-support-success/support/troubleshooting.md`
+- [spec/roles/working/core-cli-runner-engineer/engineering/configuration.md](/working/core-cli-runner-engineer/engineering/configuration/)
+- [spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md](/working/core-cli-runner-engineer/engineering/build-and-run/)
+- [spec/roles/working/customer-support-success/support/troubleshooting.md](/working/customer-support-success/support/troubleshooting/)

@@ -13,5 +13,5 @@ Cogni makes maintainability measurable by turning codebase understanding into a 
 - Clear task tables with pass/fail status.
 
 ## See also
-- `spec/roles/working/product-owner-manager/overview/project-summary.md`
-- `spec/roles/working/documentation-education-owner/design/ui-ux.md`
+- [spec/roles/working/product-owner-manager/overview/project-summary.md](/working/product-owner-manager/overview/project-summary/)
+- [spec/roles/working/documentation-education-owner/design/ui-ux.md](/working/documentation-education-owner/design/ui-ux/)

@@ -13,6 +13,6 @@
 - Do not persist secrets in results or reports.
 
 ## See also
-- `spec/roles/working/core-cli-runner-engineer/requirements/non-functional.md`
-- `spec/roles/working/security-compliance-reviewer/security/security-architecture.md`
-- `spec/roles/working/agent-llm-integration-engineer/agent/builtin-agent.md`
+- [spec/roles/working/core-cli-runner-engineer/requirements/non-functional.md](/working/core-cli-runner-engineer/requirements/non-functional/)
+- [spec/roles/working/security-compliance-reviewer/security/security-architecture.md](/working/security-compliance-reviewer/security/security-architecture/)
+- [spec/roles/working/agent-llm-integration-engineer/agent/builtin-agent.md](/working/agent-llm-integration-engineer/agent/builtin-agent/)

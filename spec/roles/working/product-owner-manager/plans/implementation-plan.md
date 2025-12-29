@@ -9,14 +9,14 @@
 
 ## Inputs and references
 
-- Requirements: `spec/requirements/functional.md`, `spec/requirements/non-functional.md`.
-- Architecture: `spec/architecture/logical-architecture.md`, `spec/architecture/data-flow.md`.
-- Design: `spec/design/api.md`, `spec/design/data-model.md`, `spec/design/ui-ux.md`.
-- Engineering: `spec/engineering/repo-structure.md`, `spec/engineering/configuration.md`,
-  `spec/engineering/testing.md`, `spec/engineering/build-and-run.md`,
-  `spec/engineering/observability.md`, `spec/engineering/ci-cd.md`.
-- Built-in agent behavior: `spec/engineering/builtin-agent.md`.
-- Acceptance criteria: `spec/requirements/acceptance-criteria.md`.
+- Requirements: [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/), [spec/roles/working/core-cli-runner-engineer/requirements/non-functional.md](/working/core-cli-runner-engineer/requirements/non-functional/).
+- Architecture: [spec/roles/working/core-cli-runner-engineer/architecture/logical-architecture.md](/working/core-cli-runner-engineer/architecture/logical-architecture/), [spec/roles/working/core-cli-runner-engineer/architecture/data-flow.md](/working/core-cli-runner-engineer/architecture/data-flow/).
+- Design: [spec/roles/working/core-cli-runner-engineer/design/api.md](/working/core-cli-runner-engineer/design/api/), [spec/roles/working/core-cli-runner-engineer/design/data-model.md](/working/core-cli-runner-engineer/design/data-model/), [spec/roles/working/documentation-education-owner/design/ui-ux.md](/working/documentation-education-owner/design/ui-ux/).
+- Engineering: [spec/roles/working/core-cli-runner-engineer/engineering/repo-structure.md](/working/core-cli-runner-engineer/engineering/repo-structure/), [spec/roles/working/core-cli-runner-engineer/engineering/configuration.md](/working/core-cli-runner-engineer/engineering/configuration/),
+  [spec/roles/working/qa-test-engineer/testing/testing.md](/working/qa-test-engineer/testing/testing/), [spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md](/working/core-cli-runner-engineer/engineering/build-and-run/),
+  [spec/roles/working/core-cli-runner-engineer/engineering/observability.md](/working/core-cli-runner-engineer/engineering/observability/), [spec/roles/working/release-ci-engineer/ci/ci-cd.md](/working/release-ci-engineer/ci/ci-cd/).
+- Built-in agent behavior: [spec/roles/working/agent-llm-integration-engineer/agent/builtin-agent.md](/working/agent-llm-integration-engineer/agent/builtin-agent/).
+- Acceptance criteria: [spec/roles/working/qa-test-engineer/requirements/acceptance-criteria.md](/working/qa-test-engineer/requirements/acceptance-criteria/).
 
 ## Plan conventions
 
@@ -35,8 +35,8 @@
 
 ## Phase 0 - Repository and CLI scaffolding
 
-- Inputs: `spec/engineering/repo-structure.md`, `spec/design/api.md`,
-  `spec/engineering/build-and-run.md`.
+- Inputs: [spec/roles/working/core-cli-runner-engineer/engineering/repo-structure.md](/working/core-cli-runner-engineer/engineering/repo-structure/), [spec/roles/working/core-cli-runner-engineer/design/api.md](/working/core-cli-runner-engineer/design/api/),
+  [spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md](/working/core-cli-runner-engineer/engineering/build-and-run/).
 - Work:
   - Initialize Go module and directory layout (`cmd/cogni`, `internal/*`).
   - Create CLI entrypoint with subcommands and help text; define exit codes.
@@ -48,8 +48,8 @@
 
 ## Phase 1 - Spec parsing and validation
 
-- Inputs: `spec/engineering/configuration.md`, `spec/design/data-model.md`,
-  `spec/requirements/functional.md`.
+- Inputs: [spec/roles/working/core-cli-runner-engineer/engineering/configuration.md](/working/core-cli-runner-engineer/engineering/configuration/), [spec/roles/working/core-cli-runner-engineer/design/data-model.md](/working/core-cli-runner-engineer/design/data-model/),
+  [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/).
 - Work:
   - Load `.cogni.yml` into config structs with defaults and normalization.
   - Validate unique task/agent IDs, default agent references, budgets, and
@@ -64,8 +64,8 @@
 
 ## Phase 2 - VCS and workspace handling
 
-- Inputs: `spec/architecture/system-context.md`, `spec/architecture/data-flow.md`,
-  `spec/requirements/functional.md`.
+- Inputs: [spec/roles/working/core-cli-runner-engineer/architecture/system-context.md](/working/core-cli-runner-engineer/architecture/system-context/), [spec/roles/working/core-cli-runner-engineer/architecture/data-flow.md](/working/core-cli-runner-engineer/architecture/data-flow/),
+  [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/).
 - Work:
   - Detect git repo root; capture commit SHA, branch, and dirty state metadata.
   - Resolve refs for `compare`/`report` (base/head and range syntax).
@@ -78,8 +78,8 @@
 
 ## Phase 3 - Tool layer and instrumentation
 
-- Inputs: `spec/requirements/non-functional.md`, `spec/engineering/observability.md`,
-  `spec/engineering/builtin-agent.md`.
+- Inputs: [spec/roles/working/core-cli-runner-engineer/requirements/non-functional.md](/working/core-cli-runner-engineer/requirements/non-functional/), [spec/roles/working/core-cli-runner-engineer/engineering/observability.md](/working/core-cli-runner-engineer/engineering/observability/),
+  [spec/roles/working/agent-llm-integration-engineer/agent/builtin-agent.md](/working/agent-llm-integration-engineer/agent/builtin-agent/).
 - Work:
   - Implement read-only tools: `list_files`, `search` (rg), `read_file`.
   - Enforce file read limits, output truncation, and error surfaces.
@@ -92,8 +92,8 @@
 
 ## Phase 4 - Built-in agent runtime
 
-- Inputs: `spec/engineering/builtin-agent.md`, `spec/engineering/configuration.md`,
-  `spec/requirements/functional.md`.
+- Inputs: [spec/roles/working/agent-llm-integration-engineer/agent/builtin-agent.md](/working/agent-llm-integration-engineer/agent/builtin-agent/), [spec/roles/working/core-cli-runner-engineer/engineering/configuration.md](/working/core-cli-runner-engineer/engineering/configuration/),
+  [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/).
 - Work:
   - Implement session initialization, prompt building, and tool loop as specified.
   - Integrate OpenRouter request/stream handling for the built-in agent.
@@ -111,8 +111,8 @@
 
 ## Phase 5 - Evaluation and metrics
 
-- Inputs: `spec/design/data-model.md`, `spec/requirements/functional.md`,
-  `spec/engineering/testing.md`.
+- Inputs: [spec/roles/working/core-cli-runner-engineer/design/data-model.md](/working/core-cli-runner-engineer/design/data-model/), [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/),
+  [spec/roles/working/qa-test-engineer/testing/testing.md](/working/qa-test-engineer/testing/testing/).
 - Work:
   - Implement QA evaluation pipeline: JSON parse, schema validation,
     must_contain checks, and citation validation.
@@ -125,8 +125,8 @@
 
 ## Phase 6 - Runner pipeline
 
-- Inputs: `spec/architecture/logical-architecture.md`, `spec/design/data-model.md`,
-  `spec/engineering/observability.md`, `spec/requirements/functional.md`.
+- Inputs: [spec/roles/working/core-cli-runner-engineer/architecture/logical-architecture.md](/working/core-cli-runner-engineer/architecture/logical-architecture/), [spec/roles/working/core-cli-runner-engineer/design/data-model.md](/working/core-cli-runner-engineer/design/data-model/),
+  [spec/roles/working/core-cli-runner-engineer/engineering/observability.md](/working/core-cli-runner-engineer/engineering/observability/), [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/).
 - Work:
   - Orchestrate task selection, execution, repeats (`--repeat`), and aggregation.
   - Validate task selectors (`task-id`, `task-id@agent-id`) and fail on unknown IDs.
@@ -143,8 +143,8 @@
 
 ## Phase 7 - Reporting and compare
 
-- Inputs: `spec/design/ui-ux.md`, `spec/design/api.md`,
-  `spec/requirements/functional.md`.
+- Inputs: [spec/roles/working/documentation-education-owner/design/ui-ux.md](/working/documentation-education-owner/design/ui-ux/), [spec/roles/working/core-cli-runner-engineer/design/api.md](/working/core-cli-runner-engineer/design/api/),
+  [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/).
 - Work:
   - Implement results loader and comparison logic (base/head or range).
   - Load reports from stored run artifacts; avoid rerunning tasks.
@@ -159,9 +159,9 @@
 
 ## Phase 8 - Docs, examples, and CI
 
-- Inputs: `spec/engineering/setup.md`, `spec/engineering/ci-cd.md`,
-  `spec/engineering/build-and-run.md`, `spec/engineering/troubleshooting.md`,
-  `spec/engineering/deployment.md`.
+- Inputs: [spec/roles/working/core-cli-runner-engineer/engineering/setup.md](/working/core-cli-runner-engineer/engineering/setup/), [spec/roles/working/release-ci-engineer/ci/ci-cd.md](/working/release-ci-engineer/ci/ci-cd/),
+  [spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md](/working/core-cli-runner-engineer/engineering/build-and-run/), [spec/roles/working/customer-support-success/support/troubleshooting.md](/working/customer-support-success/support/troubleshooting/),
+  [spec/roles/working/release-ci-engineer/ci/deployment.md](/working/release-ci-engineer/ci/deployment/).
 - Work:
   - Provide example configs and sample question suite under `examples/`.
   - Update docs for setup/build/run, troubleshooting, and CI workflow.
@@ -189,7 +189,7 @@
 
 ## Definition of done (MVP)
 
-- All acceptance criteria in `spec/requirements/acceptance-criteria.md` pass.
+- All acceptance criteria in [spec/roles/working/qa-test-engineer/requirements/acceptance-criteria.md](/working/qa-test-engineer/requirements/acceptance-criteria/) pass.
 - `go test ./...` and `go build ./cmd/cogni` pass locally.
 - `cogni run`, `cogni compare`, and `cogni report` work on a demo repo.
 - CI smoke test passes with `results.json` and `report.html` artifacts.

@@ -15,6 +15,6 @@
 - No hosted dashboards or multi-tenant features in MVP.
 
 ## See also
-- `spec/roles/working/documentation-education-owner/guides/user-tutorial.md`
-- `spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md`
-- `spec/roles/working/product-owner-manager/overview/project-summary.md`
+- [spec/roles/working/documentation-education-owner/guides/user-tutorial.md](/working/documentation-education-owner/guides/user-tutorial/)
+- [spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md](/working/core-cli-runner-engineer/engineering/build-and-run/)
+- [spec/roles/working/product-owner-manager/overview/project-summary.md](/working/product-owner-manager/overview/project-summary/)

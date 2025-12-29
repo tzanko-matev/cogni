@@ -14,5 +14,5 @@
 - It is not a linter or SAST product.
 
 ## See also
-- `spec/roles/working/product-owner-manager/overview/goals-and-nongoals.md`
-- `spec/roles/working/product-owner-manager/plans/roadmap.md`
+- [spec/roles/working/product-owner-manager/overview/goals-and-nongoals.md](/working/product-owner-manager/overview/goals-and-nongoals/)
+- [spec/roles/working/product-owner-manager/plans/roadmap.md](/working/product-owner-manager/plans/roadmap/)

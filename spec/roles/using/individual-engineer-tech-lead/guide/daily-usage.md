@@ -17,6 +17,6 @@ Run targeted checks to validate changes and spot regressions in understanding.
 - Check `results.json` and per-task logs in the run output folder.
 
 ## See also
-- `spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md`
-- `spec/roles/working/customer-support-success/support/troubleshooting.md`
-- `spec/roles/working/qa-test-engineer/testing/integration-e2e-tests.md`
+- [spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md](/working/core-cli-runner-engineer/engineering/build-and-run/)
+- [spec/roles/working/customer-support-success/support/troubleshooting.md](/working/customer-support-success/support/troubleshooting/)
+- [spec/roles/working/qa-test-engineer/testing/integration-e2e-tests.md](/working/qa-test-engineer/testing/integration-e2e-tests/)

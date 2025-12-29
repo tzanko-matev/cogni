@@ -33,4 +33,4 @@
 ## Tracking
 
 - Track milestones in the issue tracker with linked PRs.
-- Record milestone completion in `spec/appendix/changelog.md`.
+- Record milestone completion in [spec/roles/working/legal-procurement/legal/changelog.md](/working/legal-procurement/legal/changelog/).

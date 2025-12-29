@@ -14,6 +14,6 @@
 - A run is a benchmark execution at a specific commit.
 
 ## See also
-- `spec/roles/working/documentation-education-owner/overview/glossary.md`
-- `spec/roles/working/documentation-education-owner/design/ui-ux.md`
-- `spec/roles/working/product-owner-manager/overview/project-summary.md`
+- [spec/roles/working/documentation-education-owner/overview/glossary.md](/working/documentation-education-owner/overview/glossary/)
+- [spec/roles/working/documentation-education-owner/design/ui-ux.md](/working/documentation-education-owner/design/ui-ux/)
+- [spec/roles/working/product-owner-manager/overview/project-summary.md](/working/product-owner-manager/overview/project-summary/)

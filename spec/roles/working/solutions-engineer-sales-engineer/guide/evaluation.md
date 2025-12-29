@@ -15,6 +15,6 @@
 - `report.html` for stakeholder-friendly output.
 
 ## See also
-- `spec/roles/working/documentation-education-owner/guides/user-tutorial.md`
-- `spec/roles/working/core-cli-runner-engineer/engineering/configuration.md`
-- `spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md`
+- [spec/roles/working/documentation-education-owner/guides/user-tutorial.md](/working/documentation-education-owner/guides/user-tutorial/)
+- [spec/roles/working/core-cli-runner-engineer/engineering/configuration.md](/working/core-cli-runner-engineer/engineering/configuration/)
+- [spec/roles/working/core-cli-runner-engineer/engineering/build-and-run.md](/working/core-cli-runner-engineer/engineering/build-and-run/)

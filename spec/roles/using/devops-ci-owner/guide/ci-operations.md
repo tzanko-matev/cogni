@@ -20,7 +20,7 @@ Run Cogni in CI reliably, capture artifacts, and keep costs predictable.
 - Rotate API keys if compromised.
 
 ## See also
-- `spec/roles/working/release-ci-engineer/ci/ci-cd.md`
-- `spec/roles/working/release-ci-engineer/ci/deployment.md`
-- `spec/roles/working/customer-support-success/support/runbooks.md`
-- `spec/roles/working/customer-support-success/support/backup-restore.md`
+- [spec/roles/working/release-ci-engineer/ci/ci-cd.md](/working/release-ci-engineer/ci/ci-cd/)
+- [spec/roles/working/release-ci-engineer/ci/deployment.md](/working/release-ci-engineer/ci/deployment/)
+- [spec/roles/working/customer-support-success/support/runbooks.md](/working/customer-support-success/support/runbooks/)
+- [spec/roles/working/customer-support-success/support/backup-restore.md](/working/customer-support-success/support/backup-restore/)
