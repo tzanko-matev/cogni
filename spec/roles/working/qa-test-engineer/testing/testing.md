@@ -1,3 +1,12 @@
+---
+title: Testing
+tests:
+  - cogni/internal/cli::TestInitCommandCreatesFiles
+  - cogni/internal/cli::TestInitCommandRefusesOverwrite
+  - cogni/internal/cli::TestValidateCommandSuccess
+  - cogni/internal/cli::TestValidateCommandFailure
+---
+
 # Testing
 
 ## Test strategy
@@ -16,3 +25,9 @@
 ## How to run tests
 
 - `go test ./...`
+
+## Docs-linked test results
+
+- Add `tests:` front matter with IDs like `cogni/internal/cli::TestInitCommandCreatesFiles`.
+- Run `just docs-test-results` to generate `data/test_results.json`.
+- Start the docs site with `just docs-serve` and open this page to see the status panel.

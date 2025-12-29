@@ -4,6 +4,7 @@
     {{ with .File.Path }}
       <div class="doc-meta">Path: <code>{{ . }}</code></div>
     {{ end }}
+    {{ partial "test-status.html" . }}
     <div class="prose">{{ .Content }}</div>
   </article>
 {{ end }}

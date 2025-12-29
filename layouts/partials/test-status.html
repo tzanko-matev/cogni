@@ -1,0 +1,56 @@
+{{ $tests := .Params.tests }}
+{{ if $tests }}
+  {{ $data := .Site.Data.test_results }}
+  <section class="test-status">
+    <div class="test-status-header">
+      <h2>Test status</h2>
+      {{ if $data }}
+        {{ with $data.generated_at }}
+          <div class="test-status-updated">Updated {{ . }}</div>
+        {{ end }}
+      {{ end }}
+    </div>
+    {{ if not $data }}
+      <p class="test-status-empty">No test results data yet. Run <code>just docs-test-results</code>.</p>
+    {{ else }}
+      <ul class="test-list">
+        {{ range $tests }}
+          {{ $id := . }}
+          {{ $entry := index $data.tests $id }}
+          {{ $status := "missing" }}
+          {{ $duration := "" }}
+          {{ $package := "" }}
+          {{ $name := $id }}
+          {{ if $entry }}
+            {{ $status = $entry.status }}
+            {{ $package = $entry.package }}
+            {{ $name = $entry.name }}
+            {{ if gt $entry.duration 0.0 }}
+              {{ $duration = printf "%.2fs" $entry.duration }}
+            {{ end }}
+          {{ else }}
+            {{ $parts := split $id "::" }}
+            {{ if eq (len $parts) 2 }}
+              {{ $package = index $parts 0 }}
+              {{ $name = index $parts 1 }}
+            {{ end }}
+          {{ end }}
+          <li class="test-item">
+            <div>
+              <div class="test-name">{{ $name }}</div>
+              {{ if $package }}
+                <div class="test-package">{{ $package }}</div>
+              {{ end }}
+            </div>
+            <div class="test-meta">
+              {{ if $duration }}
+                <span>{{ $duration }}</span>
+              {{ end }}
+              <span class="status-pill status-{{ $status }}">{{ $status }}</span>
+            </div>
+          </li>
+        {{ end }}
+      </ul>
+    {{ end }}
+  </section>
+{{ end }}

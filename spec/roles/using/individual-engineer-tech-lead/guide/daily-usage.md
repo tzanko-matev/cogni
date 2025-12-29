@@ -1,3 +1,12 @@
+---
+title: Daily usage
+tests:
+  - cogni/internal/cli::TestInitCommandCreatesFiles
+  - cogni/internal/cli::TestInitCommandRefusesOverwrite
+  - cogni/internal/cli::TestValidateCommandSuccess
+  - cogni/internal/cli::TestValidateCommandFailure
+---
+
 # Daily usage
 
 ## What you do
