@@ -16,5 +16,5 @@
 
 ## Schemas
 
-- `.cogni.yml` defines repo settings, agents, tasks, and budgets.
+- `.cogni/config.yml` (in `.cogni/`) defines repo settings, agents, tasks, and budgets.
 - `results.json` captures run metadata, agent definitions, per-task attempts, and summaries.

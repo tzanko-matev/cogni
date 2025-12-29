@@ -15,5 +15,5 @@
 ## Interfaces
 
 - CLI commands (`cogni init|validate|run|compare|report`)
-- `.cogni.yml` configuration and JSON schemas
+- `.cogni/config.yml` configuration and `.cogni/schemas/` (discovered by walking up parent directories)
 - Environment variables (`LLM_PROVIDER`, `LLM_API_KEY`, `LLM_MODEL`)

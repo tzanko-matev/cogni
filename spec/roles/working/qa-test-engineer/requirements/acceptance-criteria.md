@@ -2,7 +2,12 @@
 
 ## Definition of done
 
-- `.cogni.yml` supports agents, tasks, and `output_dir`.
+- `.cogni/config.yml` supports agents, tasks, and `output_dir`.
+- `.cogni/schemas/` is created by `cogni init` and loaded for validation.
+- `cogni init` confirms the target `.cogni/` location before writing.
+- `cogni init` prompts for a results folder (default `.cogni/results`) and writes it to `repo.output_dir`.
+- In a git repo, `cogni init` offers to add the results folder to the repo root `.gitignore`.
+- CLI commands find `.cogni/` by walking up parent directories.
 - `cogni validate` rejects invalid YAML or schemas.
 - `cogni run` produces `results.json` and `report.html` under the configured output directory.
 - `cogni run task-id@agent-id` uses the specified agent.

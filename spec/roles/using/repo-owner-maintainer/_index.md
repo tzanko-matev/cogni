@@ -10,7 +10,7 @@ I own a repository and want a repeatable way to measure maintainability. I need 
 - Minimal disruption to developer workflows.
 
 ## I need from the spec
-- How to structure `.cogni.yml`, tasks, and agents.
+- How to structure `.cogni/config.yml` inside `.cogni/`, tasks, and agents.
 - How outputs are stored and compared across commits.
 - What counts as pass or fail for a task.
 

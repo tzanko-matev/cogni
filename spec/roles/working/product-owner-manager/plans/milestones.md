@@ -3,7 +3,7 @@
 ## M1 - CLI foundation and configuration
 
 - Goal: establish the core CLI surface and config validation.
-- Deliverables: `cogni init`, `cogni validate`, schema folder, config parsing, and clear error messages.
+- Deliverables: `cogni init` (location + output folder prompts), `cogni validate`, `.cogni/` folder (config + schemas), config parsing, and clear error messages.
 - Exit criteria: sample config passes validation; invalid configs fail fast with actionable errors.
 
 ## M2 - Task runtime and metrics

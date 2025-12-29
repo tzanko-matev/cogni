@@ -1,7 +1,8 @@
 # Evaluation workflow
 
 ## Demo setup
-- Run `cogni init` to scaffold `.cogni.yml`.
+- Run `cogni init` to scaffold `.cogni/config.yml` (confirm the `.cogni/` location).
+- Choose a results folder when prompted (default `.cogni/results`) and decide whether to add it to `.gitignore` in git repos.
 - Add a small set of QA tasks with citation checks.
 - Set `output_dir` so runs are repeatable.
 

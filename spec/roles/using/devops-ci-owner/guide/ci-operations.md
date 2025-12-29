@@ -18,6 +18,8 @@ Run Cogni in CI reliably, capture artifacts, and keep costs predictable.
 - Runs should be deterministic and always write `results.json` even on partial failures.
 - Backup `output_dir` for historical comparisons.
 - Rotate API keys if compromised.
+- Ensure `.cogni/` lives at the repo root; CLI commands can run from subdirectories and will walk up to find it.
+- Default output is `.cogni/results`; `cogni init` can add it to `.gitignore` in git repos.
 
 ## See also
 - [spec/roles/working/release-ci-engineer/ci/ci-cd.md](/working/release-ci-engineer/ci/ci-cd/)

@@ -12,10 +12,11 @@
 - `./cogni run task-id@agent-id`
 - `./cogni compare --base main`
 - `./cogni report --range main..HEAD --open`
+- Commands can run from subdirectories; `.cogni/` is discovered by walking up parent directories.
 
 ## Common commands
 
-- `cogni init` - scaffold config
+- `cogni init` - scaffold `.cogni/` (prompts for location, results folder, and `.gitignore` in git repos)
 - `cogni validate` - validate config
 - `cogni run` - execute benchmark
 - `cogni compare` - compare runs

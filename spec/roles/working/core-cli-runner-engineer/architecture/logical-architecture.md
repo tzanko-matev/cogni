@@ -3,7 +3,7 @@
 ## Major components
 
 - CLI entrypoint (command parsing and dispatch)
-- Spec parser and validator (`.cogni.yml` + schemas)
+- Spec parser and validator (`.cogni/config.yml` + `.cogni/schemas/`, discovered via parent search)
 - VCS resolver (commit and range handling; git in MVP)
 - Agent manager (agent selection and configuration)
 - Tool layer (list/search/read)

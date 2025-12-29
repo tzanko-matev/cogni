@@ -4,7 +4,7 @@
 
 - `cmd/cogni`: CLI entrypoint
 - `internal/config`: config loading and validation
-- `internal/spec`: `.cogni.yml` parsing
+- `internal/spec`: `.cogni/config.yml` parsing and `.cogni/` discovery
 - `internal/runner`: task execution pipeline
 - `internal/agent`: built-in agent implementation
 - `internal/tools`: list/search/read tooling
@@ -14,5 +14,5 @@
 
 ## Key directories
 
-- `examples/`: demo repo with sample `.cogni.yml`
+- `examples/`: demo repo with sample `.cogni/config.yml`
 - `spec/`: project documentation

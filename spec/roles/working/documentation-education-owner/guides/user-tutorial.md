@@ -2,16 +2,19 @@
 This is how cogni looks in day-to-day use for a repo owner.
 
 1) Add questions
-   - Start with `cogni init` to scaffold `.cogni.yml` and a `schemas/` folder.
+   - Start with `cogni init`, confirm the suggested `.cogni/` location, and scaffold `.cogni/config.yml` plus `.cogni/schemas/`.
+   - In a git repo, `cogni init` defaults to the repo root; otherwise it uses the current folder.
+   - Choose a results folder when prompted (default `.cogni/results`); this is written to `repo.output_dir`.
+   - If a git repo is detected, decide whether to add the results folder to `.gitignore`.
    - Define `qa` tasks with prompts tied to key product features and stakeholder concerns.
    - Require citations so answers are traceable to code.
    - Define one or more agents and assign each question to an agent (or rely on the default agent).
-   - Set the output folder once in `.cogni.yml` so CLI commands stay short.
-   - Example questions for the future cogni codebase:
+   - Set the output folder once in `.cogni/config.yml` so CLI commands stay short.
+   - Save the following example in `.cogni/config.yml` (sample questions for the future cogni codebase):
 
      ```yaml
      repo:
-       output_dir: "./cogni-results"
+       output_dir: ".cogni/results"
      agents:
        - id: default
          type: builtin
@@ -69,6 +72,7 @@ This is how cogni looks in day-to-day use for a repo owner.
    - `cogni run --agent default` (override agent for all tasks in this run)
    - Produces `results.json` and `report.html` under `<output_dir>/<commit>/<run-id>/`
    - Prints a terminal summary with pass rate and resource usage.
+   - Commands can run from subdirectories; Cogni finds `.cogni/` by walking up parent directories.
 
 4) Compare runs in the CLI
    - `cogni compare --base main` (compare the current commit against main)

@@ -9,7 +9,7 @@ I run demos, proofs of concept, and integrations for prospects. I need a reliabl
 - Clear interpretation of results.
 
 ## I need from the spec
-- A short evaluation guide and sample `.cogni.yml`.
+- A short evaluation guide and sample `.cogni/config.yml` in `.cogni/`.
 - CLI workflow and expected artifacts.
 - Limitations and guardrails.
 

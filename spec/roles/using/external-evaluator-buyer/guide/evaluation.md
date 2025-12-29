@@ -6,9 +6,12 @@
 - Outputs are local and easy to share (`report.html`).
 
 ## Quick steps
-- Run `cogni init` and add a small task.
+- Run `cogni init`, confirm the suggested `.cogni/` location, and choose a results folder (default `.cogni/results`).
+- If a git repo is detected, decide whether to add the results folder to `.gitignore`.
+- Add a small task in `.cogni/config.yml`.
 - Run `cogni validate` and `cogni run`.
 - Generate a report with `cogni report --range main..HEAD`.
+- Run commands from any subdirectory; Cogni finds `.cogni/` by walking up parent directories.
 
 ## Constraints to note
 - MVP is local-only, read-only, and git-only.

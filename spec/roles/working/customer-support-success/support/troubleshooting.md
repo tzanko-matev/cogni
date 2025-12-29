@@ -3,7 +3,7 @@
 ## Common issues
 
 - Missing `LLM_API_KEY` or invalid provider configuration.
-- Invalid `.cogni.yml` or missing schema files.
+- Invalid `.cogni/config.yml`, missing `.cogni/schemas/`, or no `.cogni/` found in parent directories.
 - Unknown task ID or agent ID.
 - No results found for a commit range.
 

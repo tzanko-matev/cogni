@@ -40,7 +40,7 @@
 - Work:
   - Initialize Go module and directory layout (`cmd/cogni`, `internal/*`).
   - Create CLI entrypoint with subcommands and help text; define exit codes.
-  - Add shared config/result structs for `.cogni.yml` and output artifacts.
+  - Add shared config/result structs for `.cogni/config.yml` (inside `.cogni/`) and output artifacts.
 - Verification:
   - `go build ./cmd/cogni`.
   - `cogni --help` lists all commands with usage text.
@@ -51,11 +51,15 @@
 - Inputs: [spec/roles/working/core-cli-runner-engineer/engineering/configuration.md](/working/core-cli-runner-engineer/engineering/configuration/), [spec/roles/working/core-cli-runner-engineer/design/data-model.md](/working/core-cli-runner-engineer/design/data-model/),
   [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/).
 - Work:
-  - Load `.cogni.yml` into config structs with defaults and normalization.
+  - Load `.cogni/config.yml` into config structs with defaults and normalization.
   - Validate unique task/agent IDs, default agent references, budgets, and
     schema file paths.
   - Validate referenced JSON schemas are syntactically valid and loadable.
-  - Implement `cogni init` to scaffold `.cogni.yml` plus `schemas/` examples.
+  - Implement `cogni init` to scaffold `.cogni/` with `config.yml` plus `schemas/` examples.
+  - Prompt for confirmation before writing `.cogni/` to disk.
+  - Prompt for a results folder (default `.cogni/results`) and write it to `repo.output_dir`.
+  - If a git repo is detected, offer to add the results folder to the repo root `.gitignore`.
+  - Resolve `.cogni/` by walking up parent directories for `validate/run/compare/report`.
   - Implement `cogni validate` with actionable errors (file, field, reason).
 - Verification:
   - Unit tests for parsing defaults, invalid YAML, duplicate IDs, bad schemas.
@@ -68,6 +72,7 @@
   [spec/roles/working/core-cli-runner-engineer/requirements/functional.md](/working/core-cli-runner-engineer/requirements/functional/).
 - Work:
   - Detect git repo root; capture commit SHA, branch, and dirty state metadata.
+  - Use git repo root to suggest `.cogni/` location for `cogni init`.
   - Resolve refs for `compare`/`report` (base/head and range syntax).
   - Define run ID generation and output directory layout conventions.
   - Ensure deterministic task ordering (stable by config order or ID).
@@ -181,7 +186,7 @@
 
 ## Acceptance criteria traceability
 
-- `.cogni.yml` support and validation: Phases 1 and 6.
+- `.cogni/` config support and validation: Phases 1 and 6.
 - `cogni validate` behavior: Phase 1.
 - `cogni run` outputs (`results.json`, `report.html`): Phase 6.
 - `cogni compare` and `cogni report`: Phase 7.

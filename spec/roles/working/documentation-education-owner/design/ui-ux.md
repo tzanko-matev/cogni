@@ -2,7 +2,7 @@
 
 ## User journeys
 
-- Initialize `.cogni.yml`, add questions, and run `cogni run`.
+- Initialize `.cogni/` (confirm location, choose results folder, optional `.gitignore` update), add questions in `.cogni/config.yml`, and run `cogni run`.
 - Compare a commit against main using `cogni compare --base main`.
 - Generate a trend report for a range using `cogni report --range main..HEAD`.
 

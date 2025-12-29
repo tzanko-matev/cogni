@@ -2,8 +2,17 @@
 
 ## Config sources
 
-- `.cogni.yml` in the repo
+- `.cogni/config.yml` inside a `.cogni/` folder
 - Environment variables for LLM provider credentials
+
+## Config location rules
+
+- `cogni init` proposes `.cogni/` at the git repo root; if no git repo is found, it uses the current folder.
+- `cogni init` asks for confirmation before writing the folder and files.
+- `cogni init` prompts for a results folder (default `.cogni/results`) and writes it to `repo.output_dir`.
+- If a git repo is detected, `cogni init` offers to add the results folder to the repo root `.gitignore`.
+- All commands locate `.cogni/` by walking up parent directories from the current working directory.
+- `.cogni/schemas/` lives next to the config file and is loaded relative to the `.cogni/` folder.
 
 ## Environment variables
 
@@ -16,7 +25,7 @@
 ```yaml
 version: 1
 repo:
-  output_dir: "./cogni-results"
+  output_dir: ".cogni/results"
   setup_commands:
     - "go mod download"
 

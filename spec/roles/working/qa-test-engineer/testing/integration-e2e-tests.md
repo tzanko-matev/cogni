@@ -78,13 +78,14 @@ git commit -m "update release stage"
 
 ### Config recipe (per test)
 
-Use a minimal `.cogni.yml` created with `cat`. Adjust tasks per test case.
+Use a minimal `.cogni/config.yml` created with `cat`. Create `.cogni/` and `.cogni/schemas/` first. Adjust tasks per test case.
 
 ```bash
-cat > .cogni.yml <<'EOF'
+mkdir -p .cogni/schemas
+cat > .cogni/config.yml <<'EOF'
 version: 1
 repo:
-  output_dir: "./cogni-results"
+  output_dir: ".cogni/results"
 agents:
   - id: default
     type: builtin
@@ -117,7 +118,7 @@ Prompts are written in plain language with objective, verifiable answers
 ### T1: Provider connectivity smoke test
 
 - Goal: confirm a valid provider key enables a full run.
-- Setup: Simple repo recipe with one QA task in `.cogni.yml`.
+- Setup: Simple repo recipe with one QA task in `.cogni/config.yml`.
 - Steps: run `cogni run` from the fixture repo.
 - Expected: run succeeds, 1 task passes, artifacts exist.
 
@@ -180,7 +181,7 @@ Prompts are written in plain language with objective, verifiable answers
 ### T10: Config validation errors
 
 - Goal: ensure invalid configs are caught early and clearly.
-- Setup: create an invalid `.cogni.yml` with missing required fields.
+- Setup: create an invalid `.cogni/config.yml` with missing required fields.
 - Steps: run `cogni validate`.
 - Expected: command fails with actionable error messages.
 
@@ -188,10 +189,24 @@ Prompts are written in plain language with objective, verifiable answers
 
 - Goal: demonstrate a "first run" experience.
 - Setup: empty fixture repo.
-- Steps: run `cogni init`, edit prompts minimally, then run `cogni run`.
-- Expected: config created, run succeeds, artifacts produced.
+- Steps: run `cogni init`, confirm the proposed `.cogni/` location, choose a results folder (accept default), accept adding it to `.gitignore`, edit prompts minimally, then run `cogni run`.
+- Expected: `.cogni/` created at the repo root, `repo.output_dir` matches the chosen folder, `.gitignore` includes the entry, run succeeds, artifacts produced.
 
-### T12: Provider failure handling
+### T12: Init results folder and gitignore opt-out
+
+- Goal: ensure users can decline `.gitignore` changes and pick a custom output folder.
+- Setup: empty fixture repo with an existing `.gitignore`.
+- Steps: run `cogni init`, choose a non-default results folder, and decline `.gitignore` changes.
+- Expected: `.cogni/config.yml` uses the chosen folder; `.gitignore` remains unchanged.
+
+### T13: Config discovery from subdir
+
+- Goal: confirm commands work when invoked from a nested folder.
+- Setup: Simple repo recipe with `.cogni/` at the repo root.
+- Steps: `mkdir -p nested/dir`, `cd nested/dir`, run `cogni validate` and `cogni run`.
+- Expected: CLI locates `.cogni/` by walking up parent directories and completes.
+
+### T14: Provider failure handling
 
 - Goal: verify clear errors when the provider is unavailable.
 - Setup: Simple repo recipe and an invalid API key or disabled provider.

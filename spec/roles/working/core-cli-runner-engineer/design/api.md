@@ -3,7 +3,15 @@
 ## Surface area
 
 - CLI commands: `cogni init`, `cogni validate`, `cogni run`, `cogni compare`, `cogni report`
-- Configuration: `.cogni.yml` and JSON schemas
+- Configuration: `.cogni/config.yml` and `.cogni/schemas/` under `.cogni/`
+
+## Init behavior
+
+- `cogni init` proposes a `.cogni/` location (git repo root if available, otherwise the current directory).
+- The user must confirm the proposed location before files are written.
+- `cogni init` asks for a results folder (default `.cogni/results`) and writes it to `repo.output_dir`.
+- If a git repo is detected, `cogni init` offers to add the results folder to the repo root `.gitignore`.
+- All commands resolve `.cogni/` by walking up parent directories from the current working directory.
 
 ## Endpoints or interfaces
 

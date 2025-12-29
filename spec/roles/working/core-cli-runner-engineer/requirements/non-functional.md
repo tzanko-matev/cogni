@@ -17,7 +17,7 @@
 - Read-only tooling only (list/search/read).
 - No code modifications to the repo in MVP.
 - Results stored locally; no uploads to hosted services.
-- Treat `.cogni.yml` as trusted within the repo boundary.
+- Treat `.cogni/config.yml` and `.cogni/schemas/` as trusted within the repo boundary.
 
 ## Compliance
 

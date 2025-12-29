@@ -2,7 +2,7 @@
 
 ## Data lifecycle
 
-- Read `.cogni.yml` and schemas.
+- Read `.cogni/config.yml` and `.cogni/schemas/`.
 - Resolve commit(s) to evaluate.
 - Execute QA tasks through the agent.
 - Produce per-attempt metrics and evaluation artifacts.

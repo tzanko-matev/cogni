@@ -11,7 +11,7 @@
 
 ## Solution overview
 
-- Define a repo-specific question suite in `.cogni.yml`.
+- Define a repo-specific question suite in `.cogni/config.yml` (stored in `.cogni/`).
 - Run an instrumented agent to answer questions and capture resource metrics.
 - Generate local results and reports with trends over commit ranges.
 
