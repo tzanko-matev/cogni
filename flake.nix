@@ -31,6 +31,8 @@
               jujutsu
               ripgrep
               jq
+              bashInteractive
+              hugo
             ];
             shellHook = ''
               if [ -z "$LLM_PROVIDER" ]; then
