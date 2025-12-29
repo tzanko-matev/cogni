@@ -1,0 +1,259 @@
+{{ define "main" }}
+  <section class="hero" id="top">
+    <div class="hero-text reveal">
+      <p class="eyebrow">Cogni CLI</p>
+      <h1>Measure codebase maintainability with a repeatable cognitive benchmark.</h1>
+      <p class="lede">Local, read-only CLI. Repo-specific questions with citations. Trend reports over commits.</p>
+      <div class="cta-row">
+        <a class="button primary" href="{{ "/using/individual-engineer-tech-lead/" | relURL }}">Get started</a>
+        <a class="button ghost" href="#report">See sample report</a>
+      </div>
+      <div class="hero-tags">
+        <span class="chip">Read-only by design</span>
+        <span class="chip">Citations required</span>
+        <span class="chip">Trendable evidence</span>
+      </div>
+    </div>
+    <div class="hero-visual reveal" style="--delay: 0.1s;">
+      <div class="terminal-card">
+        <div class="terminal-top">
+          <span class="terminal-title">Terminal run</span>
+          <span class="terminal-pill">cogni</span>
+        </div>
+        <pre><code>$ cogni run auth-login@agent-fast repo-health
+OK auth-login   3 citations   1.8s   812 tokens
+OK repo-health  2 citations   2.1s   640 tokens
+
+$ cogni compare --base main
+pass rate: 84%  (+6%)
+tokens:    12.4k (-18%)</code></pre>
+      </div>
+      <div class="report-card">
+        <div class="report-header">
+          <div>
+            <div class="report-label">Commit range</div>
+            <div class="report-range">main..HEAD</div>
+          </div>
+          <div>
+            <div class="report-label">Pass rate</div>
+            <div class="report-value">84%</div>
+          </div>
+        </div>
+        <div class="mini-charts">
+          <div class="mini-chart">
+            <svg viewBox="0 0 120 40" width="120" height="40" aria-hidden="true">
+              <polyline points="0,30 20,24 40,26 60,18 80,14 100,12 120,8" fill="none" stroke="#1b7f7a" stroke-width="2" />
+            </svg>
+            <span>Pass rate</span>
+            <strong>+6%</strong>
+          </div>
+          <div class="mini-chart">
+            <svg viewBox="0 0 120 40" width="120" height="40" aria-hidden="true">
+              <polyline points="0,10 20,14 40,16 60,22 80,28 100,32 120,34" fill="none" stroke="#f0b44c" stroke-width="2" />
+            </svg>
+            <span>Tokens</span>
+            <strong>-18%</strong>
+          </div>
+          <div class="mini-chart">
+            <svg viewBox="0 0 120 40" width="120" height="40" aria-hidden="true">
+              <polyline points="0,26 20,22 40,20 60,16 80,18 100,14 120,12" fill="none" stroke="#1c1813" stroke-width="2" />
+            </svg>
+            <span>Wall time</span>
+            <strong>1.9s</strong>
+          </div>
+        </div>
+        <div class="report-row">
+          <span class="status-pill status-pass">pass</span>
+          <span class="report-task">auth-login</span>
+          <span class="report-meta">3 citations</span>
+        </div>
+        <div class="report-row">
+          <span class="status-pill status-fail">fail</span>
+          <span class="report-task">billing-sync</span>
+          <span class="report-meta">missing citations</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="product" class="section split">
+    <div class="panel reveal">
+      <p class="eyebrow">Problem</p>
+      <h2>Understanding regresses. It is hard to prove.</h2>
+      <p>Teams lack an objective way to quantify how understandable a codebase is over time.</p>
+    </div>
+    <div class="panel accent reveal" style="--delay: 0.05s;">
+      <p class="eyebrow">Solution</p>
+      <h2>Turn code understanding into a benchmark.</h2>
+      <p>Define questions, run the agent, and track trends across commits with local reports.</p>
+      <ul class="checklist">
+        <li>Repo-specific question suites in <code>.cogni/config.yml</code></li>
+        <li>Objective checks with required citations</li>
+        <li>Trend charts for pass rate, tokens, and time</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="how-it-works" class="section">
+    <div class="section-header">
+      <p class="eyebrow">How it works</p>
+      <h2>From questions to trends in three steps.</h2>
+      <p>Keep the workflow simple and repeatable, from config to report.</p>
+    </div>
+    <div class="steps">
+      <div class="step-card reveal" style="--delay: 0s;">
+        <div class="step-number">01</div>
+        <h3>Define</h3>
+        <p>Write a focused question suite tied to your core features.</p>
+      </div>
+      <div class="step-card reveal" style="--delay: 0.05s;">
+        <div class="step-number">02</div>
+        <h3>Run</h3>
+        <p>Answer questions with citations, track tokens, time, and tool usage.</p>
+      </div>
+      <div class="step-card reveal" style="--delay: 0.1s;">
+        <div class="step-number">03</div>
+        <h3>Report</h3>
+        <p>Compare commits and export a report you can share.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="workflow" class="section">
+    <div class="section-header">
+      <p class="eyebrow">Daily usage</p>
+      <h2>Targeted checks for individual devs.</h2>
+      <p>Run a subset of tasks in minutes and trust the citations.</p>
+    </div>
+    <div class="workflow-grid">
+      <div class="code-panel reveal">
+        <div class="panel-title">CLI flow</div>
+        <pre><code>cogni init
+cogni run auth-login@agent-fast repo-health
+cogni compare --base main
+cogni report --range main..HEAD</code></pre>
+        <p class="panel-note">Run fast checks before a review or release.</p>
+      </div>
+      <div class="code-panel reveal" style="--delay: 0.05s;">
+        <div class="panel-title">Question suite</div>
+        <pre><code># .cogni/config.yml
+tasks:
+  - id: auth-login
+    type: qa
+    prompt: "How does login token refresh work?"
+    eval:
+      validate_citations: true
+  - id: repo-health
+    type: qa
+    prompt: "Where are global error boundaries defined?"
+    eval:
+      validate_citations: true</code></pre>
+        <p class="panel-note">Keep questions tied to product features you own.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="report" class="section">
+    <div class="section-header">
+      <p class="eyebrow">Report preview</p>
+      <h2>Trends you can show in retro.</h2>
+      <p>Pass rate, tokens, and time across commits, plus per-task evidence.</p>
+    </div>
+    <div class="report-preview reveal">
+      <div>
+        <h3>Trend report for main..HEAD</h3>
+        <p>Compare runs across commits and highlight regressions in understanding.</p>
+      </div>
+      <div class="report-graphs">
+        <div class="graph-card">
+          <div class="graph-header">Pass rate <strong>84%</strong></div>
+          <svg viewBox="0 0 160 60" width="160" height="60" aria-hidden="true">
+            <polyline points="0,42 20,36 40,38 60,30 80,26 100,22 120,18 140,16 160,12" fill="none" stroke="#1b7f7a" stroke-width="3" />
+          </svg>
+        </div>
+        <div class="graph-card">
+          <div class="graph-header">Tokens <strong>12.4k</strong></div>
+          <svg viewBox="0 0 160 60" width="160" height="60" aria-hidden="true">
+            <polyline points="0,16 20,20 40,24 60,30 80,34 100,38 120,42 140,46 160,48" fill="none" stroke="#f0b44c" stroke-width="3" />
+          </svg>
+        </div>
+        <div class="graph-card">
+          <div class="graph-header">Wall time <strong>1.9s</strong></div>
+          <svg viewBox="0 0 160 60" width="160" height="60" aria-hidden="true">
+            <polyline points="0,40 20,36 40,32 60,28 80,30 100,26 120,24 140,20 160,18" fill="none" stroke="#1c1813" stroke-width="3" />
+          </svg>
+        </div>
+      </div>
+      <div class="report-table">
+        <div class="report-table-row">
+          <span class="status-pill status-pass">pass</span>
+          <span>auth-login</span>
+          <span>3 citations</span>
+          <span>1.8s</span>
+        </div>
+        <div class="report-table-row">
+          <span class="status-pill status-pass">pass</span>
+          <span>repo-health</span>
+          <span>2 citations</span>
+          <span>2.1s</span>
+        </div>
+        <div class="report-table-row">
+          <span class="status-pill status-fail">fail</span>
+          <span>billing-sync</span>
+          <span>missing citations</span>
+          <span>0.6s</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <p class="eyebrow">Core value</p>
+      <h2>Evidence you can trust, fast enough for daily work.</h2>
+      <p>Cogni keeps results local and readable while making trends obvious.</p>
+    </div>
+    <div class="value-grid">
+      <div class="value-card reveal">
+        <h3>Objective checks with citations</h3>
+        <p>Every answer must cite files in the repo, so evidence is reviewable.</p>
+      </div>
+      <div class="value-card reveal" style="--delay: 0.05s;">
+        <h3>Fast, targeted runs</h3>
+        <p>Select specific tasks and agents to validate high-risk changes.</p>
+      </div>
+      <div class="value-card reveal" style="--delay: 0.1s;">
+        <h3>Trends over commits</h3>
+        <p>Spot regressions and share reports with non-engineers.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <p class="eyebrow">Trust and limits</p>
+      <h2>Read-only by design.</h2>
+      <p>Cogni stays local and focuses on maintainability signals.</p>
+    </div>
+    <div class="chip-grid">
+      <span class="chip">No code changes</span>
+      <span class="chip">Local outputs only</span>
+      <span class="chip">No hosted dashboards in MVP</span>
+      <span class="chip">Git-only integration</span>
+      <span class="chip">OpenRouter-only provider in MVP</span>
+    </div>
+  </section>
+
+  <section class="cta-final">
+    <div class="cta-card reveal">
+      <div>
+        <h2>Ready to benchmark understanding?</h2>
+        <p>Start with a focused question suite and get a report in minutes.</p>
+      </div>
+      <div class="cta-row">
+        <a class="button primary" href="{{ "/using/individual-engineer-tech-lead/" | relURL }}">Get started</a>
+        <a class="button ghost" href="{{ "/using/" | relURL }}">Read the docs</a>
+      </div>
+    </div>
+  </section>
+{{ end }}
