@@ -23,7 +23,7 @@ func runReport(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		fs := flag.NewFlagSet(cmd.Name, flag.ContinueOnError)
 		fs.SetOutput(stderr)
 		inputDir := fs.String("input", "", "Directory containing runs")
-		specPath := fs.String("spec", ".cogni.yml", "Path to .cogni.yml")
+		specPath := fs.String("spec", "", "Path to config file (default: search for .cogni/config.yml)")
 		rangeSpec := fs.String("range", "", "Commit range start..end")
 		outputPath := fs.String("output", "", "Report output path")
 		if err := fs.Parse(args); err != nil {

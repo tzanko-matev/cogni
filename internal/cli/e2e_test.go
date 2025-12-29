@@ -74,7 +74,10 @@ func writeConfig(t *testing.T, repoRoot string, cfg spec.Config) string {
 	if err != nil {
 		t.Fatalf("marshal config: %v", err)
 	}
-	path := filepath.Join(repoRoot, ".cogni.yml")
+	path := filepath.Join(repoRoot, ".cogni", "config.yml")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("create config dir: %v", err)
+	}
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
@@ -319,19 +322,19 @@ func TestE2EMultipleTasksSummary(t *testing.T) {
 		Type:   "qa",
 		Agent:  "default",
 		Prompt: promptA,
-		Eval: spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Sample Service", "README.md"}},
+		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Sample Service", "README.md"}},
 	}, {
 		ID:     "t5b",
 		Type:   "qa",
 		Agent:  "default",
 		Prompt: promptB,
-		Eval: spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Platform Team", "app.md"}},
+		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Platform Team", "app.md"}},
 	}, {
 		ID:     "t5c",
 		Type:   "qa",
 		Agent:  "default",
 		Prompt: promptC,
-		Eval: spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"sample", "config/app-config.yml"}},
+		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"sample", "config/app-config.yml"}},
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 
@@ -507,7 +510,10 @@ func TestE2EInitToRunFlow(t *testing.T) {
 	runGit(t, repoRoot, "add", "README.md")
 	runGit(t, repoRoot, "commit", "-m", "init")
 
-	specPath := filepath.Join(repoRoot, ".cogni.yml")
+	specPath := filepath.Join(repoRoot, ".cogni", "config.yml")
+	origInput := initInput
+	initInput = strings.NewReader("y\n\nn\n")
+	t.Cleanup(func() { initInput = origInput })
 	_, stderr, exitCode := runCLI(t, []string{"init", "--spec", specPath})
 	if exitCode != ExitOK {
 		t.Fatalf("init failed: %s", stderr)

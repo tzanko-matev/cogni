@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-const defaultConfig = `version: 1
+const defaultConfigTemplate = `version: 1
 repo:
-  output_dir: "./cogni-results"
+  output_dir: "{{OUTPUT_DIR}}"
   setup_commands:
     - "go mod download"
 
@@ -69,10 +70,18 @@ const defaultSchema = `{
 }
 `
 
-func Scaffold(specPath string) error {
+func Scaffold(specPath, outputDir string) error {
 	if specPath == "" {
 		return fmt.Errorf("spec path is required")
 	}
+	dir := strings.TrimSpace(outputDir)
+	if dir == "" {
+		dir = DefaultOutputDir
+	}
+	if strings.Contains(dir, "\n") {
+		return fmt.Errorf("output dir must be a single line")
+	}
+	dir = strings.ReplaceAll(dir, "\"", "\\\"")
 	if info, err := os.Stat(specPath); err == nil {
 		if info.IsDir() {
 			return fmt.Errorf("spec path %q is a directory", specPath)
@@ -98,7 +107,8 @@ func Scaffold(specPath string) error {
 		return fmt.Errorf("stat schema file: %w", err)
 	}
 
-	if err := os.WriteFile(specPath, []byte(defaultConfig), 0o644); err != nil {
+	configBody := strings.ReplaceAll(defaultConfigTemplate, "{{OUTPUT_DIR}}", dir)
+	if err := os.WriteFile(specPath, []byte(configBody), 0o644); err != nil {
 		return fmt.Errorf("write spec file: %w", err)
 	}
 	if err := os.WriteFile(schemaPath, []byte(defaultSchema), 0o644); err != nil {

@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"path/filepath"
 
 	"cogni/internal/config"
 	"cogni/internal/runner"
@@ -21,7 +20,7 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		}
 		fs := flag.NewFlagSet(cmd.Name, flag.ContinueOnError)
 		fs.SetOutput(stderr)
-		specPath := fs.String("spec", ".cogni.yml", "Path to .cogni.yml")
+		specPath := fs.String("spec", "", "Path to config file (default: search for .cogni/config.yml)")
 		agentOverride := fs.String("agent", "", "Agent id override")
 		outputDir := fs.String("output-dir", "", "Override output directory")
 		repeat := fs.Int("repeat", 1, "Repeat count")
@@ -29,7 +28,13 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			return ExitUsage
 		}
 
-		cfg, err := config.Load(*specPath)
+		resolvedSpec, err := resolveSpecPath(*specPath)
+		if err != nil {
+			fmt.Fprintf(stderr, "Failed to locate config: %v\n", err)
+			return ExitError
+		}
+
+		cfg, err := config.Load(resolvedSpec)
 		if err != nil {
 			fmt.Fprintf(stderr, "Failed to load config: %v\n", err)
 			return ExitError
@@ -41,12 +46,7 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			return ExitUsage
 		}
 
-		absSpec, err := filepath.Abs(*specPath)
-		if err != nil {
-			fmt.Fprintf(stderr, "Failed to resolve spec path: %v\n", err)
-			return ExitError
-		}
-		repoRoot := filepath.Dir(absSpec)
+		repoRoot := config.RepoRootFromConfigPath(resolvedSpec)
 
 		results, paths, err := runAndWrite(context.Background(), cfg, runner.RunParams{
 			RepoRoot:      repoRoot,

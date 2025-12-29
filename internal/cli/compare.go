@@ -25,7 +25,7 @@ func runCompare(cmd *Command) func(args []string, stdout, stderr io.Writer) int 
 		fs := flag.NewFlagSet(cmd.Name, flag.ContinueOnError)
 		fs.SetOutput(stderr)
 		inputDir := fs.String("input", "", "Directory containing runs")
-		specPath := fs.String("spec", ".cogni.yml", "Path to .cogni.yml")
+		specPath := fs.String("spec", "", "Path to config file (default: search for .cogni/config.yml)")
 		baseRef := fs.String("base", "", "Base commit/run/ref")
 		headRef := fs.String("head", "", "Head commit/run/ref")
 		rangeSpec := fs.String("range", "", "Commit range start..end")
@@ -91,15 +91,15 @@ func resolveInputDir(inputDir, specPath string) (string, string, error) {
 		}
 		return abs, "", nil
 	}
-	cfg, err := config.Load(specPath)
+	resolvedSpec, err := resolveSpecPath(specPath)
 	if err != nil {
 		return "", "", err
 	}
-	absSpec, err := filepath.Abs(specPath)
+	cfg, err := config.Load(resolvedSpec)
 	if err != nil {
 		return "", "", err
 	}
-	repoRoot := filepath.Dir(absSpec)
+	repoRoot := config.RepoRootFromConfigPath(resolvedSpec)
 	outputDir := cfg.Repo.OutputDir
 	if outputDir == "" {
 		return "", "", fmt.Errorf("repo.output_dir is required")

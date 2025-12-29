@@ -18,7 +18,7 @@ func runValidate(cmd *Command) func(args []string, stdout, stderr io.Writer) int
 
 		flags := flag.NewFlagSet(cmd.Name, flag.ContinueOnError)
 		flags.SetOutput(stderr)
-		specPath := flags.String("spec", ".cogni.yml", "Path to .cogni.yml")
+		specPath := flags.String("spec", "", "Path to config file (default: search for .cogni/config.yml)")
 		if err := flags.Parse(args); err != nil {
 			if err == flag.ErrHelp {
 				printCommandUsage(cmd, stdout)
@@ -34,7 +34,13 @@ func runValidate(cmd *Command) func(args []string, stdout, stderr io.Writer) int
 			return ExitUsage
 		}
 
-		if _, err := config.Load(*specPath); err != nil {
+		resolvedSpec, err := resolveSpecPath(*specPath)
+		if err != nil {
+			fmt.Fprintf(stderr, "Validation failed:\n%v\n", err)
+			return ExitError
+		}
+
+		if _, err := config.Load(resolvedSpec); err != nil {
 			fmt.Fprintf(stderr, "Validation failed:\n%s\n", err.Error())
 			return ExitError
 		}

@@ -1,6 +1,6 @@
 version: 1
 repo:
-  output_dir: "./cogni-results"
+  output_dir: ".cogni/results"
   setup_commands:
     - "go mod download"
 

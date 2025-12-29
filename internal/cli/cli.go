@@ -113,11 +113,12 @@ func command(name, summary string, usage []string, runner func(cmd *Command) fun
 }
 
 var commands = []*Command{
-	command("init", "Scaffold .cogni.yml and schemas", []string{
+	command("init", "Scaffold .cogni config and schemas", []string{
+		"cogni init",
 		"cogni init --spec <path>",
 	}, runInit),
-	command("validate", "Validate .cogni.yml and schemas", []string{
-		"cogni validate --spec <path>",
+	command("validate", "Validate .cogni config and schemas", []string{
+		"cogni validate [--spec <path>]",
 	}, runValidate),
 	command("run", "Execute benchmark tasks", []string{
 		"cogni run [task-id|task-id@agent-id]...",

@@ -10,8 +10,12 @@ import (
 
 func TestInitCommandCreatesFiles(t *testing.T) {
 	dir := t.TempDir()
-	specPath := filepath.Join(dir, "cogni.yml")
-	schemaPath := filepath.Join(dir, "schemas", "auth_flow_summary.schema.json")
+	specPath := filepath.Join(dir, ".cogni", "config.yml")
+	schemaPath := filepath.Join(dir, ".cogni", "schemas", "auth_flow_summary.schema.json")
+
+	origInput := initInput
+	initInput = strings.NewReader("y\n\n")
+	t.Cleanup(func() { initInput = origInput })
 
 	var out, err bytes.Buffer
 	code := Run([]string{"init", "--spec", specPath}, &out, &err)
@@ -34,7 +38,10 @@ func TestInitCommandCreatesFiles(t *testing.T) {
 
 func TestInitCommandRefusesOverwrite(t *testing.T) {
 	dir := t.TempDir()
-	specPath := filepath.Join(dir, "cogni.yml")
+	specPath := filepath.Join(dir, ".cogni", "config.yml")
+	if err := os.MkdirAll(filepath.Dir(specPath), 0o755); err != nil {
+		t.Fatalf("create config dir: %v", err)
+	}
 	if err := os.WriteFile(specPath, []byte("version: 1\n"), 0o644); err != nil {
 		t.Fatalf("write spec: %v", err)
 	}

@@ -13,7 +13,7 @@ import (
 
 func TestRunCommandParsesFlags(t *testing.T) {
 	specDir := t.TempDir()
-	specPath := filepath.Join(specDir, ".cogni.yml")
+	specPath := filepath.Join(specDir, ".cogni", "config.yml")
 	specBody := `version: 1
 repo:
   output_dir: "./out"
@@ -31,6 +31,9 @@ tasks:
     agent: default
     prompt: "hello"
 `
+	if err := os.MkdirAll(filepath.Dir(specPath), 0o755); err != nil {
+		t.Fatalf("create config dir: %v", err)
+	}
 	if err := os.WriteFile(specPath, []byte(specBody), 0o644); err != nil {
 		t.Fatalf("write spec: %v", err)
 	}
