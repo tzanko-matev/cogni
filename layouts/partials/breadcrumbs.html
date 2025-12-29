@@ -1,0 +1,13 @@
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <a href="{{ .Site.Home.RelPermalink }}">Home</a>
+  {{ range .Ancestors.Reverse }}
+    {{ if not .IsHome }}
+      <span class="sep">/</span>
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+    {{ end }}
+  {{ end }}
+  {{ if not .IsHome }}
+    <span class="sep">/</span>
+    <span>{{ .Title }}</span>
+  {{ end }}
+</nav>

@@ -1,0 +1,9 @@
+{{ define "main" }}
+  <article class="doc">
+    {{ partial "breadcrumbs.html" . }}
+    {{ with .File.Path }}
+      <div class="doc-meta">Path: <code>{{ . }}</code></div>
+    {{ end }}
+    <div class="prose">{{ .Content }}</div>
+  </article>
+{{ end }}

@@ -1,0 +1,39 @@
+{{ define "main" }}
+  <div class="page-intro">
+    {{ partial "breadcrumbs.html" . }}
+    <h1>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}</h1>
+    {{ with .Content }}
+      <div class="prose">{{ . }}</div>
+    {{ end }}
+  </div>
+
+  {{ if .Sections }}
+    <section class="grid-block">
+      <h2>Sections</h2>
+      <div class="grid">
+        {{ range .Sections.ByTitle }}
+          <a class="card" href="{{ .RelPermalink }}">
+            <h3>{{ .Title }}</h3>
+            <p class="meta">{{ .RelPermalink }}</p>
+          </a>
+        {{ end }}
+      </div>
+    </section>
+  {{ end }}
+
+  {{ if .RegularPages }}
+    <section class="grid-block">
+      <h2>Docs</h2>
+      <div class="grid">
+        {{ range .RegularPages.ByTitle }}
+          <a class="card" href="{{ .RelPermalink }}">
+            <h3>{{ .Title }}</h3>
+            {{ with .File.Path }}
+              <p class="meta">{{ . }}</p>
+            {{ end }}
+          </a>
+        {{ end }}
+      </div>
+    </section>
+  {{ end }}
+{{ end }}
