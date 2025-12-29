@@ -110,7 +110,7 @@ Prompts are written in plain language with objective, verifiable answers
 - CLI exits successfully for passing runs and clearly signals failures otherwise.
 - `results.json` and `report.html` are produced for successful runs.
 - Task outcomes are understandable to non-engineers (pass/fail with reasons).
-- Answers may vary in wording, but must satisfy each task’s success criteria.
+- Answers may vary in wording, but must satisfy each task's success criteria.
 
 ## Test cases
 
@@ -125,7 +125,7 @@ Prompts are written in plain language with objective, verifiable answers
 
 - Goal: verify the agent cites a specific file to support an answer.
 - Setup: Simple repo recipe where README contains a clear sentence to quote.
-- Steps: ask “What is the project name? Cite the README.”
+- Steps: ask "What is the project name? Cite the README."
 - Expected: pass status; answer references the README content.
 
 ### T3: Multi-file evidence
@@ -139,7 +139,7 @@ Prompts are written in plain language with objective, verifiable answers
 
 - Goal: confirm the agent can locate information without hints.
 - Setup: Simple repo recipe includes `config/app-config.yml`.
-- Steps: ask “Where is app-config.yml located? Provide the path.”
+- Steps: ask "Where is app-config.yml located? Provide the path."
 - Expected: pass status; answer includes the correct relative path.
 
 ### T5: Multiple tasks in one run
@@ -161,7 +161,7 @@ Prompts are written in plain language with objective, verifiable answers
 - Goal: ensure limits prevent runaway runs with a clear outcome.
 - Setup: Simple repo recipe and one task with intentionally strict limits.
 - Steps: run `cogni run`.
-- Expected: task fails with a clear “budget exceeded” style reason; run continues.
+- Expected: task fails with a clear "budget exceeded" style reason; run continues.
 
 ### T8: Output artifacts integrity
 
@@ -186,7 +186,7 @@ Prompts are written in plain language with objective, verifiable answers
 
 ### T11: Init-to-run flow
 
-- Goal: demonstrate a “first run” experience.
+- Goal: demonstrate a "first run" experience.
 - Setup: empty fixture repo.
 - Steps: run `cogni init`, edit prompts minimally, then run `cogni run`.
 - Expected: config created, run succeeds, artifacts produced.
