@@ -1,5 +1,6 @@
 /cogni
 /cogni.exe
+/cmd/cogni/cogni
 /.direnv/
 *~
 /.hugo_build.lock
