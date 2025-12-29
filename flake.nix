@@ -39,6 +39,9 @@
               if [ -z "$LLM_MODEL" ]; then
                 export LLM_MODEL="gpt-4.1-mini"
               fi
+              if [ -z "$LLM_API_KEY" ] && [ -n "$OPENROUTER_API_KEY" ]; then
+                export LLM_API_KEY="$OPENROUTER_API_KEY"
+              fi
               echo "cogni dev shell: set LLM_API_KEY to run benchmarks."
             '';
           };
