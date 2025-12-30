@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"cogni/internal/tools"
+	"golang.org/x/term"
 )
 
 const (
@@ -18,24 +20,57 @@ const (
 
 var verboseMaxBytes = tools.DefaultLimits().MaxOutputBytes
 
-func logVerbose(opts RunOptions, format string, args ...any) {
-	if !opts.Verbose || opts.VerboseWriter == nil {
-		return
-	}
-	writeVerboseLine(opts.VerboseWriter, fmt.Sprintf(format, args...))
+const (
+	ansiReset   = "\x1b[0m"
+	ansiBold    = "\x1b[1m"
+	ansiDim     = "\x1b[2m"
+	ansiMagenta = "\x1b[35m"
+	ansiRed     = "\x1b[31m"
+	ansiYellow  = "\x1b[33m"
+	ansiGreen   = "\x1b[32m"
+	ansiCyan    = "\x1b[36m"
+	ansiBlue    = "\x1b[34m"
+	ansiGray    = "\x1b[90m"
+)
+
+type verboseStyle int
+
+const (
+	styleDefault verboseStyle = iota
+	styleDim
+	styleHeadingPrompt
+	styleHeadingOutput
+	styleHeadingToolCall
+	styleHeadingToolResult
+	styleHeadingMetrics
+	styleHeadingTask
+	styleHeadingError
+)
+
+type verbosePalette struct {
+	enabled bool
 }
 
-func logVerboseBlock(opts RunOptions, header, body string) {
+func logVerbose(opts RunOptions, style verboseStyle, format string, args ...any) {
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
 	}
-	writeVerboseLine(opts.VerboseWriter, header)
+	palette := paletteFor(opts.VerboseWriter)
+	writeVerboseLine(opts.VerboseWriter, palette, style, fmt.Sprintf(format, args...))
+}
+
+func logVerboseBlock(opts RunOptions, header, body string, headerStyle, bodyStyle verboseStyle) {
+	if !opts.Verbose || opts.VerboseWriter == nil {
+		return
+	}
+	palette := paletteFor(opts.VerboseWriter)
+	writeVerboseLine(opts.VerboseWriter, palette, headerStyle, header)
 	trimmed := truncateVerbose(body)
 	if strings.TrimSpace(trimmed) == "" {
 		return
 	}
 	for _, line := range strings.Split(trimmed, "\n") {
-		writeVerboseLine(opts.VerboseWriter, line)
+		writeVerboseLine(opts.VerboseWriter, palette, bodyStyle, line)
 	}
 }
 
@@ -43,13 +78,14 @@ func logVerboseToolOutput(opts RunOptions, header, body string) {
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
 	}
-	writeVerboseLine(opts.VerboseWriter, header)
+	palette := paletteFor(opts.VerboseWriter)
+	writeVerboseLine(opts.VerboseWriter, palette, styleHeadingToolResult, header)
 	trimmed := truncateVerboseInline(limitOutputLines(body, verboseToolOutputMaxLines))
 	if strings.TrimSpace(trimmed) == "" {
 		return
 	}
 	for _, line := range strings.Split(trimmed, "\n") {
-		writeVerboseLine(opts.VerboseWriter, line)
+		writeVerboseLine(opts.VerboseWriter, palette, styleDefault, line)
 	}
 }
 
@@ -58,11 +94,64 @@ func logVerbosePrompt(opts RunOptions, prompt Prompt, step int) {
 		return
 	}
 	header := fmt.Sprintf("LLM prompt (step %d)", step)
-	logVerboseBlock(opts, header, formatPrompt(prompt))
+	logVerboseBlock(opts, header, formatPrompt(prompt), styleHeadingPrompt, styleDim)
 }
 
-func writeVerboseLine(w io.Writer, line string) {
-	fmt.Fprintf(w, "%s %s\n", verbosePrefix, line)
+func writeVerboseLine(w io.Writer, palette verbosePalette, style verboseStyle, line string) {
+	prefix := verbosePrefix
+	if palette.enabled {
+		prefix = palette.apply(styleDim, prefix)
+	}
+	fmt.Fprintf(w, "%s %s\n", prefix, palette.apply(style, line))
+}
+
+func paletteFor(writer io.Writer) verbosePalette {
+	return verbosePalette{enabled: shouldUseStyling(writer)}
+}
+
+func shouldUseStyling(writer io.Writer) bool {
+	if writer == nil {
+		return false
+	}
+	if os.Getenv("NO_COLOR") != "" || os.Getenv("TERM") == "dumb" {
+		return false
+	}
+	if strings.EqualFold(os.Getenv("CLICOLOR"), "0") {
+		return false
+	}
+	if file, ok := writer.(*os.File); ok {
+		return term.IsTerminal(int(file.Fd()))
+	}
+	if fder, ok := writer.(interface{ Fd() uintptr }); ok {
+		return term.IsTerminal(int(fder.Fd()))
+	}
+	return false
+}
+
+func (p verbosePalette) apply(style verboseStyle, text string) string {
+	if !p.enabled {
+		return text
+	}
+	switch style {
+	case styleDim:
+		return ansiDim + ansiGray + text + ansiReset
+	case styleHeadingPrompt:
+		return ansiBold + ansiCyan + text + ansiReset
+	case styleHeadingOutput:
+		return ansiBold + ansiMagenta + text + ansiReset
+	case styleHeadingToolCall:
+		return ansiBold + ansiYellow + text + ansiReset
+	case styleHeadingToolResult:
+		return ansiBold + ansiGreen + text + ansiReset
+	case styleHeadingMetrics:
+		return ansiBold + ansiBlue + text + ansiReset
+	case styleHeadingTask:
+		return ansiBold + ansiCyan + text + ansiReset
+	case styleHeadingError:
+		return ansiBold + ansiRed + text + ansiReset
+	default:
+		return text
+	}
 }
 
 func formatPrompt(prompt Prompt) string {

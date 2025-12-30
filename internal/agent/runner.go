@@ -130,12 +130,12 @@ func HandleResponseStream(ctx context.Context, session *Session, stream Stream, 
 		switch event.Type {
 		case StreamEventMessage:
 			session.History = append(session.History, HistoryItem{Role: "assistant", Content: event.Message})
-			logVerboseBlock(opts, "LLM output", event.Message)
+			logVerboseBlock(opts, "LLM output", event.Message, styleHeadingOutput, styleDefault)
 		case StreamEventToolCall:
 			if event.ToolCall.ID == "" {
 				event.ToolCall.ID = fmt.Sprintf("call-%d", len(session.History))
 			}
-			logVerbose(opts, "Tool call id=%s name=%s args=%s", event.ToolCall.ID, event.ToolCall.Name, formatArgs(event.ToolCall.Args))
+			logVerbose(opts, styleHeadingToolCall, "Tool call id=%s name=%s args=%s", event.ToolCall.ID, event.ToolCall.Name, formatArgs(event.ToolCall.Args))
 			session.History = append(session.History, HistoryItem{Role: "assistant", Content: event.ToolCall})
 			result := executor.Execute(ctx, event.ToolCall)
 			session.History = append(session.History, HistoryItem{Role: "tool", Content: ToolOutput{
