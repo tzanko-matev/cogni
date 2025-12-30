@@ -12,10 +12,15 @@
 - `cogni compare --range <start>..<end>`
 - `cogni report --range <start>..<end>`
 
+## Run flags
+
+- `cogni run --verbose`: stream detailed execution logs to the console (LLM input/output, tool calls and results, per-task metrics).
+
 ## Request and response examples
 
 ```bash
 cogni run
+cogni run --verbose
 cogni run auth_flow_summary@default
 cogni compare --base main
 cogni report --range main..HEAD --open

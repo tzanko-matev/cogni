@@ -4,6 +4,7 @@
 
 - CLI summary output for each run.
 - Optional per-task logs in the run output directory.
+- Verbose console logs for `cogni run --verbose` (LLM input/output, tool calls and results, per-task metrics; respect truncation limits).
 
 ## Metrics
 

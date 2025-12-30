@@ -9,6 +9,7 @@
 - `./cogni init`
 - `./cogni validate`
 - `./cogni run`
+- `./cogni run --verbose`
 - `./cogni run task-id@agent-id`
 - `./cogni compare --base main`
 - `./cogni report --range main..HEAD --open`

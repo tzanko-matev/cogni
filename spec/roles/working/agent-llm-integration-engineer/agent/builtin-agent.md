@@ -38,6 +38,7 @@ Inputs used to start a session. Fields:
 - `base_instructions_override`: optional; if present, replace model family template.
 - `output_schema`: optional schema for providers that support it.
 - `features`: flags such as `parallel_tools` and `skills_enabled`.
+- `verbose`: boolean; when true, emit detailed console logs (LLM input/output, tool calls and results, metrics).
 - `tool_config`: tool list and tool settings.
 - `auth_mode`: auth strategy for provider credentials.
 
@@ -57,6 +58,7 @@ Runtime context created from the config:
 - `approval_policy`, `sandbox_policy`, `cwd`
 - `developer_instructions`, `user_instructions`
 - `base_instructions_override`, `output_schema`
+- `verbose`
 
 ### Prompt
 
@@ -183,6 +185,16 @@ Implement `handle_response_stream(session, stream)`:
 
 Always append tool outputs, even on error. The model must see the error output
 to decide how to proceed.
+
+## Verbose logging
+
+When `verbose` is true, emit console logs for:
+
+- Model request inputs and response outputs.
+- Tool calls and tool outputs (subject to truncation limits).
+- Per-task metrics updates and the final metrics snapshot.
+
+Verbose logging is diagnostic only and must not change task execution or outputs.
 
 ## Environment updates mid-session
 
