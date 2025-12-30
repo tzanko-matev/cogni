@@ -51,7 +51,7 @@ tasks:
 		t.Fatalf("run command not found")
 	}
 	var stdout, stderr bytes.Buffer
-	exitCode := cmd.Run([]string{"--spec", specPath, "--agent", "default", "--verbose", "task-1"}, &stdout, &stderr)
+	exitCode := cmd.Run([]string{"--spec", specPath, "--agent", "default", "--verbose", "--no-color", "task-1"}, &stdout, &stderr)
 	if exitCode != ExitOK {
 		t.Fatalf("unexpected exit: %d, stderr: %s", exitCode, stderr.String())
 	}
@@ -63,6 +63,9 @@ tasks:
 	}
 	if gotParams.VerboseWriter != &stdout {
 		t.Fatalf("expected verbose writer to be stdout")
+	}
+	if !gotParams.NoColor {
+		t.Fatalf("expected no-color enabled")
 	}
 	if len(gotParams.Selectors) != 1 || gotParams.Selectors[0].TaskID != "task-1" {
 		t.Fatalf("unexpected selectors: %+v", gotParams.Selectors)

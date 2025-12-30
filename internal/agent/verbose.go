@@ -19,6 +19,7 @@ const (
 )
 
 var verboseMaxBytes = tools.DefaultLimits().MaxOutputBytes
+var isTerminal = term.IsTerminal
 
 const (
 	ansiReset   = "\x1b[0m"
@@ -55,7 +56,7 @@ func logVerbose(opts RunOptions, style verboseStyle, format string, args ...any)
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
 	}
-	palette := paletteFor(opts.VerboseWriter)
+	palette := paletteFor(opts.VerboseWriter, opts.NoColor)
 	writeVerboseLine(opts.VerboseWriter, palette, style, fmt.Sprintf(format, args...))
 }
 
@@ -63,7 +64,7 @@ func logVerboseBlock(opts RunOptions, header, body string, headerStyle, bodyStyl
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
 	}
-	palette := paletteFor(opts.VerboseWriter)
+	palette := paletteFor(opts.VerboseWriter, opts.NoColor)
 	writeVerboseLine(opts.VerboseWriter, palette, headerStyle, header)
 	trimmed := truncateVerbose(body)
 	if strings.TrimSpace(trimmed) == "" {
@@ -78,7 +79,7 @@ func logVerboseToolOutput(opts RunOptions, header, body string) {
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
 	}
-	palette := paletteFor(opts.VerboseWriter)
+	palette := paletteFor(opts.VerboseWriter, opts.NoColor)
 	writeVerboseLine(opts.VerboseWriter, palette, styleHeadingToolResult, header)
 	trimmed := truncateVerboseInline(limitOutputLines(body, verboseToolOutputMaxLines))
 	if strings.TrimSpace(trimmed) == "" {
@@ -105,7 +106,10 @@ func writeVerboseLine(w io.Writer, palette verbosePalette, style verboseStyle, l
 	fmt.Fprintf(w, "%s %s\n", prefix, palette.apply(style, line))
 }
 
-func paletteFor(writer io.Writer) verbosePalette {
+func paletteFor(writer io.Writer, noColor bool) verbosePalette {
+	if noColor {
+		return verbosePalette{enabled: false}
+	}
 	return verbosePalette{enabled: shouldUseStyling(writer)}
 }
 
@@ -120,10 +124,10 @@ func shouldUseStyling(writer io.Writer) bool {
 		return false
 	}
 	if file, ok := writer.(*os.File); ok {
-		return term.IsTerminal(int(file.Fd()))
+		return isTerminal(int(file.Fd()))
 	}
 	if fder, ok := writer.(interface{ Fd() uintptr }); ok {
-		return term.IsTerminal(int(fder.Fd()))
+		return isTerminal(int(fder.Fd()))
 	}
 	return false
 }

@@ -37,6 +37,7 @@ type RunParams struct {
 	Repeat        int
 	Verbose       bool
 	VerboseWriter io.Writer
+	NoColor       bool
 	Deps          RunDependencies
 }
 
@@ -106,7 +107,7 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 		if repeat <= 0 {
 			repeat = 1
 		}
-		taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, repeat, params.Verbose, verboseWriter))
+		taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, repeat, params.Verbose, verboseWriter, params.NoColor))
 	}
 
 	agents := make([]AgentInfo, 0, len(usedAgents))
@@ -233,13 +234,14 @@ func runTask(
 	repeat int,
 	verbose bool,
 	verboseWriter io.Writer,
+	noColor bool,
 ) TaskResult {
 	result := TaskResult{TaskID: task.Task.ID, Type: task.Task.Type}
 	attempts := make([]AttemptResult, 0, repeat)
 	var failureReason *string
 
 	for attemptIndex := 1; attemptIndex <= repeat; attemptIndex++ {
-		logVerbose(verbose, verboseWriter, styleTask, "Task %s attempt %d/%d agent=%s model=%s", task.Task.ID, attemptIndex, repeat, task.AgentID, task.Model)
+		logVerbose(verbose, verboseWriter, noColor, styleTask, "Task %s attempt %d/%d agent=%s model=%s", task.Task.ID, attemptIndex, repeat, task.AgentID, task.Model)
 		provider, err := providerFactory(task.Agent, task.Model)
 		if err != nil {
 			reason := "runtime_error"
@@ -258,11 +260,12 @@ func runTask(
 			},
 			Verbose:       verbose,
 			VerboseWriter: verboseWriter,
+			NoColor:       noColor,
 		})
 		if runErr != nil {
-			logVerbose(verbose, verboseWriter, styleError, "Task %s attempt %d error=%v", task.Task.ID, attemptIndex, runErr)
+			logVerbose(verbose, verboseWriter, noColor, styleError, "Task %s attempt %d error=%v", task.Task.ID, attemptIndex, runErr)
 		}
-		logVerbose(verbose, verboseWriter, styleMetrics, "Metrics task=%s attempt=%d steps=%d tokens=%d wall_time=%s tool_calls=%s", task.Task.ID, attemptIndex, runMetrics.Steps, runMetrics.Tokens, runMetrics.WallTime, formatToolCounts(runMetrics.ToolCalls))
+		logVerbose(verbose, verboseWriter, noColor, styleMetrics, "Metrics task=%s attempt=%d steps=%d tokens=%d wall_time=%s tool_calls=%s", task.Task.ID, attemptIndex, runMetrics.Steps, runMetrics.Tokens, runMetrics.WallTime, formatToolCounts(runMetrics.ToolCalls))
 
 		output, ok := latestAssistantMessage(session.History)
 		if !ok {

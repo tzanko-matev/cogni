@@ -14,13 +14,15 @@
 
 ## Run flags
 
-- `cogni run --verbose`: stream detailed execution logs to the console (LLM input/output, tool calls and results, per-task metrics).
+- `cogni run --verbose`: stream detailed execution logs to the console (LLM input/output, tool calls and results, per-task metrics) with ANSI styling when stdout is a terminal.
+- `cogni run --no-color`: disable ANSI styling for verbose console logs.
 
 ## Request and response examples
 
 ```bash
 cogni run
 cogni run --verbose
+cogni run --verbose --no-color
 cogni run auth_flow_summary@default
 cogni compare --base main
 cogni report --range main..HEAD --open

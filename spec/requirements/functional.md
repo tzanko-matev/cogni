@@ -7,7 +7,8 @@
 - Run the full benchmark (`cogni run`).
 - Run a subset of tasks using selectors (`task-id` or `task-id@agent-id`).
 - Configure multiple agents and select per task; support `--agent` override.
-- Support `cogni run --verbose` to stream LLM input/output, tool calls and results, and per-task metrics to the console (respect truncation limits).
+- Support `cogni run --verbose` to stream LLM input/output, tool calls and results, and per-task metrics to the console (respect truncation limits); use ANSI styling when stdout is a terminal.
+- Support `cogni run --no-color` to disable ANSI styling for verbose console logs.
 - Capture metrics per attempt: correctness, tokens, wall time, tool calls, files read, model, agent ID.
 - Write outputs to `<output_dir>/<commit>/<run-id>/` (`results.json`, `report.html`, logs).
 - Compare runs by base/head or commit range (`cogni compare`).

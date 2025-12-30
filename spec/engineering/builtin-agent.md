@@ -194,7 +194,7 @@ When `verbose` is true, emit console logs for:
 - Tool calls and tool outputs (subject to truncation limits).
 - Per-task metrics updates and the final metrics snapshot.
 
-Verbose logging is diagnostic only and must not change task execution or outputs.
+Verbose logging is diagnostic only and must not change task execution or outputs. Use ANSI styling when stdout is a terminal; allow `--no-color` to force plain text.
 
 ## Environment updates mid-session
 

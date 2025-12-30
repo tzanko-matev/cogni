@@ -25,6 +25,7 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		outputDir := fs.String("output-dir", "", "Override output directory")
 		repeat := fs.Int("repeat", 1, "Repeat count")
 		verbose := fs.Bool("verbose", false, "Verbose logging")
+		noColor := fs.Bool("no-color", false, "Disable ANSI colors in verbose logs")
 		if err := fs.Parse(args); err != nil {
 			return ExitUsage
 		}
@@ -57,6 +58,7 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			Repeat:        *repeat,
 			Verbose:       *verbose,
 			VerboseWriter: stdout,
+			NoColor:       *noColor,
 		})
 		if err != nil {
 			fmt.Fprintf(stderr, "Run failed: %v\n", err)

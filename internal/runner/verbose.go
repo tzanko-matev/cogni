@@ -31,11 +31,11 @@ const (
 	styleError
 )
 
-func logVerbose(enabled bool, writer io.Writer, style verboseStyle, format string, args ...any) {
+func logVerbose(enabled bool, writer io.Writer, noColor bool, style verboseStyle, format string, args ...any) {
 	if !enabled || writer == nil {
 		return
 	}
-	palette := paletteFor(writer)
+	palette := paletteFor(writer, noColor)
 	line := fmt.Sprintf(format, args...)
 	fmt.Fprintf(writer, "%s %s\n", palette.prefix(verbosePrefix), palette.apply(style, line))
 }
@@ -60,7 +60,10 @@ type verbosePalette struct {
 	enabled bool
 }
 
-func paletteFor(writer io.Writer) verbosePalette {
+func paletteFor(writer io.Writer, noColor bool) verbosePalette {
+	if noColor {
+		return verbosePalette{enabled: false}
+	}
 	return verbosePalette{enabled: shouldUseStyling(writer)}
 }
 

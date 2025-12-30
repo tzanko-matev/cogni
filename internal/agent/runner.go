@@ -60,6 +60,7 @@ type RunOptions struct {
 	Limits          RunLimits
 	Verbose         bool
 	VerboseWriter   io.Writer
+	NoColor         bool
 }
 
 type RunMetrics struct {

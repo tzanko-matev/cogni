@@ -10,6 +10,7 @@
 - `./cogni validate`
 - `./cogni run`
 - `./cogni run --verbose`
+- `./cogni run --verbose --no-color`
 - `./cogni run task-id@agent-id`
 - `./cogni compare --base main`
 - `./cogni report --range main..HEAD --open`
