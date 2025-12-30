@@ -142,7 +142,7 @@ func HandleResponseStream(ctx context.Context, session *Session, stream Stream, 
 				ToolCallID: event.ToolCall.ID,
 				Result:     result,
 			}})
-			logVerboseBlock(opts, fmt.Sprintf("Tool result id=%s name=%s duration=%s bytes=%d truncated=%t error=%s", event.ToolCall.ID, result.Tool, result.Duration, result.OutputBytes, result.Truncated, result.Error), result.Output)
+			logVerboseToolOutput(opts, fmt.Sprintf("Tool result id=%s name=%s duration=%s bytes=%d truncated=%t error=%s", event.ToolCall.ID, result.Tool, result.Duration, result.OutputBytes, result.Truncated, result.Error), result.Output)
 			if metrics != nil {
 				if metrics.ToolCalls == nil {
 					metrics.ToolCalls = map[string]int{}

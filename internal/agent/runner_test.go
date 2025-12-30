@@ -48,6 +48,14 @@ func (e *fakeExecutor) Execute(_ context.Context, call ToolCall) tools.CallResul
 	return tools.CallResult{Tool: call.Name, Output: "ok", OutputBytes: 2}
 }
 
+type verboseExecutor struct {
+	output string
+}
+
+func (e *verboseExecutor) Execute(_ context.Context, call ToolCall) tools.CallResult {
+	return tools.CallResult{Tool: call.Name, Output: e.output, OutputBytes: len(e.output)}
+}
+
 func TestRunTurnHandlesToolCalls(t *testing.T) {
 	session := &Session{
 		Ctx: TurnContext{
@@ -139,7 +147,7 @@ func TestRunTurnVerboseLogs(t *testing.T) {
 			{{Type: StreamEventMessage, Message: "done"}},
 		},
 	}
-	executor := &fakeExecutor{}
+	executor := &verboseExecutor{output: strings.Join([]string{"one", "two", "three", "four", "five", "six", "seven"}, "\n")}
 	var logs bytes.Buffer
 
 	_, err := RunTurn(context.Background(), session, provider, executor, "run", RunOptions{
@@ -154,5 +162,33 @@ func TestRunTurnVerboseLogs(t *testing.T) {
 		if !strings.Contains(output, needle) {
 			t.Fatalf("expected verbose logs to include %q, got %s", needle, output)
 		}
+	}
+	if strings.Contains(output, "six") {
+		t.Fatalf("expected tool output to be truncated to 5 lines, got %s", output)
+	}
+	if !strings.Contains(output, "[truncated]") {
+		t.Fatalf("expected truncation marker, got %s", output)
+	}
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	toolResultIndex := -1
+	endIndex := len(lines)
+	for i, line := range lines {
+		if toolResultIndex == -1 && strings.Contains(line, "Tool result id=") {
+			toolResultIndex = i
+			continue
+		}
+		if toolResultIndex != -1 {
+			if strings.Contains(line, "LLM prompt") || strings.Contains(line, "LLM output") || strings.Contains(line, "Tool call") {
+				endIndex = i
+				break
+			}
+		}
+	}
+	if toolResultIndex == -1 {
+		t.Fatalf("expected tool result log, got %s", output)
+	}
+	toolLines := lines[toolResultIndex+1 : endIndex]
+	if len(toolLines) > 5 {
+		t.Fatalf("expected at most 5 tool output lines, got %d: %s", len(toolLines), output)
 	}
 }

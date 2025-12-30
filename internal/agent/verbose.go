@@ -10,8 +10,10 @@ import (
 )
 
 const (
-	verbosePrefix           = "[verbose]"
-	verboseTruncationMarker = "\n... [truncated]"
+	verbosePrefix                 = "[verbose]"
+	verboseTruncationMarker       = "\n... [truncated]"
+	verboseInlineTruncationMarker = "... [truncated]"
+	verboseToolOutputMaxLines     = 5
 )
 
 var verboseMaxBytes = tools.DefaultLimits().MaxOutputBytes
@@ -29,6 +31,20 @@ func logVerboseBlock(opts RunOptions, header, body string) {
 	}
 	writeVerboseLine(opts.VerboseWriter, header)
 	trimmed := truncateVerbose(body)
+	if strings.TrimSpace(trimmed) == "" {
+		return
+	}
+	for _, line := range strings.Split(trimmed, "\n") {
+		writeVerboseLine(opts.VerboseWriter, line)
+	}
+}
+
+func logVerboseToolOutput(opts RunOptions, header, body string) {
+	if !opts.Verbose || opts.VerboseWriter == nil {
+		return
+	}
+	writeVerboseLine(opts.VerboseWriter, header)
+	trimmed := truncateVerboseInline(limitOutputLines(body, verboseToolOutputMaxLines))
 	if strings.TrimSpace(trimmed) == "" {
 		return
 	}
@@ -88,6 +104,7 @@ func formatHistoryItem(item HistoryItem) string {
 	case ToolOutput:
 		output := strings.TrimRight(content.Result.Output, "\n")
 		if output != "" {
+			output = truncateVerboseInline(limitOutputLines(output, verboseToolOutputMaxLines))
 			output = indentLines(output, "  ")
 			return fmt.Sprintf("- %s: tool_output call_id=%s tool=%s bytes=%d truncated=%t error=%s\n%s\n", item.Role, content.ToolCallID, content.Result.Tool, content.Result.OutputBytes, content.Result.Truncated, content.Result.Error, output)
 		}
@@ -124,4 +141,36 @@ func truncateVerbose(value string) string {
 		return verboseTruncationMarker[:verboseMaxBytes]
 	}
 	return value[:verboseMaxBytes-len(verboseTruncationMarker)] + verboseTruncationMarker
+}
+
+func truncateVerboseInline(value string) string {
+	if verboseMaxBytes <= 0 || len(value) <= verboseMaxBytes {
+		return value
+	}
+	if verboseMaxBytes <= len(verboseInlineTruncationMarker) {
+		return verboseInlineTruncationMarker[:verboseMaxBytes]
+	}
+	return value[:verboseMaxBytes-len(verboseInlineTruncationMarker)] + verboseInlineTruncationMarker
+}
+
+func limitOutputLines(value string, maxLines int) string {
+	if maxLines <= 0 {
+		return value
+	}
+	trimmed := strings.TrimRight(value, "\n")
+	if strings.TrimSpace(trimmed) == "" {
+		return ""
+	}
+	lines := strings.Split(trimmed, "\n")
+	if len(lines) <= maxLines {
+		return strings.Join(lines, "\n")
+	}
+	lines = lines[:maxLines]
+	last := maxLines - 1
+	if strings.TrimSpace(lines[last]) == "" {
+		lines[last] = verboseInlineTruncationMarker
+	} else {
+		lines[last] = lines[last] + " " + verboseInlineTruncationMarker
+	}
+	return strings.Join(lines, "\n")
 }
