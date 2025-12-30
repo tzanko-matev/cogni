@@ -2,7 +2,13 @@
 
 ## One-line description
 
-- cogni is a cognitive benchmarking CLI that measures codebase maintainability by probing it with questions.
+- Cogni is a slop-testing framework.
+
+## Slop testing definition
+
+- "Slop" means badly-written AI- or human-generated code (context: https://www.merriam-webster.com/wordplay/word-of-the-year).
+- A slop test is a question about your code.
+- Cogni has AI agents repeatedly answer the question and measures the effort and how it changes as the codebase evolves, exposing maintainability in a way that is comprehensible across the org.
 
 ## Problem statement
 

@@ -1,9 +1,9 @@
 {{ define "main" }}
   <section class="hero" id="top">
     <div class="hero-text reveal">
-      <p class="eyebrow">Cogni CLI</p>
-      <h1>Measure codebase maintainability with a repeatable cognitive benchmark.</h1>
-      <p class="lede">Local, read-only CLI. Repo-specific questions with citations. Trend reports over commits.</p>
+      <p class="eyebrow">Slop testing framework</p>
+      <h1>Cogni is a slop-testing framework.</h1>
+      <p class="lede">Slop means badly-written AI- or human-generated code (context: <a href="https://www.merriam-webster.com/wordplay/word-of-the-year">Merriam-Webster</a>). Slop tests are questions about your code; Cogni runs agents repeatedly to measure effort as the codebase evolves and make maintainability comprehensible across your org.</p>
       <div class="cta-row">
         <a class="button primary" href="{{ "/using/individual-engineer-tech-lead/" | relURL }}">Get started</a>
         <a class="button ghost" href="#report">See sample report</a>
@@ -79,17 +79,17 @@ tokens:    12.4k (-18%)</code></pre>
   <section id="product" class="section split">
     <div class="panel reveal">
       <p class="eyebrow">Problem</p>
-      <h2>Understanding regresses. It is hard to prove.</h2>
-      <p>Teams lack an objective way to quantify how understandable a codebase is over time.</p>
+      <h2>Slop creeps in. It is hard to measure.</h2>
+      <p>Teams lack an objective way to quantify how understandable a codebase stays as slop accumulates.</p>
     </div>
     <div class="panel accent reveal" style="--delay: 0.05s;">
       <p class="eyebrow">Solution</p>
-      <h2>Turn code understanding into a benchmark.</h2>
-      <p>Define questions, run the agent, and track trends across commits with local reports.</p>
+      <h2>Turn slop tests into a benchmark.</h2>
+      <p>Define questions, run agents repeatedly, and track effort trends across commits with local reports.</p>
       <ul class="checklist">
-        <li>Repo-specific question suites in <code>.cogni/config.yml</code></li>
+        <li>Repo-specific slop tests in <code>.cogni/config.yml</code></li>
         <li>Objective checks with required citations</li>
-        <li>Trend charts for pass rate, tokens, and time</li>
+        <li>Trend charts for effort, tokens, and time</li>
       </ul>
     </div>
   </section>
@@ -97,24 +97,24 @@ tokens:    12.4k (-18%)</code></pre>
   <section id="how-it-works" class="section">
     <div class="section-header">
       <p class="eyebrow">How it works</p>
-      <h2>From questions to trends in three steps.</h2>
+      <h2>From slop tests to trends in three steps.</h2>
       <p>Keep the workflow simple and repeatable, from config to report.</p>
     </div>
     <div class="steps">
       <div class="step-card reveal" style="--delay: 0s;">
         <div class="step-number">01</div>
         <h3>Define</h3>
-        <p>Write a focused question suite tied to your core features.</p>
+        <p>Write slop tests as focused questions tied to your core features.</p>
       </div>
       <div class="step-card reveal" style="--delay: 0.05s;">
         <div class="step-number">02</div>
         <h3>Run</h3>
-        <p>Answer questions with citations, track tokens, time, and tool usage.</p>
+        <p>Agents answer repeatedly with citations while Cogni tracks effort, tokens, time, and tool usage.</p>
       </div>
       <div class="step-card reveal" style="--delay: 0.1s;">
         <div class="step-number">03</div>
         <h3>Report</h3>
-        <p>Compare commits and export a report you can share.</p>
+        <p>Compare commits and export a report that shows how effort shifts as the codebase evolves.</p>
       </div>
     </div>
   </section>
@@ -122,8 +122,8 @@ tokens:    12.4k (-18%)</code></pre>
   <section id="workflow" class="section">
     <div class="section-header">
       <p class="eyebrow">Daily usage</p>
-      <h2>Targeted checks for individual devs.</h2>
-      <p>Run a subset of tasks in minutes and trust the citations.</p>
+      <h2>Targeted slop tests for individual devs.</h2>
+      <p>Run a subset of questions in minutes and trust the citations.</p>
     </div>
     <div class="workflow-grid">
       <div class="code-panel reveal">
@@ -156,13 +156,13 @@ tasks:
   <section id="report" class="section">
     <div class="section-header">
       <p class="eyebrow">Report preview</p>
-      <h2>Trends you can show in retro.</h2>
-      <p>Pass rate, tokens, and time across commits, plus per-task evidence.</p>
+      <h2>Effort trends you can show in retro.</h2>
+      <p>Pass rate, tokens, and time across commits, plus per-test evidence.</p>
     </div>
     <div class="report-preview reveal">
       <div>
         <h3>Trend report for main..HEAD</h3>
-        <p>Compare runs across commits and highlight regressions in understanding.</p>
+        <p>Compare runs across commits and highlight regressions in understanding as slop accumulates.</p>
       </div>
       <div class="report-graphs">
         <div class="graph-card">
@@ -211,7 +211,7 @@ tasks:
     <div class="section-header">
       <p class="eyebrow">Core value</p>
       <h2>Evidence you can trust, fast enough for daily work.</h2>
-      <p>Cogni keeps results local and readable while making trends obvious.</p>
+      <p>Cogni keeps results local and readable while making slop trends obvious.</p>
     </div>
     <div class="value-grid">
       <div class="value-card reveal">
@@ -219,8 +219,8 @@ tasks:
         <p>Every answer must cite files in the repo, so evidence is reviewable.</p>
       </div>
       <div class="value-card reveal" style="--delay: 0.05s;">
-        <h3>Fast, targeted runs</h3>
-        <p>Select specific tasks and agents to validate high-risk changes.</p>
+        <h3>Fast, targeted slop tests</h3>
+        <p>Select specific questions and agents to validate high-risk changes.</p>
       </div>
       <div class="value-card reveal" style="--delay: 0.1s;">
         <h3>Trends over commits</h3>
@@ -233,7 +233,7 @@ tasks:
     <div class="section-header">
       <p class="eyebrow">Trust and limits</p>
       <h2>Read-only by design.</h2>
-      <p>Cogni stays local and focuses on maintainability signals.</p>
+      <p>Cogni stays local and focuses on slop and maintainability signals.</p>
     </div>
     <div class="chip-grid">
       <span class="chip">No code changes</span>
@@ -247,7 +247,7 @@ tasks:
   <section class="cta-final">
     <div class="cta-card reveal">
       <div>
-        <h2>Ready to benchmark understanding?</h2>
+        <h2>Ready to run slop tests?</h2>
         <p>Start with a focused question suite and get a report in minutes.</p>
       </div>
       <div class="cta-row">
