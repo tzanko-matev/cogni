@@ -20,6 +20,7 @@ type SessionConfig struct {
 	OutputSchema             string
 	Features                 FeatureFlags
 	ToolConfig               ToolConfig
+	Verbose                  bool
 	AuthMode                 string
 }
 
@@ -63,6 +64,7 @@ type TurnContext struct {
 	BaseInstructionsOverride string
 	OutputSchema             string
 	Features                 FeatureFlags
+	Verbose                  bool
 }
 
 type HistoryItem struct {
@@ -114,6 +116,7 @@ func StartSession(config SessionConfig, loader ModelFamilyLoader) (*Session, err
 		BaseInstructionsOverride: config.BaseInstructionsOverride,
 		OutputSchema:             config.OutputSchema,
 		Features:                 config.Features,
+		Verbose:                  config.Verbose,
 	}
 	history := BuildInitialContext(ctx)
 	return &Session{

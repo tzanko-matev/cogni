@@ -1,9 +1,11 @@
 package agent
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 
 	"cogni/internal/tools"
@@ -122,5 +124,35 @@ func TestRunTurnBudgetExceeded(t *testing.T) {
 	})
 	if err != ErrBudgetExceeded {
 		t.Fatalf("expected budget exceeded, got %v", err)
+	}
+}
+
+func TestRunTurnVerboseLogs(t *testing.T) {
+	session := &Session{
+		Ctx: TurnContext{
+			ModelFamily: ModelFamily{BaseInstructionsTemplate: "base"},
+		},
+	}
+	provider := &fakeProvider{
+		streams: [][]StreamEvent{
+			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: map[string]any{}}}},
+			{{Type: StreamEventMessage, Message: "done"}},
+		},
+	}
+	executor := &fakeExecutor{}
+	var logs bytes.Buffer
+
+	_, err := RunTurn(context.Background(), session, provider, executor, "run", RunOptions{
+		Verbose:       true,
+		VerboseWriter: &logs,
+	})
+	if err != nil {
+		t.Fatalf("run turn: %v", err)
+	}
+	output := logs.String()
+	for _, needle := range []string{"LLM prompt", "Tool call", "Tool result", "LLM output"} {
+		if !strings.Contains(output, needle) {
+			t.Fatalf("expected verbose logs to include %q, got %s", needle, output)
+		}
 	}
 }

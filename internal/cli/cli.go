@@ -122,6 +122,7 @@ var commands = []*Command{
 	}, runValidate),
 	command("run", "Execute benchmark tasks", []string{
 		"cogni run [task-id|task-id@agent-id]...",
+		"cogni run --verbose [task-id|task-id@agent-id]...",
 	}, runRun),
 	command("compare", "Compare runs between commits", []string{
 		"cogni compare --base <commit|run-id|ref> [--head <commit|run-id|ref>]",

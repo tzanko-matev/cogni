@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,6 +35,8 @@ type RunParams struct {
 	AgentOverride string
 	Selectors     []TaskSelector
 	Repeat        int
+	Verbose       bool
+	VerboseWriter io.Writer
 	Deps          RunDependencies
 }
 
@@ -92,6 +95,10 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 	toolDefs := defaultToolDefinitions()
 	taskResults := make([]TaskResult, 0, len(taskRuns))
 	usedAgents := map[string]spec.AgentConfig{}
+	verboseWriter := params.VerboseWriter
+	if params.Verbose && verboseWriter == nil {
+		verboseWriter = os.Stdout
+	}
 
 	for _, taskRun := range taskRuns {
 		usedAgents[taskRun.Agent.ID] = taskRun.Agent
@@ -99,7 +106,7 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 		if repeat <= 0 {
 			repeat = 1
 		}
-		taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, repeat))
+		taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, repeat, params.Verbose, verboseWriter))
 	}
 
 	agents := make([]AgentInfo, 0, len(usedAgents))
@@ -224,12 +231,15 @@ func runTask(
 	providerFactory ProviderFactory,
 	tokenCounter agent.TokenCounter,
 	repeat int,
+	verbose bool,
+	verboseWriter io.Writer,
 ) TaskResult {
 	result := TaskResult{TaskID: task.Task.ID, Type: task.Task.Type}
 	attempts := make([]AttemptResult, 0, repeat)
 	var failureReason *string
 
 	for attemptIndex := 1; attemptIndex <= repeat; attemptIndex++ {
+		logVerbose(verbose, verboseWriter, "Task %s attempt %d/%d agent=%s model=%s", task.Task.ID, attemptIndex, repeat, task.AgentID, task.Model)
 		provider, err := providerFactory(task.Agent, task.Model)
 		if err != nil {
 			reason := "runtime_error"
@@ -237,7 +247,7 @@ func runTask(
 			result.FailureReason = &reason
 			return result
 		}
-		session := newSession(task, repoRoot, toolsDefs)
+		session := newSession(task, repoRoot, toolsDefs, verbose)
 		runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, task.Task.Prompt, agent.RunOptions{
 			TokenCounter:    tokenCounter,
 			CompactionLimit: task.Task.Budget.MaxTokens,
@@ -246,7 +256,13 @@ func runTask(
 				MaxSeconds: time.Duration(task.Task.Budget.MaxSeconds) * time.Second,
 				MaxTokens:  task.Task.Budget.MaxTokens,
 			},
+			Verbose:       verbose,
+			VerboseWriter: verboseWriter,
 		})
+		if runErr != nil {
+			logVerbose(verbose, verboseWriter, "Task %s attempt %d error=%v", task.Task.ID, attemptIndex, runErr)
+		}
+		logVerbose(verbose, verboseWriter, "Metrics task=%s attempt=%d steps=%d tokens=%d wall_time=%s tool_calls=%s", task.Task.ID, attemptIndex, runMetrics.Steps, runMetrics.Tokens, runMetrics.WallTime, formatToolCounts(runMetrics.ToolCalls))
 
 		output, ok := latestAssistantMessage(session.History)
 		if !ok {
@@ -316,7 +332,7 @@ func runTask(
 	return result
 }
 
-func newSession(task taskRun, repoRoot string, toolsDefs []agent.ToolDefinition) *agent.Session {
+func newSession(task taskRun, repoRoot string, toolsDefs []agent.ToolDefinition, verbose bool) *agent.Session {
 	ctx := agent.TurnContext{
 		Model:                    task.Model,
 		ModelFamily:              agent.ModelFamily{},
@@ -329,6 +345,7 @@ func newSession(task taskRun, repoRoot string, toolsDefs []agent.ToolDefinition)
 		BaseInstructionsOverride: "",
 		OutputSchema:             "",
 		Features:                 agent.FeatureFlags{},
+		Verbose:                  verbose,
 	}
 	return &agent.Session{
 		Ctx:     ctx,

@@ -58,6 +58,8 @@ type RunOptions struct {
 	TokenCounter    TokenCounter
 	CompactionLimit int
 	Limits          RunLimits
+	Verbose         bool
+	VerboseWriter   io.Writer
 }
 
 type RunMetrics struct {
@@ -85,6 +87,7 @@ func RunTurn(ctx context.Context, session *Session, provider Provider, executor 
 		}
 
 		prompt := BuildPrompt(session.Ctx, session.History)
+		logVerbosePrompt(opts, prompt, metrics.Steps+1)
 		stream, err := provider.Stream(ctx, prompt)
 		if err != nil {
 			metrics.WallTime = time.Since(start)
@@ -94,7 +97,7 @@ func RunTurn(ctx context.Context, session *Session, provider Provider, executor 
 			return metrics, err
 		}
 		metrics.Steps++
-		needsFollowUp, err := HandleResponseStream(ctx, session, stream, executor, &metrics)
+		needsFollowUp, err := HandleResponseStream(ctx, session, stream, executor, &metrics, opts)
 		if err != nil {
 			metrics.WallTime = time.Since(start)
 			if opts.TokenCounter != nil {
@@ -114,7 +117,7 @@ func RunTurn(ctx context.Context, session *Session, provider Provider, executor 
 	return metrics, nil
 }
 
-func HandleResponseStream(ctx context.Context, session *Session, stream Stream, executor ToolExecutor, metrics *RunMetrics) (bool, error) {
+func HandleResponseStream(ctx context.Context, session *Session, stream Stream, executor ToolExecutor, metrics *RunMetrics, opts RunOptions) (bool, error) {
 	needsFollowUp := false
 	for {
 		event, err := stream.Recv()
@@ -127,16 +130,19 @@ func HandleResponseStream(ctx context.Context, session *Session, stream Stream, 
 		switch event.Type {
 		case StreamEventMessage:
 			session.History = append(session.History, HistoryItem{Role: "assistant", Content: event.Message})
+			logVerboseBlock(opts, "LLM output", event.Message)
 		case StreamEventToolCall:
 			if event.ToolCall.ID == "" {
 				event.ToolCall.ID = fmt.Sprintf("call-%d", len(session.History))
 			}
+			logVerbose(opts, "Tool call id=%s name=%s args=%s", event.ToolCall.ID, event.ToolCall.Name, formatArgs(event.ToolCall.Args))
 			session.History = append(session.History, HistoryItem{Role: "assistant", Content: event.ToolCall})
 			result := executor.Execute(ctx, event.ToolCall)
 			session.History = append(session.History, HistoryItem{Role: "tool", Content: ToolOutput{
 				ToolCallID: event.ToolCall.ID,
 				Result:     result,
 			}})
+			logVerboseBlock(opts, fmt.Sprintf("Tool result id=%s name=%s duration=%s bytes=%d truncated=%t error=%s", event.ToolCall.ID, result.Tool, result.Duration, result.OutputBytes, result.Truncated, result.Error), result.Output)
 			if metrics != nil {
 				if metrics.ToolCalls == nil {
 					metrics.ToolCalls = map[string]int{}
