@@ -109,6 +109,27 @@ class OpenAIBackend:
         user: str,
         schema: type[BaseModel],
     ) -> BaseModel:
+        def _schema_hint() -> str:
+            if schema.__name__ == "StepPlan":
+                return json.dumps(
+                    {
+                        "step_goal": "Concise goal",
+                        "rationale": "Why this step is needed",
+                        "file_writes": [
+                            {"path": "path/to/file.ext", "content": "", "mode": "overwrite"}
+                        ],
+                        "commands": [{"cmd": "python -m pytest", "purpose": "Run tests", "timeout_sec": 300}],
+                        "expected_outcomes": ["What should be true after the step"],
+                        "new_tasks": [],
+                        "notes": [],
+                    },
+                    indent=2,
+                )
+            try:
+                return json.dumps(schema.model_json_schema(), indent=2)[:3000]
+            except Exception:
+                return f"Schema name: {schema.__name__}"
+
         def _input_items(content: str) -> List[Dict[str, str]]:
             return [
                 {"role": "system", "content": system},
@@ -124,6 +145,118 @@ class OpenAIBackend:
             if start != -1 and end != -1 and end > start:
                 return text[start : end + 1]
             return text
+
+        def _ensure_list(value: Any) -> List[Any]:
+            if value is None:
+                return []
+            if isinstance(value, list):
+                return value
+            return [value]
+
+        def _coerce_for_schema(data: Any) -> Any:
+            if schema.__name__ != "StepPlan" or not isinstance(data, dict):
+                return data
+
+            out = dict(data)
+            if "step_goal" not in out or not isinstance(out.get("step_goal"), str):
+                for key in ("objective", "goal", "step_id", "title"):
+                    if isinstance(out.get(key), str):
+                        out["step_goal"] = out[key]
+                        break
+            if "rationale" not in out or not isinstance(out.get("rationale"), str):
+                for key in ("rationale", "why", "objective", "notes"):
+                    if isinstance(out.get(key), str):
+                        out["rationale"] = out[key]
+                        break
+                out.setdefault("rationale", "")
+
+            files = out.get("file_writes")
+            if files is None and "files" in out:
+                files = out.get("files")
+            files_list = _ensure_list(files)
+            coerced_files = []
+            for fw in files_list:
+                if not isinstance(fw, dict):
+                    continue
+                path = fw.get("path") or fw.get("file") or fw.get("name")
+                content = fw.get("content", "")
+                mode = fw.get("mode", "overwrite")
+                if path:
+                    coerced_files.append({"path": path, "content": content or "", "mode": mode})
+            if coerced_files:
+                out["file_writes"] = coerced_files
+
+            cmds = out.get("commands") or out.get("cmds")
+            cmds_list = _ensure_list(cmds)
+            coerced_cmds = []
+            for cmd in cmds_list:
+                if not isinstance(cmd, dict):
+                    continue
+                cmd_str = cmd.get("cmd") or cmd.get("command")
+                if not cmd_str:
+                    continue
+                purpose = cmd.get("purpose") or cmd.get("why") or "Run command"
+                timeout_sec = cmd.get("timeout_sec", 300)
+                coerced_cmds.append(
+                    {"cmd": cmd_str, "purpose": purpose, "timeout_sec": timeout_sec}
+                )
+            if coerced_cmds:
+                out["commands"] = coerced_cmds
+
+            if "expected_outcomes" not in out and "outcomes" in out:
+                out["expected_outcomes"] = out["outcomes"]
+
+            if isinstance(out.get("notes"), str):
+                out["notes"] = [out["notes"]]
+
+            for key in ("expected_outcomes", "new_tasks", "notes"):
+                if key in out:
+                    out[key] = _ensure_list(out[key])
+
+            return out
+
+        def _repair_json(bad_json: str, error: Exception) -> Optional[Dict[str, Any]]:
+            repair_system = (
+                "You fix JSON to match a target schema. "
+                "Return ONLY a valid JSON object."
+            )
+            repair_user = textwrap.dedent(
+                f"""
+                The following JSON does NOT match schema {schema.__name__}.
+                Fix it so it validates. Keep content concise.
+
+                Schema hint:
+                { _schema_hint() }
+
+                Validation errors:
+                { str(error) }
+
+                Invalid JSON:
+                { bad_json }
+                """
+            ).strip()
+            kwargs = {
+                "model": model,
+                "input": [
+                    {"role": "system", "content": repair_system},
+                    {"role": "user", "content": repair_user},
+                ],
+                "max_output_tokens": max(800, min(max_output_tokens, 2500)),
+                "reasoning": {"effort": "low"},
+                "text": {"format": {"type": "json_object"}},
+            }
+            if temperature is not None:
+                kwargs["temperature"] = temperature
+            try:
+                resp = self.client.responses.create(**kwargs)
+            except Exception:
+                return None
+            raw = resp.output_text
+            try:
+                cleaned = _extract_json_object(raw)
+                return json.loads(cleaned)
+            except Exception:
+                return None
 
         input_items = _input_items(user)
         # Try the SDK helper first (best ergonomics).
@@ -168,11 +301,20 @@ class OpenAIBackend:
             try:
                 cleaned = _extract_json_object(raw)
                 data = json.loads(cleaned)
+                data = _coerce_for_schema(data)
                 return schema.model_validate(data)
             except json.JSONDecodeError as e:
                 last_error = e
             except ValidationError as e:
-                last_error = e
+                repaired = _repair_json(cleaned, e)
+                if repaired is not None:
+                    repaired = _coerce_for_schema(repaired)
+                    try:
+                        return schema.model_validate(repaired)
+                    except ValidationError as ve:
+                        last_error = ve
+                else:
+                    last_error = e
 
             # One retry with more room and stricter reminder.
             current_max = max(current_max, 3000) + 500
@@ -273,6 +415,10 @@ class StepPlan(BaseModel):
     expected_outcomes: List[str] = Field(default_factory=list)
     new_tasks: List[str] = Field(default_factory=list)
     notes: List[str] = Field(default_factory=list)
+
+
+class FileContent(BaseModel):
+    content: str
 
 
 class DoneCheck(BaseModel):
@@ -513,6 +659,7 @@ class EntropyAwareAgent:
             - produces verifiable outcomes (tests/commands)
             - writes only the necessary files
             - proposes safe commands only
+            - do NOT include file contents in the plan; set file_writes[*].content to an empty string
 
             Prefer:
             - adding tests first
@@ -521,6 +668,18 @@ class EntropyAwareAgent:
             - crisp expected outcomes
 
             Output must follow the provided schema exactly.
+            """
+        ).strip()
+
+    def _system_file_content(self) -> str:
+        return textwrap.dedent(
+            """
+            You are generating the full content for a single file.
+
+            Rules:
+            - Output ONLY a JSON object: {"content": "..."}.
+            - Content must be complete, minimal, and directly implements the step.
+            - Keep it concise; avoid extra commentary.
             """
         ).strip()
 
@@ -805,11 +964,66 @@ class EntropyAwareAgent:
         assert isinstance(step, StepPlan)
         return step
 
+    def _needs_file_content(self, fw: FileWrite) -> bool:
+        if fw.content is None:
+            return True
+        trimmed = fw.content.strip()
+        return trimmed == "" or trimmed.upper() in ("TBD", "TODO")
+
+    def generate_file_content(self, step: StepPlan, fw: FileWrite) -> str:
+        spec_text = read_text(self.workspace / "SPEC.md") if (self.workspace / "SPEC.md").exists() else ""
+        risks_text = read_text(self.workspace / "RISKS.md") if (self.workspace / "RISKS.md").exists() else ""
+
+        prompt = textwrap.dedent(
+            f"""
+            SPEC:
+            {spec_text}
+
+            RISKS (optional context):
+            {risks_text}
+
+            STEP GOAL:
+            {step.step_goal}
+
+            RATIONALE:
+            {step.rationale}
+
+            EXPECTED OUTCOMES:
+            {json.dumps(step.expected_outcomes, indent=2)}
+
+            NOTES:
+            {json.dumps(step.notes, indent=2)}
+
+            Write content for this file:
+            {fw.path}
+            """
+        ).strip()
+
+        fc = self._llm_parse(
+            f"Writing file content: {fw.path}",
+            model=self.model_main,
+            reasoning_effort="medium",
+            temperature=None,
+            system=self._system_file_content(),
+            user=prompt,
+            schema=FileContent,
+            max_output_tokens=2500,
+        )
+        assert isinstance(fc, FileContent)
+        return fc.content
+
     def execute_step(self, step: StepPlan) -> bool:
         """
         Apply file writes, run commands. Return True if all commands succeed.
         """
         print_panel("Step goal", f"{step.step_goal}\n\n{step.rationale}")
+
+        # Fill file contents in a separate pass (two-stage plan).
+        for fw in step.file_writes:
+            if fw.content is not None and fw.content.strip():
+                fw.content = ""
+            if self._needs_file_content(fw):
+                fw.content = self.generate_file_content(step, fw)
 
         # Apply file writes
         for fw in step.file_writes:
