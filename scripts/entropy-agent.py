@@ -26,12 +26,14 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import difflib
+import hashlib
 import json
 import os
 import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import textwrap
 import time
 from pathlib import Path
@@ -439,13 +441,22 @@ class AgentState:
     risks: List[Dict[str, Any]] = dataclasses.field(default_factory=list)
     high_entropy_risk_ids: List[str] = dataclasses.field(default_factory=list)
     history: List[Dict[str, Any]] = dataclasses.field(default_factory=list)
+    current_step: Optional[Dict[str, Any]] = None
+    current_step_id: Optional[str] = None
+    current_step_status: Optional[str] = None
+    current_step_started_at: Optional[str] = None
+    current_step_applied_files: List[Dict[str, Any]] = dataclasses.field(default_factory=list)
+    current_step_cmd_outputs: List[Dict[str, Any]] = dataclasses.field(default_factory=list)
+    completed_steps: List[Dict[str, Any]] = dataclasses.field(default_factory=list)
 
     def to_json(self) -> Dict[str, Any]:
         return dataclasses.asdict(self)
 
     @staticmethod
     def from_json(data: Dict[str, Any]) -> "AgentState":
-        return AgentState(**data)
+        fields = {f.name for f in dataclasses.fields(AgentState)}
+        filtered = {k: v for k, v in data.items() if k in fields}
+        return AgentState(**filtered)
 
 
 # --- Safe command policy ---
@@ -518,6 +529,21 @@ def write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def write_text_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(prefix=path.name, dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        os.replace(tmp_path, path)
+    finally:
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
+
+
 def run_command(cmd: str, cwd: Path, timeout_sec: int) -> Tuple[int, str]:
     proc = subprocess.run(
         cmd,
@@ -539,12 +565,14 @@ class EntropyAwareAgent:
         goal: str,
         workspace: Path,
         auto: bool,
+        resume: bool,
         model_main: str,
         model_scan: str,
     ) -> None:
         self.goal = goal
         self.workspace = workspace
         self.auto = auto
+        self.resume = resume
         self.backend = OpenAIBackend()
         self.policy = CommandPolicy()
         self._llm_call_id = 0
@@ -566,7 +594,7 @@ class EntropyAwareAgent:
             self.state = AgentState(goal=goal)
 
     def save(self) -> None:
-        write_text(self.state_path, json.dumps(self.state.to_json(), indent=2))
+        write_text_atomic(self.state_path, json.dumps(self.state.to_json(), indent=2))
         if not self.log_path.exists():
             write_text(self.log_path, f"# Worklog\n\n## Goal\n{self.goal}\n\n")
 
@@ -575,6 +603,49 @@ class EntropyAwareAgent:
         entry = f"\n## {ts} — {title}\n\n{body}\n"
         with self.log_path.open("a", encoding="utf-8") as f:
             f.write(entry)
+
+    def _now(self) -> str:
+        return time.strftime("%Y-%m-%d %H:%M:%S")
+
+    def _step_fingerprint(self, step: StepPlan) -> str:
+        payload = {
+            "step_goal": step.step_goal,
+            "rationale": step.rationale,
+            "file_paths": [fw.path for fw in step.file_writes],
+            "commands": [c.cmd for c in step.commands],
+        }
+        digest = hashlib.sha1(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+        return digest[:12]
+
+    def _record_current_step(self, step: StepPlan, status: str) -> None:
+        step_id = self._step_fingerprint(step)
+        if status == "in_progress" and self.state.current_step_id != step_id:
+            self.state.current_step_applied_files = []
+            self.state.current_step_cmd_outputs = []
+            self.state.current_step_started_at = self._now()
+        self.state.current_step = step.model_dump()
+        self.state.current_step_id = step_id
+        self.state.current_step_status = status
+        self.save()
+
+    def _clear_current_step(self) -> None:
+        self.state.current_step = None
+        self.state.current_step_id = None
+        self.state.current_step_status = None
+        self.state.current_step_started_at = None
+        self.state.current_step_applied_files = []
+        self.state.current_step_cmd_outputs = []
+        self.save()
+
+    def _record_applied_file(self, path: str, content: str, mode: str) -> None:
+        checksum = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        entry = {"path": path, "sha256": checksum, "mode": mode, "at": self._now()}
+        self.state.current_step_applied_files.append(entry)
+        self.save()
+
+    def _record_cmd_output(self, output: Dict[str, Any]) -> None:
+        self.state.current_step_cmd_outputs.append(output)
+        self.save()
 
     def _llm_parse(self, purpose: str, **kwargs: Any) -> BaseModel:
         self._llm_call_id += 1
@@ -1012,18 +1083,23 @@ class EntropyAwareAgent:
         assert isinstance(fc, FileContent)
         return fc.content
 
-    def execute_step(self, step: StepPlan) -> bool:
+    def execute_step(self, step: StepPlan, *, resume: bool = False) -> bool:
         """
         Apply file writes, run commands. Return True if all commands succeed.
         """
         print_panel("Step goal", f"{step.step_goal}\n\n{step.rationale}")
 
+        if not resume:
+            self._record_current_step(step, "in_progress")
+
         # Fill file contents in a separate pass (two-stage plan).
         for fw in step.file_writes:
-            if fw.content is not None and fw.content.strip():
+            if not resume and fw.content is not None and fw.content.strip():
                 fw.content = ""
             if self._needs_file_content(fw):
                 fw.content = self.generate_file_content(step, fw)
+
+        self._record_current_step(step, "in_progress")
 
         # Apply file writes
         for fw in step.file_writes:
@@ -1044,6 +1120,7 @@ class EntropyAwareAgent:
                         continue
             write_text(target, fw.content)
             print_info(f"Wrote {fw.path}")
+            self._record_applied_file(fw.path, fw.content, fw.mode)
 
         # Run commands
         all_ok = True
@@ -1072,6 +1149,7 @@ class EntropyAwareAgent:
 
             print_panel(f"Command output: {c.cmd} (exit {code})", out[:4000] + ("\n... (truncated)" if len(out) > 4000 else ""))
             cmd_outputs.append({"cmd": c.cmd, "exit": code, "output": out})
+            self._record_cmd_output({"cmd": c.cmd, "exit": code, "output": out})
             if code != 0:
                 all_ok = False
 
@@ -1089,6 +1167,19 @@ class EntropyAwareAgent:
             if all_ok:
                 self.state.tasks.pop(0)
 
+        if all_ok:
+            self.state.completed_steps.append(
+                {
+                    "id": self.state.current_step_id,
+                    "step_goal": step.step_goal,
+                    "completed_at": self._now(),
+                    "applied_files": list(self.state.current_step_applied_files),
+                    "cmd_outputs": list(self.state.current_step_cmd_outputs),
+                }
+            )
+            self._clear_current_step()
+        else:
+            self.state.current_step_status = "failed"
         self.save()
         return all_ok
 
@@ -1141,6 +1232,39 @@ class EntropyAwareAgent:
             print_err(f"Repair planning failed: {e}")
             return None
 
+    def resume_incomplete_step(self, max_repairs_per_step: int) -> bool:
+        if not self.resume:
+            return False
+        if self.state.current_step_status not in ("in_progress", "failed"):
+            return False
+        if not self.state.current_step:
+            return False
+
+        try:
+            step = StepPlan.model_validate(self.state.current_step)
+        except ValidationError as e:
+            print_warn(f"Cannot resume: stored step is invalid: {e}")
+            return False
+
+        print_panel("Resuming in-progress step", f"{step.step_goal}\n\n{step.rationale}")
+        if not self.auto:
+            ans = input("Resume this step now? (y/n): ").strip().lower()
+            if not ans.startswith("y"):
+                return False
+
+        self._record_current_step(step, "in_progress")
+        ok = self.execute_step(step, resume=True)
+        repairs = 0
+        while not ok and repairs < max_repairs_per_step:
+            repairs += 1
+            print_warn(f"Resume step failed; attempting repair {repairs}/{max_repairs_per_step}")
+            rep = self.repair_after_failure(step)
+            if not rep:
+                break
+            step = rep
+            ok = self.execute_step(step)
+        return ok
+
     # ---------- Done check ----------
     def check_done(self) -> DoneCheck:
         spec_text = read_text(self.workspace / "SPEC.md") if (self.workspace / "SPEC.md").exists() else ""
@@ -1179,7 +1303,12 @@ class EntropyAwareAgent:
     # ---------- Main loop ----------
     def run(self, max_iters: int = 50, max_repairs_per_step: int = 3) -> None:
         self.collect_spec()
-        self.build_risk_register(samples=3)
+        if self.state.risks and (self.workspace / "RISKS.md").exists():
+            print_info("Using existing risk register.")
+        else:
+            self.build_risk_register(samples=3)
+
+        self.resume_incomplete_step(max_repairs_per_step)
 
         for it in range(max_iters):
             print_info(f"Iteration {it+1}/{max_iters}")
@@ -1287,6 +1416,7 @@ def main() -> None:
     parser.add_argument("--goal", required=True, help="Big objective/question to work on.")
     parser.add_argument("--workspace", required=True, help="Directory to write files into.")
     parser.add_argument("--auto", action="store_true", help="Auto-run safe steps/commands without asking.")
+    parser.add_argument("--resume", action="store_true", help="Resume from an interrupted in-progress step.")
     parser.add_argument("--max-iters", type=int, default=50, help="Maximum agent loop iterations.")
 
     # Models:
@@ -1300,6 +1430,7 @@ def main() -> None:
         goal=args.goal,
         workspace=Path(args.workspace),
         auto=args.auto,
+        resume=args.resume,
         model_main=args.model_main,
         model_scan=args.model_scan,
     )
