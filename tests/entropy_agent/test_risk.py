@@ -38,6 +38,20 @@ def test_enrich_risks_scores_disagreement_higher() -> None:
     assert enriched[0]["_entropy"]["appear_frac"] == 0.5
 
 
+def test_enrich_risks_uses_override() -> None:
+    r1 = Risk(
+        id="r1",
+        area="a",
+        title="Cache invalidation",
+        description="d",
+        severity="high",
+        confidence=0.9,
+    )
+    reg = RiskRegister(risks=[r1])
+    enriched = enrich_risks([reg], samples=3, appear_frac_by_primary_id={"r1": 0.2})
+    assert enriched[0]["_entropy"]["appear_frac"] == 0.2
+
+
 def test_select_high_entropy_ids_uses_thresholds() -> None:
     risks = [
         {"id": "r1", "severity": "high", "_entropy": {"score": 0.4}},

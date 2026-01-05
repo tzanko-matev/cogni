@@ -11,7 +11,15 @@ from pydantic import BaseModel
 
 from .backend import OpenAIBackend
 from .console import print_err, print_info, print_panel, print_warn
-from .models import DoneCheck, FileContent, FileWrite, ProjectSpec, RiskRegister, StepPlan
+from .models import (
+    DoneCheck,
+    FileContent,
+    FileWrite,
+    ProjectSpec,
+    RiskEquivalenceResult,
+    RiskRegister,
+    StepPlan,
+)
 from .policy import CommandPolicy
 from .risk import enrich_risks, merge_risks, select_high_entropy_ids
 from .state import AgentState
@@ -140,6 +148,22 @@ class EntropyAwareAgent:
             """
         ).strip()
 
+    def _system_equivalence(self) -> str:
+        return textwrap.dedent(
+            """
+            You are a semantic equivalence judge for risk items.
+
+            Group items that describe the same underlying risk, even if worded differently.
+            Use title + description + area to judge meaning. If they differ in root cause,
+            scope, component, or impact, keep them separate.
+
+            Rules:
+            - Every item must appear in exactly one group.
+            - Groups can be singletons if no equivalent exists.
+            - Output must follow the provided schema exactly.
+            """
+        ).strip()
+
     def _system_step(self) -> str:
         return textwrap.dedent(
             """
@@ -226,6 +250,89 @@ class EntropyAwareAgent:
             registers.append(rr)
         return registers
 
+    def _judge_risk_equivalence(
+        self,
+        registers: List[RiskRegister],
+        *,
+        samples: int,
+        label: str,
+    ) -> Optional[Dict[str, float]]:
+        if samples <= 1:
+            return None
+        items: List[Dict[str, Any]] = []
+        item_sample: Dict[str, int] = {}
+        primary_map: Dict[str, str] = {}
+
+        for s_idx, rr in enumerate(registers):
+            for r_idx, r in enumerate(rr.risks):
+                uid = f"s{s_idx}:{r_idx}"
+                items.append(
+                    {
+                        "id": uid,
+                        "sample": s_idx,
+                        "risk_id": r.id,
+                        "title": r.title,
+                        "description": r.description,
+                        "area": r.area,
+                    }
+                )
+                item_sample[uid] = s_idx
+                if s_idx == 0:
+                    primary_map[r.id] = uid
+
+        prompt = textwrap.dedent(
+            f"""
+            Group these risk items by semantic equivalence.
+
+            Items:
+            {json.dumps(items, indent=2)}
+            """
+        ).strip()
+
+        try:
+            judged = self._llm_parse(
+                f"Risk equivalence judging ({label})",
+                model=self.model_main,
+                reasoning_effort="low",
+                temperature=0.0,
+                system=self._system_equivalence(),
+                user=prompt,
+                schema=RiskEquivalenceResult,
+                max_output_tokens=2000,
+            )
+            assert isinstance(judged, RiskEquivalenceResult)
+        except Exception as e:
+            print_warn(f"Risk equivalence judging failed: {e}")
+            return None
+
+        seen: Dict[str, int] = {}
+        for gi, group in enumerate(judged.groups):
+            for uid in group.ids:
+                if uid in seen:
+                    print_warn("Risk equivalence judging returned duplicate item ids; falling back to title match.")
+                    return None
+                seen[uid] = gi
+
+        # Add any missing items as singleton groups.
+        missing = set(item_sample.keys()) - set(seen.keys())
+        if missing:
+            base_index = len(judged.groups)
+            for i, uid in enumerate(sorted(missing)):
+                seen[uid] = base_index + i
+
+        group_samples: Dict[int, set[int]] = {}
+        for uid, gi in seen.items():
+            group_samples.setdefault(gi, set()).add(item_sample[uid])
+
+        appear_frac_by_primary: Dict[str, float] = {}
+        for primary_id, uid in primary_map.items():
+            gi = seen.get(uid)
+            if gi is None:
+                continue
+            appear_frac_by_primary[primary_id] = len(group_samples.get(gi, set())) / max(samples, 1)
+
+        return appear_frac_by_primary
+
     def _apply_risk_update(
         self,
         registers: List[RiskRegister],
@@ -235,7 +342,8 @@ class EntropyAwareAgent:
         iteration: Optional[int],
         label: str,
     ) -> None:
-        enriched = enrich_risks(registers, samples)
+        appear_override = self._judge_risk_equivalence(registers, samples=samples, label=label)
+        enriched = enrich_risks(registers, samples, appear_frac_by_primary_id=appear_override)
         if reset or not self.state.risks:
             merged = enriched
         else:

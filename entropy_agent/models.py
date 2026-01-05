@@ -47,6 +47,14 @@ class RiskRegister(BaseModel):
     risks: List[Risk]
 
 
+class RiskEquivalenceGroup(BaseModel):
+    ids: List[str]
+
+
+class RiskEquivalenceResult(BaseModel):
+    groups: List[RiskEquivalenceGroup]
+
+
 class FileWrite(BaseModel):
     path: str
     content: str

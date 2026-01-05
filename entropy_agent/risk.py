@@ -6,7 +6,12 @@ from .models import RiskRegister
 from .utils import normalize_key, severity_weight
 
 
-def enrich_risks(registers: List[RiskRegister], samples: int) -> List[Dict[str, Any]]:
+def enrich_risks(
+    registers: List[RiskRegister],
+    samples: int,
+    *,
+    appear_frac_by_primary_id: Optional[Dict[str, float]] = None,
+) -> List[Dict[str, Any]]:
     if not registers:
         return []
 
@@ -24,8 +29,11 @@ def enrich_risks(registers: List[RiskRegister], samples: int) -> List[Dict[str, 
 
     enriched: List[Dict[str, Any]] = []
     for r in primary.risks:
-        k = normalize_key(r.title)
-        appear_frac = key_counts.get(k, 0) / max(samples, 1)
+        if appear_frac_by_primary_id and r.id in appear_frac_by_primary_id:
+            appear_frac = appear_frac_by_primary_id[r.id]
+        else:
+            k = normalize_key(r.title)
+            appear_frac = key_counts.get(k, 0) / max(samples, 1)
 
         # Entropy proxy:
         # - low appearance fraction => disagreement => higher entropy
