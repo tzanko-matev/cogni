@@ -112,6 +112,8 @@ class EntropyAwareAgent:
             - Prefer small steps with verifiable outcomes.
             - When unsure, propose an experiment or a precise question.
             - Do not propose destructive commands.
+            - Questions should minimize search space; prioritize the few that reduce it the most.
+            - For every question, include a brief justification of how it reduces the problem space.
             - Output must follow the provided schema exactly.
             """
         ).strip()
@@ -132,6 +134,7 @@ class EntropyAwareAgent:
             Rules:
             - Focus on essential complexity, hidden constraints, integrations, security, scaling, correctness.
             - Prefer actionable, testable items over generic advice.
+            - If you add user_questions, make them high leverage and include a brief justification of how they reduce the problem space.
             - Output must follow the provided schema exactly.
             """
         ).strip()
@@ -280,7 +283,7 @@ class EntropyAwareAgent:
             Produce:
             - definition_of_done as bullet conditions
             - a small set of constraints/assumptions
-            - clarifying questions (only the highest leverage)
+            - clarifying questions (only the highest leverage; include justification for how each reduces the problem space)
             - an initial task list that could be executed in small steps
 
             Keep it practical for a coding agent working locally.
