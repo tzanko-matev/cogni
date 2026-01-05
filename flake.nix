@@ -23,6 +23,7 @@
           pythonEnv = python.withPackages (ps: [
             ps.openai
             ps.pydantic
+            ps.pytest
             ps.rich
           ]);
           pythonSitePackages = "${pythonEnv}/${python.sitePackages}";
