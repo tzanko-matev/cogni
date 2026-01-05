@@ -109,10 +109,23 @@ class OpenAIBackend:
         user: str,
         schema: type[BaseModel],
     ) -> BaseModel:
-        input_items = [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ]
+        def _input_items(content: str) -> List[Dict[str, str]]:
+            return [
+                {"role": "system", "content": system},
+                {"role": "user", "content": content},
+            ]
+
+        def _extract_json_object(raw: str) -> str:
+            text = raw.strip()
+            if text.startswith("{") and text.endswith("}"):
+                return text
+            start = text.find("{")
+            end = text.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                return text[start : end + 1]
+            return text
+
+        input_items = _input_items(user)
         # Try the SDK helper first (best ergonomics).
         if hasattr(self.client.responses, "parse"):
             kwargs: Dict[str, Any] = {
@@ -124,26 +137,52 @@ class OpenAIBackend:
             }
             if temperature is not None:
                 kwargs["temperature"] = temperature
-            resp = self.client.responses.parse(**kwargs)
-            return resp.output_parsed
+            try:
+                resp = self.client.responses.parse(**kwargs)
+                return resp.output_parsed
+            except Exception as e:
+                print_warn(
+                    "Structured parse failed ({err}); retrying with JSON mode.".format(
+                        err=type(e).__name__
+                    )
+                )
 
         # Fallback: enforce JSON with instructions and parse ourselves
-        kwargs = {
-            "model": model,
-            "input": input_items,
-            "max_output_tokens": max_output_tokens,
-            "reasoning": {"effort": reasoning_effort},
-            "text": {"format": {"type": "json_object"}},
-        }
-        if temperature is not None:
-            kwargs["temperature"] = temperature
-        resp = self.client.responses.create(**kwargs)
-        raw = resp.output_text
-        try:
-            data = json.loads(raw)
-            return schema.model_validate(data)
-        except Exception as e:
-            raise RuntimeError(f"Failed to parse model JSON.\nRaw:\n{raw}") from e
+        retry_user = user + "\n\nReturn ONLY a valid JSON object. If needed, reduce list sizes."
+        retries = 2
+        last_error: Optional[Exception] = None
+        current_max = max_output_tokens
+        current_user = retry_user
+        for attempt in range(retries):
+            kwargs = {
+                "model": model,
+                "input": _input_items(current_user),
+                "max_output_tokens": current_max,
+                "reasoning": {"effort": reasoning_effort},
+                "text": {"format": {"type": "json_object"}},
+            }
+            if temperature is not None:
+                kwargs["temperature"] = temperature
+            resp = self.client.responses.create(**kwargs)
+            raw = resp.output_text
+            try:
+                cleaned = _extract_json_object(raw)
+                data = json.loads(cleaned)
+                return schema.model_validate(data)
+            except json.JSONDecodeError as e:
+                last_error = e
+            except ValidationError as e:
+                last_error = e
+
+            # One retry with more room and stricter reminder.
+            current_max = max(current_max, 3000) + 500
+            current_user = (
+                retry_user
+                + "\nKeep responses short: 6-8 items max, 1-2 short sentences per field."
+            )
+
+        raw_preview = (raw or "")[:4000]
+        raise RuntimeError(f"Failed to parse model JSON after retries.\nRaw:\n{raw_preview}") from last_error
 
     def text(
         self,
@@ -454,6 +493,8 @@ class EntropyAwareAgent:
             - confidence (0..1) about your understanding
             - how to resolve: ask_user vs experiment vs tests vs design decision
             - suggested experiments must be runnable locally (tests, prototypes, commands)
+            - 6-8 risks maximum; keep each field concise
+            - signals/user_questions/suggested_experiments lists should be <= 2 items each
 
             Rules:
             - Focus on essential complexity, hidden constraints, integrations, security, scaling, correctness.
