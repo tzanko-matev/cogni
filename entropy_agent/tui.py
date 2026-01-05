@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Iterable, List, Optional
 
 try:
+    from prompt_toolkit import PromptSession
     from prompt_toolkit.shortcuts import input_dialog, message_dialog, radiolist_dialog, yes_no_dialog
 
     _HAS_PT = True
@@ -21,7 +22,11 @@ def prompt_required_text(prompt: str, *, multiline: bool = False) -> str:
 
 def prompt_text(prompt: str, *, multiline: bool = False) -> str:
     if _HAS_PT:
-        result = input_dialog(title="Input", text=prompt, multiline=multiline).run()
+        if multiline:
+            session = PromptSession()
+            result = session.prompt(f"{prompt}\n", multiline=True)
+            return (result or "").strip()
+        result = input_dialog(title="Input", text=prompt).run()
         return (result or "").strip()
     return _raw_input(prompt).strip()
 
