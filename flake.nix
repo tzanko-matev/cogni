@@ -19,6 +19,13 @@
       devShells = forAllSystems (system:
         let
           pkgs = import nixpkgs { inherit system; };
+          python = pkgs.python311;
+          pythonEnv = python.withPackages (ps: [
+            ps.openai
+            ps.pydantic
+            ps.rich
+          ]);
+          pythonSitePackages = "${pythonEnv}/${python.sitePackages}";
         in
         {
           default = pkgs.mkShell {
@@ -33,8 +40,12 @@
               jq
               bashInteractive
               hugo
+              pythonEnv
             ];
             shellHook = ''
+              # Ensure Nix Python + packages are found even if PATH is reordered by shell init.
+              export PATH="${pythonEnv}/bin:$PATH"
+              export NIX_PYTHONPATH="${pythonSitePackages}:$NIX_PYTHONPATH"
               if [ -z "$LLM_PROVIDER" ]; then
                 export LLM_PROVIDER=openrouter
               fi
