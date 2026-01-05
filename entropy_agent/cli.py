@@ -4,13 +4,11 @@ import argparse
 from pathlib import Path
 
 from .agent import EntropyAwareAgent
+from .tui import prompt_required_text
 
 
 def prompt_for_goal(prompt: str = "Enter goal: ") -> str:
-    while True:
-        goal = input(prompt).strip()
-        if goal:
-            return goal
+    return prompt_required_text(prompt, multiline=True)
 
 
 def main() -> None:

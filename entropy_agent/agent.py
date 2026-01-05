@@ -15,6 +15,7 @@ from .models import DoneCheck, FileContent, FileWrite, ProjectSpec, RiskRegister
 from .policy import CommandPolicy
 from .risk import enrich_risks, merge_risks, select_high_entropy_ids
 from .state import AgentState
+from .tui import prompt_choice, prompt_continue, prompt_required_text, prompt_yes_no
 from .utils import read_text, run_command, unified_diff, write_text
 
 
@@ -323,19 +324,11 @@ class EntropyAwareAgent:
                 continue
 
             if q.answer_type == "yes_no":
-                ans = input(f"\n[{q.id}] {q.question} (y/n): ").strip().lower()
-                answers[q.id] = "yes" if ans.startswith("y") else "no"
+                answers[q.id] = "yes" if prompt_yes_no(f"[{q.id}] {q.question}") else "no"
             elif q.answer_type == "choice" and q.choices:
-                print(f"\n[{q.id}] {q.question}")
-                for i, ch in enumerate(q.choices, 1):
-                    print(f"  {i}. {ch}")
-                idx = input("Choose number: ").strip()
-                try:
-                    answers[q.id] = q.choices[int(idx) - 1]
-                except Exception:
-                    answers[q.id] = input("Enter choice text: ").strip()
+                answers[q.id] = prompt_choice(f"[{q.id}] {q.question}", q.choices)
             else:
-                answers[q.id] = input(f"\n[{q.id}] {q.question}\n> ").strip()
+                answers[q.id] = prompt_required_text(f"[{q.id}] {q.question}", multiline=True)
 
         self.state.answers.update(answers)
         self.save()
@@ -474,7 +467,7 @@ class EntropyAwareAgent:
         print_panel(f"High-entropy risk needs input: {risk['title']}", body)
         answers = []
         for i, q in enumerate(qs, 1):
-            ans = input(f"\n({i}/{len(qs)}) {q}\n> ").strip()
+            ans = prompt_required_text(f"({i}/{len(qs)}) {q}", multiline=True)
             answers.append({"q": q, "a": ans})
 
         self.state.history.append({"type": "risk_user_answers", "risk_id": risk["id"], "answers": answers})
@@ -591,8 +584,7 @@ class EntropyAwareAgent:
                 if diff.strip():
                     print_panel(f"Diff for {fw.path}", diff[:4000] + ("\n... (truncated)" if len(diff) > 4000 else ""))
                 if not self.auto:
-                    ans = input(f"Apply changes to {fw.path}? (y/n): ").strip().lower()
-                    if not ans.startswith("y"):
+                    if not prompt_yes_no(f"Apply changes to {fw.path}?"):
                         print_warn(f"User declined writing {fw.path}")
                         continue
             write_text(target, fw.content)
@@ -606,8 +598,7 @@ class EntropyAwareAgent:
             safe, why = self.policy.is_safe(c.cmd)
             if not safe and not self.auto:
                 print_warn(f"Command blocked by policy: {c.cmd}\nReason: {why}")
-                ans = input("Run anyway? (y/n): ").strip().lower()
-                if not ans.startswith("y"):
+                if not prompt_yes_no("Run anyway?"):
                     cmd_outputs.append({"cmd": c.cmd, "skipped": True, "reason": why})
                     all_ok = False
                     continue
@@ -845,7 +836,7 @@ class EntropyAwareAgent:
                         "Check logs in .entropy_agent/worklog.md and consider adding constraints/tests or answering missing questions.",
                     )
                     if not self.auto:
-                        input("Press Enter to continue...")
+                        prompt_continue()
                 continue
 
             # Done check

@@ -23,6 +23,7 @@
           pythonEnv = python.withPackages (ps: [
             ps.openai
             ps.pydantic
+            ps.prompt-toolkit
             ps.pytest
             ps.rich
           ]);
