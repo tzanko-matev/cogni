@@ -6,9 +6,16 @@ from pathlib import Path
 from .agent import EntropyAwareAgent
 
 
+def prompt_for_goal(prompt: str = "Enter goal: ") -> str:
+    while True:
+        goal = input(prompt).strip()
+        if goal:
+            return goal
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Entropy-aware coding agent (human-in-the-loop + experiments).")
-    parser.add_argument("--goal", required=True, help="Big objective/question to work on.")
+    parser.add_argument("--goal", help="Big objective/question to work on.")
     parser.add_argument("--workspace", required=True, help="Directory to write files into.")
     parser.add_argument("--auto", action="store_true", help="Auto-run safe steps/commands without asking.")
     parser.add_argument("--max-iters", type=int, default=50, help="Maximum agent loop iterations.")
@@ -20,8 +27,10 @@ def main() -> None:
     parser.add_argument("--model-scan", default="gpt-5.2", help="Model for risk/entropy sampling steps.")
     args = parser.parse_args()
 
+    goal = args.goal or prompt_for_goal()
+
     agent = EntropyAwareAgent(
-        goal=args.goal,
+        goal=goal,
         workspace=Path(args.workspace),
         auto=args.auto,
         model_main=args.model_main,
