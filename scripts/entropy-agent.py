@@ -1,4 +1,3 @@
-HOMEBREW
 #!/usr/bin/env python3
 """
 Entropy-aware agent for large coding tasks.

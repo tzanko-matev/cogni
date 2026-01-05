@@ -11,20 +11,11 @@ from pydantic import BaseModel
 
 from .backend import OpenAIBackend
 from .console import print_err, print_info, print_panel, print_warn
-from .models import (
-    ClarifyingQuestion,
-    Command,
-    DoneCheck,
-    FileContent,
-    FileWrite,
-    ProjectSpec,
-    Risk,
-    RiskRegister,
-    StepPlan,
-)
+from .models import DoneCheck, FileContent, FileWrite, ProjectSpec, RiskRegister, StepPlan
 from .policy import CommandPolicy
+from .risk import enrich_risks, merge_risks, select_high_entropy_ids
 from .state import AgentState
-from .utils import normalize_key, read_text, run_command, severity_weight, unified_diff, write_text
+from .utils import read_text, run_command, unified_diff, write_text
 
 
 # --- The agent ---
@@ -179,6 +170,103 @@ class EntropyAwareAgent:
             """
         ).strip()
 
+    def _risk_prompt_full(self, spec_text: str) -> str:
+        return textwrap.dedent(
+            f"""
+            Using this spec:
+
+            {spec_text}
+
+            Produce a risk register.
+            """
+        ).strip()
+
+    def _risk_prompt_context(self, spec_text: str, risks_text: str, context: str, label: str) -> str:
+        return textwrap.dedent(
+            f"""
+            SPEC:
+            {spec_text}
+
+            CURRENT RISKS (for reference):
+            {risks_text}
+
+            CONTEXT ({label}):
+            {context}
+
+            Produce a risk register focused on this context.
+            Prefer new or updated risks; keep the list short (3-6 items).
+            """
+        ).strip()
+
+    def _scan_risk_registers(
+        self,
+        *,
+        prompt: str,
+        samples: int,
+        label: str,
+        max_output_tokens: int = 2500,
+    ) -> List[RiskRegister]:
+        registers: List[RiskRegister] = []
+        for i in range(samples):
+            rr = self._llm_parse(
+                f"Risk scan ({label}) {i+1}/{samples}",
+                model=self.model_scan,
+                reasoning_effort="none",
+                temperature=0.9,
+                system=self._system_risk(),
+                user=prompt + f"\n\n(Independent sample #{i+1}. Do not copy earlier samples.)",
+                schema=RiskRegister,
+                max_output_tokens=max_output_tokens,
+            )
+            assert isinstance(rr, RiskRegister)
+            registers.append(rr)
+        return registers
+
+    def _apply_risk_update(
+        self,
+        registers: List[RiskRegister],
+        *,
+        samples: int,
+        reset: bool,
+        iteration: Optional[int],
+        label: str,
+    ) -> None:
+        enriched = enrich_risks(registers, samples)
+        if reset or not self.state.risks:
+            merged = enriched
+        else:
+            merged = merge_risks(self.state.risks, enriched, iteration=iteration)
+
+        self.state.risks = merged
+        self.state.high_entropy_risk_ids = select_high_entropy_ids(merged)
+        self.save()
+        self._write_risks_md(label)
+
+    def _write_risks_md(self, label: str) -> None:
+        lines = ["# RISKS", ""]
+        for item in self.state.risks:
+            ent = item.get("_entropy") or {}
+            appear = ent.get("appear_frac", 0.0)
+            score = ent.get("score", 0.0)
+            mark = "🔥" if item["id"] in self.state.high_entropy_risk_ids else " "
+            lines.append(
+                f"- {mark} [{item.get('severity', 'n/a')}] {item.get('title', '')}  "
+                f"(confidence={float(item.get('confidence', 0.0)):.2f}, "
+                f"appear={appear:.2f}, entropy={score:.2f})"
+            )
+            lines.append(f"  - area: {item.get('area', '')}")
+            lines.append(f"  - {item.get('description', '')}")
+            if item.get("user_questions"):
+                for q in item["user_questions"]:
+                    lines.append(f"  - ask_user: {q}")
+            if item.get("suggested_experiments"):
+                for ex in item["suggested_experiments"]:
+                    lines.append(f"  - experiment: {ex}")
+            lines.append("")
+        write_text(self.workspace / "RISKS.md", "\n".join(lines))
+        self.log(f"Risk scan ({label})", "\n".join(lines))
+        print_info("Wrote RISKS.md and marked high-entropy risks (🔥).")
+
     # ---------- Bootstrap / Spec ----------
     def collect_spec(self) -> None:
         if self.state.spec is not None:
@@ -277,114 +365,80 @@ class EntropyAwareAgent:
 
     # ---------- Entropy scan ----------
     def build_risk_register(self, samples: int = 3) -> None:
-        """
-        Generate multiple risk registers (diversity sampling) and compute a simple
-        disagreement-based "entropy" score per risk.
-        """
+        """Initial multi-sample scan to seed the risk register."""
         if self.state.spec is None:
             raise RuntimeError("Spec not collected yet.")
 
         spec_text = read_text(self.workspace / "SPEC.md") if (self.workspace / "SPEC.md").exists() else json.dumps(self.state.spec)
+        user_prompt = self._risk_prompt_full(spec_text)
+        registers = self._scan_risk_registers(prompt=user_prompt, samples=samples, label="initial")
+        self._apply_risk_update(registers, samples=samples, reset=True, iteration=0, label="initial")
 
-        user_prompt = textwrap.dedent(
+    def _truncate_text(self, text: str, limit: int = 2000) -> str:
+        if len(text) <= limit:
+            return text
+        return text[:limit] + "\n... (truncated)"
+
+    def _format_cmd_outputs(self, cmd_outputs: List[Dict[str, Any]], limit: int = 2000) -> str:
+        trimmed: List[Dict[str, Any]] = []
+        for item in cmd_outputs:
+            out = item.get("output")
+            if isinstance(out, str):
+                out = self._truncate_text(out, limit=limit)
+            trimmed.append({**item, "output": out})
+        return self._truncate_text(json.dumps(trimmed, indent=2), limit=4000)
+
+    def scan_risks_for_task(self, task: str, iteration: int, samples: int = 1) -> None:
+        spec_text = read_text(self.workspace / "SPEC.md") if (self.workspace / "SPEC.md").exists() else ""
+        risks_text = read_text(self.workspace / "RISKS.md") if (self.workspace / "RISKS.md").exists() else ""
+        context = f"UPCOMING TASK:\\n{task}"
+        prompt = self._risk_prompt_context(spec_text, risks_text, context, "pre-step")
+        registers = self._scan_risk_registers(
+            prompt=prompt,
+            samples=samples,
+            label="pre-step",
+            max_output_tokens=1800,
+        )
+        self._apply_risk_update(
+            registers,
+            samples=samples,
+            reset=False,
+            iteration=iteration,
+            label="pre-step",
+        )
+
+    def scan_risks_after_step(
+        self,
+        step: StepPlan,
+        cmd_outputs: List[Dict[str, Any]],
+        iteration: int,
+        samples: int = 1,
+    ) -> None:
+        spec_text = read_text(self.workspace / "SPEC.md") if (self.workspace / "SPEC.md").exists() else ""
+        risks_text = read_text(self.workspace / "RISKS.md") if (self.workspace / "RISKS.md").exists() else ""
+        context = textwrap.dedent(
             f"""
-            Using this spec:
+            STEP PLAN:
+            {json.dumps(step.model_dump(), indent=2)}
 
-            {spec_text}
-
-            Produce a risk register.
+            COMMAND OUTPUTS (truncated):
+            {self._format_cmd_outputs(cmd_outputs)}
             """
         ).strip()
-
-        registers: List[RiskRegister] = []
-        for i in range(samples):
-            # For entropy scanning, we want diversity.
-            # Use reasoning_effort="none" + temperature.
-            rr = self._llm_parse(
-                f"Risk register sample {i+1}/{samples}",
-                model=self.model_scan,
-                reasoning_effort="none",
-                temperature=0.9,
-                system=self._system_risk(),
-                user=user_prompt + f"\n\n(Independent sample #{i+1}. Do not copy earlier samples.)",
-                schema=RiskRegister,
-                max_output_tokens=2500,
-            )
-            assert isinstance(rr, RiskRegister)
-            registers.append(rr)
-
-        # Choose the first register as "primary", then score disagreement across samples.
-        primary = registers[0]
-        key_counts: Dict[str, int] = {}
-        key_to_risks: Dict[str, List[Risk]] = {}
-
-        for rr in registers:
-            seen_keys = set()
-            for r in rr.risks:
-                k = normalize_key(r.title)
-                if k in seen_keys:
-                    continue
-                seen_keys.add(k)
-                key_counts[k] = key_counts.get(k, 0) + 1
-                key_to_risks.setdefault(k, []).append(r)
-
-        # Compute entropy score for each primary risk
-        enriched: List[Dict[str, Any]] = []
-        high_entropy_ids: List[str] = []
-
-        for r in primary.risks:
-            k = normalize_key(r.title)
-            appear_frac = key_counts.get(k, 0) / max(samples, 1)
-
-            # Entropy proxy:
-            # - low appearance fraction => disagreement => higher entropy
-            # - low confidence => higher entropy
-            # - high severity => weight higher
-            sev_w = severity_weight(r.severity)
-            score = (1.0 - appear_frac) * 0.6 + (1.0 - float(r.confidence)) * 0.4
-            score *= (0.5 + 0.5 * sev_w)
-
-            item = r.model_dump()
-            item["_entropy"] = {
-                "appear_frac": appear_frac,
-                "score": score,
-                "samples": samples,
-            }
-            enriched.append(item)
-
-        # Pick "high entropy" ones by threshold + severity
-        enriched_sorted = sorted(enriched, key=lambda x: x["_entropy"]["score"], reverse=True)
-        for item in enriched_sorted:
-            sev = item["severity"]
-            score = item["_entropy"]["score"]
-            if (sev in ("high", "critical") and score >= 0.35) or (score >= 0.55):
-                high_entropy_ids.append(item["id"])
-
-        self.state.risks = enriched_sorted
-        self.state.high_entropy_risk_ids = high_entropy_ids
-        self.save()
-
-        # Write a human-readable summary
-        lines = ["# RISKS", ""]
-        for item in enriched_sorted:
-            ent = item["_entropy"]
-            mark = "🔥" if item["id"] in high_entropy_ids else " "
-            lines.append(
-                f"- {mark} [{item['severity']}] {item['title']}  "
-                f"(confidence={item['confidence']:.2f}, appear={ent['appear_frac']:.2f}, entropy={ent['score']:.2f})"
-            )
-            lines.append(f"  - area: {item['area']}")
-            lines.append(f"  - {item['description']}")
-            if item.get("user_questions"):
-                for q in item["user_questions"]:
-                    lines.append(f"  - ask_user: {q}")
-            if item.get("suggested_experiments"):
-                for ex in item["suggested_experiments"]:
-                    lines.append(f"  - experiment: {ex}")
-            lines.append("")
-        write_text(self.workspace / "RISKS.md", "\n".join(lines))
-        self.log("Built risk register", "\n".join(lines))
-        print_info("Wrote RISKS.md and marked high-entropy risks (🔥).")
+        prompt = self._risk_prompt_context(spec_text, risks_text, context, "post-step")
+        registers = self._scan_risk_registers(
+            prompt=prompt,
+            samples=samples,
+            label="post-step",
+            max_output_tokens=1800,
+        )
+        self._apply_risk_update(
+            registers,
+            samples=samples,
+            reset=False,
+            iteration=iteration,
+            label="post-step",
+        )
 
     # ---------- Next-step selection ----------
     def pick_next_focus(self) -> Tuple[str, Optional[Dict[str, Any]]]:
@@ -508,9 +562,9 @@ class EntropyAwareAgent:
         assert isinstance(fc, FileContent)
         return fc.content
 
-    def execute_step(self, step: StepPlan) -> bool:
+    def execute_step(self, step: StepPlan) -> Tuple[bool, List[Dict[str, Any]]]:
         """
-        Apply file writes, run commands. Return True if all commands succeed.
+        Apply file writes, run commands. Return (ok, command outputs).
         """
         print_panel("Step goal", f"{step.step_goal}\n\n{step.rationale}")
 
@@ -586,7 +640,7 @@ class EntropyAwareAgent:
                 self.state.tasks.pop(0)
 
         self.save()
-        return all_ok
+        return all_ok, cmd_outputs
 
     def repair_after_failure(self, failed_step: StepPlan) -> Optional[StepPlan]:
         # Extract the last command outputs from history
@@ -673,12 +727,34 @@ class EntropyAwareAgent:
         return dc
 
     # ---------- Main loop ----------
-    def run(self, max_iters: int = 50, max_repairs_per_step: int = 3) -> None:
+    def run(
+        self,
+        max_iters: int = 50,
+        max_repairs_per_step: int = 3,
+        full_scan_interval: int = 5,
+        light_scan_samples: int = 1,
+    ) -> None:
         self.collect_spec()
         self.build_risk_register(samples=3)
 
         for it in range(max_iters):
             print_info(f"Iteration {it+1}/{max_iters}")
+            if full_scan_interval and it > 0 and it % full_scan_interval == 0:
+                spec_text = read_text(self.workspace / "SPEC.md") if (self.workspace / "SPEC.md").exists() else ""
+                prompt = self._risk_prompt_full(spec_text)
+                registers = self._scan_risk_registers(
+                    prompt=prompt,
+                    samples=3,
+                    label=f"full-scan-{it}",
+                    max_output_tokens=2500,
+                )
+                self._apply_risk_update(
+                    registers,
+                    samples=3,
+                    reset=False,
+                    iteration=it,
+                    label=f"full-scan-{it}",
+                )
             kind, payload = self.pick_next_focus()
 
             if kind == "ask_user_about_risk":
@@ -690,7 +766,7 @@ class EntropyAwareAgent:
                 assert payload is not None
                 risk = payload
                 step = self.plan_experiment_for_risk(risk)
-                ok = self.execute_step(step)
+                ok, cmd_outputs = self.execute_step(step)
                 repairs = 0
                 while not ok and repairs < max_repairs_per_step:
                     repairs += 1
@@ -699,7 +775,8 @@ class EntropyAwareAgent:
                     if not rep:
                         break
                     step = rep
-                    ok = self.execute_step(step)
+                    ok, cmd_outputs = self.execute_step(step)
+                self.scan_risks_after_step(step, cmd_outputs, iteration=it, samples=light_scan_samples)
                 # De-prioritize this risk after attempting an experiment
                 rid = risk["id"]
                 self.state.high_entropy_risk_ids = [x for x in self.state.high_entropy_risk_ids if x != rid]
@@ -708,6 +785,11 @@ class EntropyAwareAgent:
 
             if kind == "implement_task":
                 assert payload is not None
+                task = payload["task"]
+                self.scan_risks_for_task(task, iteration=it, samples=light_scan_samples)
+                kind, payload = self.pick_next_focus()
+                if kind != "implement_task":
+                    continue
                 task = payload["task"]
                 spec_text = read_text(self.workspace / "SPEC.md") if (self.workspace / "SPEC.md").exists() else ""
                 risks_text = read_text(self.workspace / "RISKS.md") if (self.workspace / "RISKS.md").exists() else ""
@@ -740,7 +822,7 @@ class EntropyAwareAgent:
                 )
                 assert isinstance(step, StepPlan)
 
-                ok = self.execute_step(step)
+                ok, cmd_outputs = self.execute_step(step)
                 repairs = 0
                 while not ok and repairs < max_repairs_per_step:
                     repairs += 1
@@ -749,7 +831,8 @@ class EntropyAwareAgent:
                     if not rep:
                         break
                     step = rep
-                    ok = self.execute_step(step)
+                    ok, cmd_outputs = self.execute_step(step)
+                self.scan_risks_after_step(step, cmd_outputs, iteration=it, samples=light_scan_samples)
 
                 # If still failing, force human intervention (high-entropy / missing context)
                 if not ok:
