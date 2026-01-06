@@ -14,16 +14,21 @@ agents:
 default_agent: "default"
 
 tasks:
-  - id: auth_flow_summary
-    type: qa
+  - id: cucumber_features
+    type: cucumber_eval
     agent: "default"
-    prompt: >
-      Explain how authorization is enforced for API requests.
-      Return JSON with keys:
-      {"entrypoints":[...],"middleware":[...],"checks":[...],"citations":[{"path":...,"lines":[start,end]}]}
-    eval:
-      json_schema: "schemas/auth_flow_summary.schema.json"
-      must_contain_strings:
-        - "middleware"
-        - "citations"
-      validate_citations: true
+    adapter: godog_default
+    features:
+      - "spec/features/*.feature"
+    prompt_template: |
+      Read the source code. For the example {example_id}, decide if it is fully
+      implemented. List relevant file names and line numbers.
+      Return JSON with example_id, implemented, evidence, notes.
+
+adapters:
+  - id: godog_default
+    type: cucumber
+    runner: godog
+    formatter: json
+    feature_roots:
+      - "spec/features"

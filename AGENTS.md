@@ -22,8 +22,10 @@ the technical debt in the repository.
 
 
 ## Local Development Environment
-We use `flake.nix` and direnv. 
-To properly run commands in the development environment you can use `nix develop`. Otherwise modifications to flake.nix in the agent's session won't be reflected in the agent's environment.
+We use `flake.nix` and direnv.  To properly run commands in the
+development environment you can use `nix develop`. Otherwise
+modifications to flake.nix in the agent's session won't be reflected
+in the agent's environment.
 
 ## Version control
 
@@ -46,3 +48,28 @@ To properly run commands in the development environment you can use `nix develop
 ## Testing
 
 * All tests should have configured timeouts. Aim to write tests with short timeouts. 
+* We want to use Cucumber .feature files to describe our test suites
+  and test cases whenever it makes sense. We'll use godog for the Go code of
+  those test cases. Any behaviour which is visible by the user should
+  be tested in this way.
+
+## Refactoring and code quality
+
+We want to follow these principles in our codebase:
+
+
+| Area           | Refactoring Goal                   | Implementation Strategy                                                     |
+|----------------|------------------------------------|-----------------------------------------------------------------------------|
+| Architecture   | Atomic Modularity                  | Limit files to <200 lines. Use Single Responsibility Principle.             |
+| Design Pattern | Functional Core / Imperative Shell | Isolate business logic from I/O to enable safe agentic reasoning.           |
+| Typing         | Strict Explicitness                | 100% Type Hint coverage. No any. Use Pydantic/Zod for runtime validation.   |
+| Context        | Mapability                         | Flat directory structures. Barrel files (index.ts). AGENTS.md present.      |
+| Testing        | Deterministic Feedback             | Zero-flakiness tests. Mock all external dependencies. Rich error reporting. |
+| Naming         | Semantic Density                   | "Verbose, intent-revealing names to optimize vector retrieval."             |
+| Workflow       | Reflexion Support                  | Fast test suites (<10s) to enable agent self-correction loops.              |
+
+After each successful step and jj commit you are allowed to do a
+**partial refactor**. This means: review the code that was just
+written and related code. If the code doesn't follow our code quality
+guidelines you can refactor it and create a jj commit with message
+"refactor:...".
