@@ -4,7 +4,9 @@ Status: In-Progress
 
 ## Current status
 - Phase 0 completed with Godog tooling, smoke tags, and a Cucumber test harness.
-- Phase 1 in progress: config structs and validation for adapters and cucumber_eval tasks.
+- Phase 1 completed: config structs and validation for adapters and cucumber_eval tasks.
+- Phase 2 completed: Gherkin parsing and Example ID generation with unit tests.
+- Phase 3 in progress: Godog JSON runner and normalization to Example IDs.
 - Go module version aligned to the nix develop Go toolchain (1.25.x).
 - Dev shell sets Go caches and installs Godog automatically if missing.
 
@@ -16,6 +18,8 @@ Status: In-Progress
 - Tagged CLI feature smoke scenarios for baseline Godog runs.
 - Extended config types for adapters and cucumber_eval task fields.
 - Added validation for adapters, features, and prompt_template requirements.
+- Added Cucumber feature parser with Example ID generation and unit tests.
+- Added Godog JSON parser, scenario status normalization, and example indexing utilities.
 - Normalized repo root expectations in vcs tests to handle `/tmp` vs `/private/tmp`.
 
 ## Next steps
