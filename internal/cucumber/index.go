@@ -60,6 +60,26 @@ func (idx ExampleIndex) FindByLine(repoRoot, featurePath string, line int) (Exam
 	return example, ok
 }
 
+func (idx ExampleIndex) Examples() []Example {
+	examples := make([]Example, 0)
+	paths := make([]string, 0, len(idx.byPath))
+	for path := range idx.byPath {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		lines := make([]int, 0, len(idx.byPath[path]))
+		for line := range idx.byPath[path] {
+			lines = append(lines, line)
+		}
+		sort.Ints(lines)
+		for _, line := range lines {
+			examples = append(examples, idx.byPath[path][line])
+		}
+	}
+	return examples
+}
+
 func ExpandFeaturePaths(repoRoot string, entries []string) ([]string, error) {
 	paths := make([]string, 0)
 	seen := make(map[string]struct{})

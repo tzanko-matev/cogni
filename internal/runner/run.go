@@ -69,6 +69,10 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 	if err != nil {
 		return Results{}, err
 	}
+	adapterByID := make(map[string]spec.AdapterConfig, len(cfg.Adapters))
+	for _, adapter := range cfg.Adapters {
+		adapterByID[adapter.ID] = adapter
+	}
 
 	providerFactory := params.Deps.ProviderFactory
 	if providerFactory == nil {
@@ -103,11 +107,15 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 
 	for _, taskRun := range taskRuns {
 		usedAgents[taskRun.Agent.ID] = taskRun.Agent
-		repeat := params.Repeat
-		if repeat <= 0 {
-			repeat = 1
+		if taskRun.Task.Type == "cucumber_eval" {
+			taskResults = append(taskResults, runCucumberTask(ctx, repoRoot, taskRun, adapterByID, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, params.NoColor))
+		} else {
+			repeat := params.Repeat
+			if repeat <= 0 {
+				repeat = 1
+			}
+			taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, repeat, params.Verbose, verboseWriter, params.NoColor))
 		}
-		taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, repeat, params.Verbose, verboseWriter, params.NoColor))
 	}
 
 	agents := make([]AgentInfo, 0, len(usedAgents))
@@ -384,9 +392,17 @@ func summarize(tasks []TaskResult) RunSummary {
 		for _, attempt := range task.Attempts {
 			summary.TokensTotal += attempt.TokensTotal
 		}
+		if task.Cucumber != nil {
+			summary.CucumberExamplesTotal += task.Cucumber.Summary.ExamplesTotal
+			summary.CucumberExamplesCorrect += task.Cucumber.Summary.ExamplesCorrect
+			summary.CucumberExamplesIncorrect += task.Cucumber.Summary.ExamplesIncorrect
+		}
 	}
 	if summary.TasksTotal > 0 {
 		summary.PassRate = float64(summary.TasksPassed) / float64(summary.TasksTotal)
+	}
+	if summary.CucumberExamplesTotal > 0 {
+		summary.CucumberAccuracy = float64(summary.CucumberExamplesCorrect) / float64(summary.CucumberExamplesTotal)
 	}
 	return summary
 }

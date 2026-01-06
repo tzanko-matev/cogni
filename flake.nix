@@ -24,7 +24,7 @@
           version = "0.1.0";
           src = ./.;
           subPackages = [ "cmd/cogni" ];
-          vendorHash = "sha256-UExvP09r11ucFVPn4tQ44lU56mjSzYEV1x9siOQQOeo=";
+          vendorHash = null;
         };
     in
     {

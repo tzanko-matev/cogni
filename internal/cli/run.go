@@ -66,6 +66,18 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		}
 
 		fmt.Fprintf(stdout, "Run %s completed\n", results.RunID)
+		for _, task := range results.Tasks {
+			if task.Cucumber == nil {
+				continue
+			}
+			summary := task.Cucumber.Summary
+			fmt.Fprintf(stdout, "Cucumber task %s accuracy: %d/%d (%.1f%%)\n",
+				task.TaskID,
+				summary.ExamplesCorrect,
+				summary.ExamplesTotal,
+				summary.Accuracy*100,
+			)
+		}
 		fmt.Fprintf(stdout, "Results: %s\n", paths.ResultsPath())
 		fmt.Fprintf(stdout, "Report: %s\n", paths.ReportPath())
 		return ExitOK

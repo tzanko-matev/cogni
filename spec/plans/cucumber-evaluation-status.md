@@ -6,7 +6,10 @@ Status: In-Progress
 - Phase 0 completed with Godog tooling, smoke tags, and a Cucumber test harness.
 - Phase 1 completed: config structs and validation for adapters and cucumber_eval tasks.
 - Phase 2 completed: Gherkin parsing and Example ID generation with unit tests.
-- Phase 3 in progress: Godog JSON runner and normalization to Example IDs.
+- Phase 3 completed: Godog JSON runner and normalization to Example IDs.
+- Phase 4 completed: manual expectations loader and validation.
+- Phase 5 completed: cucumber_eval execution, results output, and CLI summaries.
+- Phase 6 in progress: end-to-end CLI coverage for cucumber_eval tasks.
 - Go module version aligned to the nix develop Go toolchain (1.25.x).
 - Dev shell sets Go caches and installs Godog automatically if missing.
 
@@ -20,20 +23,17 @@ Status: In-Progress
 - Added validation for adapters, features, and prompt_template requirements.
 - Added Cucumber feature parser with Example ID generation and unit tests.
 - Added Godog JSON parser, scenario status normalization, and example indexing utilities.
+- Added manual expectations loader/validator with tests.
+- Added cucumber_eval task execution with per-example results and summaries.
+- Added CLI summary line for Cucumber task accuracy.
 - Normalized repo root expectations in vcs tests to handle `/tmp` vs `/private/tmp`.
 
 ## Next steps
-- Install Godog in the dev environment and wire feature tests into `go test`.
-- Add Go test harnesses for a subset of feature files, with at least some passing scenarios.
-- Extend config structs and validation for `adapters` and `cucumber_eval` tasks.
-- Implement Example ID generation and feature parsing.
-- Build Godog adapter runner and JSON normalizer.
-- Build manual expectations loader and matcher.
-- Add per-example verdicts to `results.json` and CLI summaries.
-- Add tests (unit, integration, E2E) for adapters and evaluation flow.
+- Add end-to-end CLI coverage for cucumber_eval tasks (`run`, `compare`, `report`).
+- Confirm results output includes per-example verdicts and summary fields in real runs.
 
 ## Latest test run
-- 2026-01-06: `nix develop -c env LLM_API_KEY= OPENROUTER_API_KEY= GOPATH=/Users/tzankomatev/.cache/go GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` passed.
+- 2026-01-06: `nix develop -c env LLM_API_KEY= OPENROUTER_API_KEY= GOPATH=/Users/tzankomatev/.cache/go GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` passed (Phase 5 updates).
 
 ## Relevant source files (current or planned)
 - internal/config/* (config structs, validation)

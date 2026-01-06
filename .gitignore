@@ -2,6 +2,7 @@
 /cogni.exe
 /cmd/cogni/cogni
 /.direnv/
+/.cache/
 *~
 /.hugo_build.lock
 /public/
