@@ -1,6 +1,6 @@
 # Cucumber Evaluation Implementation Plan
 
-Status: In-Progress
+Status: Done
 
 Linked status: [spec/plans/cucumber-evaluation-status.md](/plans/cucumber-evaluation-status/)
 
