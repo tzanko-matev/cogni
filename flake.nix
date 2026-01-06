@@ -24,7 +24,7 @@
           version = "0.1.0";
           src = ./.;
           subPackages = [ "cmd/cogni" ];
-          vendorHash = "sha256-hsk6ryKBE9hbcU8ccsLgCA0jAqJJnA7gYK0KSIA75q8=";
+          vendorHash = "sha256-UExvP09r11ucFVPn4tQ44lU56mjSzYEV1x9siOQQOeo=";
         };
     in
     {
@@ -65,6 +65,15 @@
               # Ensure Nix Python + packages are found even if PATH is reordered by shell init.
               export PATH="${pythonEnv}/bin:$PATH"
               export NIX_PYTHONPATH="${pythonSitePackages}:$NIX_PYTHONPATH"
+              export GOPATH="$HOME/.cache/go"
+              export GOMODCACHE="$HOME/.cache/go-mod"
+              export GOCACHE="$HOME/.cache/go-build"
+              export GOBIN="$HOME/.cache/go/bin"
+              mkdir -p "$GOPATH" "$GOMODCACHE" "$GOCACHE" "$GOBIN"
+              export PATH="$GOBIN:$PATH"
+              if ! command -v godog >/dev/null 2>&1; then
+                go install github.com/cucumber/godog/cmd/godog@v0.12.6
+              fi
               if [ -z "$LLM_PROVIDER" ]; then
                 export LLM_PROVIDER=openrouter
               fi

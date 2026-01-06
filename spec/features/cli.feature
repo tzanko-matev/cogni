@@ -7,6 +7,7 @@ Feature: Cogni CLI
     Given a git repository with a valid Cogni configuration
     And LLM provider credentials are available in the environment
 
+  @smoke
   Scenario: Help lists the primary commands
     When I run "cogni --help"
     Then the output lists these commands:
@@ -63,6 +64,7 @@ Feature: Cogni CLI
       | tty     | in-place indicators |
       | not-tty | line-based updates  |
 
+  @smoke
   Scenario: Exit codes reflect validation failures
     Given the config is invalid
     When I run "cogni validate"
