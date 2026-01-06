@@ -8,6 +8,7 @@ Status: In-Progress
 - Go module version aligned to the nix develop Go toolchain (1.25.x).
 - Phase 0 tasks refined with Godog tooling, smoke tagging, and a Go test harness.
 - Phase 1-3 plan details added for config structs, Example IDs, and Godog mapping.
+- Baseline `go test ./...` now passes in the dev shell after normalizing temp paths in vcs tests.
 
 ## What's done so far
 - Spec and feature documentation for `cucumber_eval` and adapters.
@@ -15,6 +16,7 @@ Status: In-Progress
 - Plan aligned with core implementation plan conventions.
 - Added Phase 0 guidance for selecting a passing scenario subset.
 - Added Phase 1-3 implementation notes for config and adapter behavior.
+- Normalized repo root expectations in vcs tests to handle `/tmp` vs `/private/tmp`.
 
 ## Next steps
 - Install Godog in the dev environment and wire feature tests into `go test`.
@@ -27,8 +29,7 @@ Status: In-Progress
 - Add tests (unit, integration, E2E) for adapters and evaluation flow.
 
 ## Latest test run
-- 2026-01-06: `nix develop -c env GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` failed:
-  - `TestDiscoverRepoRootAndMetadata` expected `/tmp/...` but got `/private/tmp/...` in `cogni/internal/vcs`.
+- 2026-01-06: `nix develop -c env GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` passed.
 
 ## Relevant source files (current or planned)
 - internal/config/* (config structs, validation)

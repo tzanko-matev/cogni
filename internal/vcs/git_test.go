@@ -24,8 +24,16 @@ func TestDiscoverRepoRootAndMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatalf("discover repo root: %v", err)
 	}
-	if root != repo.Root {
-		t.Fatalf("expected root %q, got %q", repo.Root, root)
+	expectedRoot, err := filepath.EvalSymlinks(repo.Root)
+	if err != nil {
+		t.Fatalf("eval expected root: %v", err)
+	}
+	actualRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatalf("eval actual root: %v", err)
+	}
+	if actualRoot != expectedRoot {
+		t.Fatalf("expected root %q, got %q", expectedRoot, actualRoot)
 	}
 
 	meta, err := Repo{Root: root}.Metadata(ctx)
