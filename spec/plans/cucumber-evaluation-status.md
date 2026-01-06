@@ -33,7 +33,7 @@ Status: Done
 - Monitor real runs for agent output formatting issues and expand coverage as needed.
 
 ## Latest test run
-- 2026-01-06: `nix develop -c env LLM_API_KEY= OPENROUTER_API_KEY= GOPATH=/Users/tzankomatev/.cache/go GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` passed (Phase 6 updates).
+- 2026-01-06: `nix develop -c go test ./...` passed with live LLM credentials (Phase 6 updates).
 
 ## Relevant source files (current or planned)
 - internal/config/* (config structs, validation)

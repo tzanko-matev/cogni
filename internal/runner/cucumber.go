@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"io"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -75,7 +76,11 @@ func runCucumberTask(
 			groundTruth[entry.ExampleID] = cucumberGroundTruth{Implemented: entry.Status == "passed"}
 		}
 	case "cucumber_manual":
-		expectations, err := cucumber.LoadExpectations(adapter.ExpectationsDir)
+		expectationsDir := strings.TrimSpace(adapter.ExpectationsDir)
+		if expectationsDir != "" && !filepath.IsAbs(expectationsDir) {
+			expectationsDir = filepath.Join(repoRoot, expectationsDir)
+		}
+		expectations, err := cucumber.LoadExpectations(expectationsDir)
 		if err != nil {
 			reason := "adapter_error"
 			result.Status = "error"
