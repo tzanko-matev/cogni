@@ -3,19 +3,19 @@
 Status: In-Progress
 
 ## Current status
-- Implementation plan expanded with phased work, verification, and exit criteria.
-- Phase 0 (Godog dev environment + baseline tests) is defined but not started.
+- Phase 0 completed with Godog tooling, smoke tags, and a Cucumber test harness.
+- Phase 1 in progress: config structs and validation for adapters and cucumber_eval tasks.
 - Go module version aligned to the nix develop Go toolchain (1.25.x).
-- Phase 0 tasks refined with Godog tooling, smoke tagging, and a Go test harness.
-- Phase 1-3 plan details added for config structs, Example IDs, and Godog mapping.
-- Baseline `go test ./...` now passes in the dev shell after normalizing temp paths in vcs tests.
+- Dev shell sets Go caches and installs Godog automatically if missing.
 
 ## What's done so far
 - Spec and feature documentation for `cucumber_eval` and adapters.
-- Phase 0 requirements captured in the plan.
-- Plan aligned with core implementation plan conventions.
-- Added Phase 0 guidance for selecting a passing scenario subset.
-- Added Phase 1-3 implementation notes for config and adapter behavior.
+- Phase 0 guidance captured in the plan, including smoke subset guidance.
+- Added Godog tooling pin (`tools/tools.go`) and dev-shell install hook.
+- Added Cucumber smoke harness + step definitions for CLI help and validation.
+- Tagged CLI feature smoke scenarios for baseline Godog runs.
+- Extended config types for adapters and cucumber_eval task fields.
+- Added validation for adapters, features, and prompt_template requirements.
 - Normalized repo root expectations in vcs tests to handle `/tmp` vs `/private/tmp`.
 
 ## Next steps
@@ -29,7 +29,7 @@ Status: In-Progress
 - Add tests (unit, integration, E2E) for adapters and evaluation flow.
 
 ## Latest test run
-- 2026-01-06: `nix develop -c env GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` passed.
+- 2026-01-06: `nix develop -c env LLM_API_KEY= OPENROUTER_API_KEY= GOPATH=/Users/tzankomatev/.cache/go GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` passed.
 
 ## Relevant source files (current or planned)
 - internal/config/* (config structs, validation)

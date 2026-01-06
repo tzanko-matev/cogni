@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -105,4 +107,91 @@ func TestValidateRejectsNegativeBudgets(t *testing.T) {
 	if !strings.Contains(err.Error(), "budget") {
 		t.Fatalf("expected budget error, got %q", err.Error())
 	}
+}
+
+func TestValidateCucumberEvalRequiresAdapter(t *testing.T) {
+	baseDir, featurePath, _ := writeCucumberFixture(t)
+	cfg := validConfig()
+	cfg.Tasks = []spec.TaskConfig{{
+		ID:             "cucumber",
+		Type:           "cucumber_eval",
+		Agent:          "default",
+		PromptTemplate: "template",
+		Features:       []string{featurePath},
+	}}
+
+	err := Validate(&cfg, baseDir)
+	if err == nil {
+		t.Fatalf("expected validation error")
+	}
+	if !strings.Contains(err.Error(), "adapter") {
+		t.Fatalf("expected adapter error, got %q", err.Error())
+	}
+}
+
+func TestValidateCucumberEvalValidConfig(t *testing.T) {
+	baseDir, featurePath, expectationsDir := writeCucumberFixture(t)
+	cfg := validConfig()
+	cfg.Adapters = []spec.AdapterConfig{{
+		ID:              "manual",
+		Type:            "cucumber_manual",
+		FeatureRoots:    []string{"features"},
+		ExpectationsDir: expectationsDir,
+	}}
+	cfg.Tasks = []spec.TaskConfig{{
+		ID:             "cucumber",
+		Type:           "cucumber_eval",
+		Agent:          "default",
+		Adapter:        "manual",
+		PromptTemplate: "template",
+		Features:       []string{featurePath},
+	}}
+
+	if err := Validate(&cfg, baseDir); err != nil {
+		t.Fatalf("expected config to validate, got %v", err)
+	}
+}
+
+func TestValidateCucumberAdapterRequiresExpectationsDir(t *testing.T) {
+	baseDir, featurePath, _ := writeCucumberFixture(t)
+	cfg := validConfig()
+	cfg.Adapters = []spec.AdapterConfig{{
+		ID:           "manual",
+		Type:         "cucumber_manual",
+		FeatureRoots: []string{"features"},
+	}}
+	cfg.Tasks = []spec.TaskConfig{{
+		ID:             "cucumber",
+		Type:           "cucumber_eval",
+		Agent:          "default",
+		Adapter:        "manual",
+		PromptTemplate: "template",
+		Features:       []string{featurePath},
+	}}
+
+	err := Validate(&cfg, baseDir)
+	if err == nil {
+		t.Fatalf("expected validation error")
+	}
+	if !strings.Contains(err.Error(), "expectations_dir") {
+		t.Fatalf("expected expectations_dir error, got %q", err.Error())
+	}
+}
+
+func writeCucumberFixture(t *testing.T) (string, string, string) {
+	t.Helper()
+	baseDir := t.TempDir()
+	featuresDir := filepath.Join(baseDir, "features")
+	if err := os.MkdirAll(featuresDir, 0o755); err != nil {
+		t.Fatalf("mkdir features: %v", err)
+	}
+	featurePath := filepath.Join(featuresDir, "sample.feature")
+	if err := os.WriteFile(featurePath, []byte("Feature: Sample\n  Scenario: Example\n    Given a step\n"), 0o644); err != nil {
+		t.Fatalf("write feature: %v", err)
+	}
+	expectationsDir := filepath.Join(baseDir, "expectations")
+	if err := os.MkdirAll(expectationsDir, 0o755); err != nil {
+		t.Fatalf("mkdir expectations: %v", err)
+	}
+	return baseDir, filepath.Join("features", "sample.feature"), filepath.Join("expectations")
 }
