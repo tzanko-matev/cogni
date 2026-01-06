@@ -9,6 +9,7 @@
 - Run `cogni init`, confirm the suggested `.cogni/` location, and choose a results folder (default `.cogni/results`).
 - If a git repo is detected, decide whether to add the results folder to `.gitignore`.
 - Add a small task in `.cogni/config.yml`.
+- If you have Cucumber specs, add a `cucumber_eval` task with a Godog or manual adapter.
 - Run `cogni validate` and `cogni run`.
 - Generate a report with `cogni report --range main..HEAD`.
 - Run commands from any subdirectory; Cogni finds `.cogni/` by walking up parent directories.

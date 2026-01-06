@@ -6,6 +6,7 @@
 - Invalid `.cogni/config.yml`, missing `.cogni/schemas/`, or no `.cogni/` found in parent directories.
 - Unknown task ID or agent ID.
 - No results found for a commit range.
+- Missing Cucumber feature files, expectations, or Godog runner errors.
 
 ## Diagnostics
 

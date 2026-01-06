@@ -3,7 +3,8 @@
 ## Scope (MVP)
 
 - Single Go CLI binary: `cogni` with `init`, `validate`, `run`, `compare`, `report`.
-- QA-only tasks with objective evaluation (JSON/schema/citations).
+- QA tasks with objective evaluation (JSON/schema/citations).
+- Cucumber evaluation tasks with Godog or manual expectations.
 - Built-in agent only, OpenRouter provider only, git-only repo integration.
 - Local, read-only execution with outputs under `<output_dir>/<commit>/<run-id>/`.
 
@@ -54,6 +55,7 @@
   - Load `.cogni/config.yml` into config structs with defaults and normalization.
   - Validate unique task/agent IDs, default agent references, budgets, and
     schema file paths.
+  - Validate Cucumber adapter configuration, feature paths, and expectations roots.
   - Validate referenced JSON schemas are syntactically valid and loadable.
   - Implement `cogni init` to scaffold `.cogni/` with `config.yml` plus `schemas/` examples.
   - Prompt for confirmation before writing `.cogni/` to disk.
@@ -123,6 +125,8 @@
     must_contain checks, and citation validation.
   - Define failure reasons and persist evaluation artifacts per attempt.
   - Aggregate per-attempt metrics and run summaries for `results.json`.
+  - Implement `cucumber_eval` pipeline: example ID generation, ground-truth mapping,
+    and per-example verdicts with accuracy.
 - Verification:
   - Unit tests for each evaluation step and failure reason mapping.
   - Fixture tests that compare evaluation outputs to expected results.

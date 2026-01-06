@@ -5,6 +5,7 @@ Keep benchmarks lightweight and contributor-friendly.
 
 ## Recommended flow
 - Provide a minimal `.cogni/config.yml` (in a `.cogni/` folder) with a small question set.
+- If you publish Cucumber features, add a `cucumber_eval` task and share expectations when tests are unavailable.
 - Run locally before CI to reduce cost.
 - Share `report.html` in issues or release notes.
 - Keep results in `.cogni/results` (default) and ignore them in git.

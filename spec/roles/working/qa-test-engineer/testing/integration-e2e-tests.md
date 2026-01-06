@@ -106,6 +106,22 @@ EOF
 Prompts are written in plain language with objective, verifiable answers
 (titles, file names, short quotes, enumerations).
 
+### Cucumber fixture recipe (per test)
+
+Create a small feature file set and optional expectations when testing the
+Cucumber adapters.
+
+```bash
+mkdir -p spec/features
+cat > spec/features/sample.feature <<'EOF'
+@id:sample_feature
+Feature: Sample
+  Scenario: Show title
+    When I read the README
+    Then I see the project title
+EOF
+```
+
 ## Acceptance criteria (global)
 
 - CLI exits successfully for passing runs and clearly signals failures otherwise.
@@ -212,3 +228,17 @@ Prompts are written in plain language with objective, verifiable answers
 - Setup: Simple repo recipe and an invalid API key or disabled provider.
 - Steps: run `cogni run`.
 - Expected: CLI fails with a clear authentication/availability message.
+
+### T15: Cucumber evaluation via Godog
+
+- Goal: evaluate feature examples with the Godog adapter.
+- Setup: Simple repo recipe, Cucumber fixture recipe, and a `cucumber_eval` task.
+- Steps: run `cogni run cucumber_cli_features`.
+- Expected: run succeeds, per-example verdicts exist, and accuracy is computed.
+
+### T16: Cucumber evaluation via manual expectations
+
+- Goal: evaluate feature examples without a test suite.
+- Setup: Simple repo recipe, Cucumber fixture recipe, and expectations file.
+- Steps: run `cogni run cucumber_cli_manual`.
+- Expected: run succeeds, ground truth comes from expectations, accuracy computed.

@@ -4,6 +4,8 @@
 
 - CLI commands: `cogni init`, `cogni validate`, `cogni run`, `cogni compare`, `cogni report`
 - Configuration: `.cogni/config.yml` and `.cogni/schemas/` under `.cogni/`
+- Task types: `qa`, `cucumber_eval`
+- Adapters: `cucumber` (Godog) and `cucumber_manual` (manual expectations)
 
 ## Init behavior
 
@@ -41,8 +43,10 @@ Outputs:
 - `results.json` per run
 - `report.html` per run or range
 - CLI summary output for compare/report
+- Per-example verdicts for `cucumber_eval` tasks
 
 ## Error handling
 
 - Non-zero exit codes on invalid config, missing API keys, or invalid task selectors.
 - Clear messages for missing runs or invalid ranges.
+- Actionable errors for missing feature files, expectations, or Godog failures.

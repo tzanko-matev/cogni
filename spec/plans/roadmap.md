@@ -10,7 +10,7 @@
 
 - CLI commands: `init`, `validate`, `run`, `compare`, `report` with stable flags and help text.
 - Config and schema support for tasks, agents, budgets, and output location.
-- Built-in agent with tool allowlist, citation validation, and QA-only task format.
+- Built-in agent with tool allowlist, citation validation, and QA plus Cucumber evaluation task formats.
 - Metrics capture per attempt (tokens, time, tool calls, files read, model, agent ID).
 - Deterministic outputs under `<output_dir>/<commit>/<run-id>/` including `results.json` and `report.html`.
 - Range-based comparison and trend reporting over commit ranges.

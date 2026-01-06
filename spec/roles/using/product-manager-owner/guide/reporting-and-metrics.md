@@ -4,6 +4,7 @@
 - Pass rate per run and over time.
 - Token usage and wall time trends.
 - Per-task outcomes with citations.
+- Per-example accuracy for Cucumber evaluation tasks.
 
 ## How to read trends
 - Use `cogni report --range <start>..<end>` for history.

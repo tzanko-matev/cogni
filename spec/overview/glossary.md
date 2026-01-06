@@ -4,6 +4,7 @@
 - Cognitive test: A single question answered by an agent with citations.
 - Probe question: A repo-specific question tied to a product feature.
 - Task: A `qa` item in `.cogni.yml`.
+- Cucumber task: A `cucumber_eval` item that evaluates feature examples.
 - Run: An execution of tasks at a specific commit.
 - Attempt: A single execution of a task (supports repeats).
 - Agent: The configured system that answers questions.
@@ -15,3 +16,7 @@
 - Output dir: Configured folder where results and reports are stored.
 - Range: A commit window (e.g., `main..HEAD`) used for trends.
 - Pass rate: Ratio of passing tasks to total tasks in a run.
+- Adapter: A configuration that defines how Cogni gathers ground truth for a task.
+- Example: A single Cucumber scenario or scenario outline row.
+- Example ID: A stable identifier for a Cucumber example, derived from explicit tags or example row IDs.
+- Expectation: A manually curated expected outcome for a Cucumber example.

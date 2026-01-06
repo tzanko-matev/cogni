@@ -7,6 +7,9 @@
 - Run the full benchmark (`cogni run`).
 - Run a subset of tasks using selectors (`task-id` or `task-id@agent-id`).
 - Configure multiple agents and select per task; support `--agent` override.
+- Support `cucumber_eval` tasks that evaluate Cucumber feature examples.
+- Support adapters for Cucumber evaluation: Godog runner and manual expectations.
+- Generate stable Example IDs from feature tags and example row IDs.
 - Support `cogni run --verbose` to stream LLM input/output, tool calls and results, and per-task metrics to the console (respect truncation limits); use ANSI styling when stdout is a terminal.
 - Support `cogni run --no-color` to disable ANSI styling for verbose console logs.
 - Capture metrics per attempt: correctness, tokens, wall time, tool calls, files read, model, agent ID.
@@ -22,3 +25,4 @@
 - Commit ranges with missing runs must warn and continue.
 - Citation validation failures must mark a task as failed.
 - Budget overruns must mark a task as failed with `budget_exceeded`.
+- Missing feature files, adapters, or expectations must fail with clear errors.

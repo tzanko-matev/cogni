@@ -24,7 +24,8 @@
 ## In scope
 
 - Go CLI for `init`, `validate`, `run`, `compare`, and `report`.
-- QA-only tasks with JSON answers and citation checks.
+- QA tasks with JSON answers and citation checks.
+- Cucumber evaluation tasks with Godog or manual expectations.
 - Local outputs (`results.json`, `report.html`) under configurable `output_dir`.
 - Git-only repo integration and OpenRouter-only provider in MVP.
 - Built-in agent with per-task agent selection.

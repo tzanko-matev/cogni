@@ -6,6 +6,7 @@
 - Invalid `.cogni.yml` or missing schema files.
 - Unknown task ID or agent ID.
 - No results found for a commit range.
+- Missing Cucumber feature files, expectations, or Godog runner errors.
 
 ## Diagnostics
 

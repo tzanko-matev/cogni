@@ -14,6 +14,7 @@ Run targeted checks to validate changes and spot regressions in understanding.
 
 ## Common workflows
 - Run a subset of tasks: `cogni run task-id1 task-id2@agent-id`.
+- Run Cucumber evaluation tasks: `cogni run cucumber_cli_features`.
 - Compare to main: `cogni compare --base main`.
 - Generate trends: `cogni report --range main..HEAD`.
 

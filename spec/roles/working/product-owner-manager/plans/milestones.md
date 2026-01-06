@@ -8,7 +8,7 @@
 
 ## M2 - Task runtime and metrics
 
-- Goal: run QA-only tasks with a built-in agent and capture metrics.
+- Goal: run QA and Cucumber evaluation tasks with a built-in agent and capture metrics.
 - Deliverables: OpenRouter integration, tool allowlist, citation checks, per-task budgets, `results.json` output.
 - Exit criteria: a sample repo run completes with partial-failure handling and stable output paths.
 

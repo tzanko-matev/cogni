@@ -4,6 +4,7 @@
 - Run `cogni init` to scaffold `.cogni/config.yml` (confirm the `.cogni/` location).
 - Choose a results folder when prompted (default `.cogni/results`) and decide whether to add it to `.gitignore` in git repos.
 - Add a small set of QA tasks with citation checks.
+- If Cucumber specs exist, add a `cucumber_eval` task with a Godog or manual adapter.
 - Set `output_dir` so runs are repeatable.
 
 ## Demo run
