@@ -1,6 +1,6 @@
 # Cucumber Evaluation Implementation Plan
 
-Status: Planned
+Status: In-Progress
 
 Linked status: [spec/plans/cucumber-evaluation-status.md](/plans/cucumber-evaluation-status/)
 
@@ -21,41 +21,97 @@ Cucumber ground truth, using either the Godog adapter or manual expectations.
 - Flaky-test detection or retries.
 - Custom UI beyond CLI summary and existing report layout.
 
+## Inputs and references
+- spec/design/cucumber-evaluation.md
+- spec/design/api.md
+- spec/design/data-model.md
+- spec/engineering/configuration.md
+- spec/engineering/testing.md
+- spec/engineering/integration-e2e-tests.md
+- spec/requirements/functional.md
+- spec/requirements/acceptance-criteria.md
+- spec/features/cucumber-adapter-godog.feature
+- spec/features/cucumber-adapter-manual.feature
+
+## Plan conventions
+- Phases are sequential; Phase 0 is required before adapter work.
+- Each phase lists work, verification steps, and exit criteria.
+- Build/test gate: run `go test ./...` once implementation or tests change.
+
 ## Phases
 
+### Phase 0 - Godog dev environment + baseline tests
+- Work:
+  - Add Godog tooling to the dev environment (`flake.nix` or `tools.go`) so
+    `go test ./...` can run feature tests locally.
+  - Create Go test harnesses for a subset of existing feature files.
+  - Implement minimal step definitions so at least some scenarios pass with
+    current functionality.
+  - Document how to run these feature tests.
+- Verification:
+  - `go test ./...` runs the Godog-based tests.
+  - A documented subset of scenarios passes with current functionality.
+- Exit criteria: Godog tests run under `go test` with a known passing baseline.
+
 ### Phase 1 - Spec + config support
-- Extend config schema for `adapters` and `cucumber_eval` tasks.
-- Validate adapter configuration, feature paths, and expectations directory.
-- Add Example ID rules to config validation error messages.
+- Work:
+  - Extend config schema for `adapters` and `cucumber_eval` tasks.
+  - Validate adapter configuration, feature paths, and expectations directories.
+  - Surface Example ID requirements and validation errors clearly.
+- Verification:
+  - Unit tests for config parsing/validation with invalid adapters and missing files.
+  - Sample config loads and validates.
+- Exit criteria: configuration supports adapters and Cucumber tasks with clear errors.
 
 ### Phase 2 - Feature parsing and Example IDs
-- Add Gherkin parser integration for feature discovery.
-- Implement Example ID generation with tag-based IDs and example row IDs.
-- Provide a fallback ID only when explicit IDs are missing.
+- Work:
+  - Integrate a Gherkin parser and build a feature index.
+  - Implement Example ID generation (tag IDs, scenario IDs, example row IDs).
+  - Persist Example ID mapping for use by adapters and evaluation.
+- Verification:
+  - Unit tests for Example ID generation and parsing across feature fixtures.
+- Exit criteria: stable Example IDs are produced for all parsed features.
 
 ### Phase 3 - Godog adapter
-- Execute Godog with JSON formatter for selected features.
-- Normalize JSON results to Example IDs.
-- Map Godog statuses to implemented/not implemented.
+- Work:
+  - Execute Godog with JSON formatter for selected features.
+  - Normalize JSON results to Example IDs.
+  - Map Godog statuses to implemented/not-implemented ground truth.
+- Verification:
+  - Integration test that runs Godog on fixture features and produces normalized results.
+- Exit criteria: Godog adapter produces Example ID keyed results.
 
 ### Phase 4 - Manual expectations adapter
-- Define expectations file format and loader.
-- Map expectations to Example IDs.
-- Validate expectation coverage and report missing Example IDs.
+- Work:
+  - Define expectations file format and loader.
+  - Map expectations to Example IDs and validate coverage.
+  - Report missing or duplicate Example IDs.
+- Verification:
+  - Unit tests for loader and validation with fixture expectations.
+- Exit criteria: manual expectations produce complete ground truth or clear errors.
 
 ### Phase 5 - Evaluation + outputs
-- Compare agent decisions to ground truth per example.
-- Record per-example verdicts, accuracy, and evidence in `results.json`.
-- Emit CLI summary for `cucumber_eval` tasks.
+- Work:
+  - Compare agent decisions to ground truth per example.
+  - Record per-example verdicts, accuracy, and evidence in `results.json`.
+  - Emit CLI summary for `cucumber_eval` tasks.
+- Verification:
+  - Integration tests covering both adapters and output shapes.
+- Exit criteria: results include per-example verdicts and accuracy.
 
-### Phase 6 - Testing
-- Unit tests for Example ID generation and expectations parsing.
-- Integration tests for Godog and manual adapters using fixture features.
-- E2E tests for CLI flows (run, results, report).
+### Phase 6 - End-to-end testing
+- Work:
+  - E2E tests for `cogni run`, `cogni report`, and `cogni compare` with
+    Cucumber tasks.
+  - Ensure outputs remain stable for CI usage.
+- Verification:
+  - E2E run against fixture repo produces expected JSON and summary output.
+- Exit criteria: E2E tests pass with deterministic outputs.
 
 ## Dependencies
 - Gherkin parser library for Go.
-- Godog binary available in PATH for integration tests.
+- Godog binary or module available in dev environment for tests.
+- JSON formatter support in Godog used by the adapter.
 
 ## Acceptance criteria
 - `cogni run` supports `cucumber_eval` tasks with Godog or manual expectations.

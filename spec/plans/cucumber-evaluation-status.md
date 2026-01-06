@@ -1,22 +1,28 @@
 # Cucumber Evaluation Status
 
-Status: Planned
+Status: In-Progress
 
 ## Current status
-- Spec and feature documentation exists for `cucumber_eval` and adapters.
-- No implementation work has started in code.
+- Implementation plan expanded with phased work, verification, and exit criteria.
+- Phase 0 (Godog dev environment + baseline tests) is defined but not started.
 
 ## What's done so far
-- Design and requirements updates across spec docs.
-- Feature files added to describe Godog and manual adapters.
+- Spec and feature documentation for `cucumber_eval` and adapters.
+- Phase 0 requirements captured in the plan.
+- Plan aligned with core implementation plan conventions.
 
 ## Next steps
-- Define config structs and validation for `adapters` and `cucumber_eval` tasks.
+- Install Godog in the dev environment and wire feature tests into `go test`.
+- Add Go test harnesses for a subset of feature files, with at least some passing scenarios.
+- Extend config structs and validation for `adapters` and `cucumber_eval` tasks.
 - Implement Example ID generation and feature parsing.
-- Build Godog adapter runner + JSON normalizer.
+- Build Godog adapter runner and JSON normalizer.
 - Build manual expectations loader and matcher.
 - Add per-example verdicts to `results.json` and CLI summaries.
-- Add tests (unit + integration + e2e) for adapters and evaluation flow.
+- Add tests (unit, integration, E2E) for adapters and evaluation flow.
+
+## Latest test run
+- 2026-01-06: `GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` failed: go: download go1.22 for darwin/arm64: toolchain not available.
 
 ## Relevant source files (current or planned)
 - internal/config/* (config structs, validation)
