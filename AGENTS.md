@@ -42,3 +42,7 @@ To properly run commands in the development environment you can use `nix develop
 - `jj describe -m "message"` - set the change description
 - `jj git push` - push changes to a git remote
 - `jj split -m ... file.txt` - non-interactive split command. Without the `-m` flag it will start an editor
+
+## Testing
+
+* All tests should have configured timeouts. Aim to write tests with short timeouts. 

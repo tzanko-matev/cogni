@@ -6,11 +6,13 @@ Status: In-Progress
 - Implementation plan expanded with phased work, verification, and exit criteria.
 - Phase 0 (Godog dev environment + baseline tests) is defined but not started.
 - Go module version aligned to the nix develop Go toolchain (1.25.x).
+- Phase 0 tasks refined with Godog tooling, smoke tagging, and a Go test harness.
 
 ## What's done so far
 - Spec and feature documentation for `cucumber_eval` and adapters.
 - Phase 0 requirements captured in the plan.
 - Plan aligned with core implementation plan conventions.
+- Added Phase 0 guidance for selecting a passing scenario subset.
 
 ## Next steps
 - Install Godog in the dev environment and wire feature tests into `go test`.
@@ -23,7 +25,9 @@ Status: In-Progress
 - Add tests (unit, integration, E2E) for adapters and evaluation flow.
 
 ## Latest test run
-- 2026-01-06: `nix develop -c env GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` failed: `TestDiscoverRepoRootAndMetadata` expected `/tmp/...` but got `/private/tmp/...` in `cogni/internal/vcs`.
+- 2026-01-06: `nix develop -c env GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` failed:
+  - `TestE2ERepositoryNavigation` in `cogni/internal/cli` (citation range out of bounds for `config/app-config.yml`).
+  - `TestDiscoverRepoRootAndMetadata` expected `/tmp/...` but got `/private/tmp/...` in `cogni/internal/vcs`.
 
 ## Relevant source files (current or planned)
 - internal/config/* (config structs, validation)

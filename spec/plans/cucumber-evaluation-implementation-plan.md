@@ -42,15 +42,18 @@ Cucumber ground truth, using either the Godog adapter or manual expectations.
 
 ### Phase 0 - Godog dev environment + baseline tests
 - Work:
-  - Add Godog tooling to the dev environment (`flake.nix` or `tools.go`) so
-    `go test ./...` can run feature tests locally.
-  - Create Go test harnesses for a subset of existing feature files.
-  - Implement minimal step definitions so at least some scenarios pass with
-    current functionality.
-  - Document how to run these feature tests.
+  - Add Godog tooling to the dev environment (pin in `tools.go` and expose via
+    `flake.nix`) so `go test ./...` can run feature tests locally.
+  - Add a Go test harness (e.g., `tests/cucumber/*_test.go`) that runs Godog
+    against a scoped subset of feature files.
+  - Tag scenarios that match current functionality (e.g., `@smoke`) and run
+    only those in the harness, or explicitly list passing feature files.
+  - Implement minimal step definitions for CLI help, config validation, and
+    output artifacts that already exist in code.
+  - Document how to run the feature tests, including `nix develop` usage.
 - Verification:
-  - `go test ./...` runs the Godog-based tests.
-  - A documented subset of scenarios passes with current functionality.
+  - `go test ./...` runs the Godog-based tests in the dev shell.
+  - The documented `@smoke` subset passes with current functionality.
 - Exit criteria: Godog tests run under `go test` with a known passing baseline.
 
 ### Phase 1 - Spec + config support
