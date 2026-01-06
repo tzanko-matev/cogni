@@ -59,6 +59,10 @@ Cucumber ground truth, using either the Godog adapter or manual expectations.
 ### Phase 1 - Spec + config support
 - Work:
   - Extend config schema for `adapters` and `cucumber_eval` tasks.
+  - Add config structs for `cucumber` (Godog) and `cucumber_manual` adapters,
+    including `feature_roots`, `tags`, and `expectations_dir`.
+  - Add `cucumber_eval` task fields for `features`, `adapter`, and
+    `prompt_template`.
   - Validate adapter configuration, feature paths, and expectations directories.
   - Surface Example ID requirements and validation errors clearly.
 - Verification:
@@ -69,7 +73,8 @@ Cucumber ground truth, using either the Godog adapter or manual expectations.
 ### Phase 2 - Feature parsing and Example IDs
 - Work:
   - Integrate a Gherkin parser and build a feature index.
-  - Implement Example ID generation (tag IDs, scenario IDs, example row IDs).
+  - Implement Example ID generation per spec (tag IDs + example `id` column,
+    then tag IDs + row index, then scenario name + row `id`, then fallback).
   - Persist Example ID mapping for use by adapters and evaluation.
 - Verification:
   - Unit tests for Example ID generation and parsing across feature fixtures.
@@ -79,7 +84,8 @@ Cucumber ground truth, using either the Godog adapter or manual expectations.
 - Work:
   - Execute Godog with JSON formatter for selected features.
   - Normalize JSON results to Example IDs.
-  - Map Godog statuses to implemented/not-implemented ground truth.
+  - Map Godog statuses to implemented/not-implemented ground truth
+    (`passed` -> implemented; `failed`, `pending`, `undefined`, `skipped` -> not).
 - Verification:
   - Integration test that runs Godog on fixture features and produces normalized results.
 - Exit criteria: Godog adapter produces Example ID keyed results.
