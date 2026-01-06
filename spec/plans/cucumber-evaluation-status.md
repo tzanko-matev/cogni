@@ -5,6 +5,7 @@ Status: In-Progress
 ## Current status
 - Implementation plan expanded with phased work, verification, and exit criteria.
 - Phase 0 (Godog dev environment + baseline tests) is defined but not started.
+- Go module version aligned to the nix develop Go toolchain (1.25.x).
 
 ## What's done so far
 - Spec and feature documentation for `cucumber_eval` and adapters.
@@ -22,7 +23,7 @@ Status: In-Progress
 - Add tests (unit, integration, E2E) for adapters and evaluation flow.
 
 ## Latest test run
-- 2026-01-06: `GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` failed: go: download go1.22 for darwin/arm64: toolchain not available.
+- 2026-01-06: `nix develop -c env GOMODCACHE=/Users/tzankomatev/.cache/go-mod GOCACHE=/Users/tzankomatev/.cache/go-build go test ./...` failed: `TestDiscoverRepoRootAndMetadata` expected `/tmp/...` but got `/private/tmp/...` in `cogni/internal/vcs`.
 
 ## Relevant source files (current or planned)
 - internal/config/* (config structs, validation)

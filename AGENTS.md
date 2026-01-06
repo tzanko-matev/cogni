@@ -23,6 +23,7 @@ the technical debt in the repository.
 
 ## Local Development Environment
 We use `flake.nix` and direnv. 
+To properly run commands in the development environment you can use `nix develop`. Otherwise modifications to flake.nix in the agent's session won't be reflected in the agent's environment.
 
 ## Version control
 
