@@ -26,7 +26,37 @@ Introduce a task type that evaluates feature examples.
 - `type: cucumber_eval`
 - `features`: list of feature files or globs to evaluate
 - `adapter`: reference to a configured adapter
-- `prompt_template`: prompt used per example
+- `prompt_template`: prompt used per feature file (batch examples)
+
+### Prompt template placeholders
+The prompt template must include the feature context and the expected example
+IDs for the feature file being evaluated.
+
+- `{feature_path}`: normalized path to the feature file.
+- `{feature_text}`: full contents of the feature file.
+- `{example_ids}`: newline-delimited list of expected Example IDs for the file.
+
+### Agent response schema (batch)
+The agent returns a single JSON object per feature file:
+
+```json
+{
+  "results": [
+    {
+      "example_id": "scenario_id:row_id",
+      "implemented": true,
+      "evidence": [{"path": "internal/foo.go", "lines": [10, 11]}],
+      "notes": "optional"
+    }
+  ]
+}
+```
+
+Validation rules:
+- Every result must include a non-empty `example_id`.
+- Example IDs must be unique.
+- The set of IDs must exactly match the expected Example IDs for the feature
+  file. Missing or extra IDs are errors.
 
 ## Adapter types
 
@@ -90,9 +120,18 @@ tasks:
     features:
       - "spec/features/cli.feature"
     prompt_template: |
-      Read the source code. For the example {example_id}, decide if it is fully
-      implemented. List relevant file names and line numbers.
-      Return JSON with example_id, implemented, evidence, notes.
+      You are evaluating the following Cucumber feature file:
+      Path: {feature_path}
+
+      Feature text:
+      {feature_text}
+
+      Expected Example IDs (one per line):
+      {example_ids}
+
+      For each example ID, decide if the behavior is fully implemented.
+      Return ONLY JSON:
+      {"results":[{"example_id":"...","implemented":true,"evidence":[{"path":"...","lines":[1,2]}],"notes":"..."}]}
 ```
 
 ## Outputs
@@ -101,5 +140,8 @@ For each example, `results.json` records:
 - Agent decision and evidence
 - Ground-truth status (test-based or manual expectation)
 - Correct/incorrect flag
+
+For each feature file, `results.json` also records feature-level effort metrics
+(tokens, wall time, tool calls).
 
 The CLI summary reports counts and accuracy per task, plus overall totals.

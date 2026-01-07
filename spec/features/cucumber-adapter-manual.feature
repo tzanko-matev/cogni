@@ -12,6 +12,7 @@ Feature: Cucumber evaluation via manual expectations
     When I run "cogni run cucumber_cli_manual"
     Then Cogni does not execute any test runner
     And the ground truth for "cli_run_defaults" is "implemented"
+    And Cogni evaluates each feature file with a single batch agent run
 
   Scenario Outline: Example IDs avoid line numbers
     Given a scenario tagged "@id:<scenario_id>"
@@ -28,3 +29,8 @@ Feature: Cucumber evaluation via manual expectations
     And the agent returns implemented "true" for that example
     When Cogni scores the example
     Then the example is marked correct
+
+  Scenario: Batch agent responses must include every example
+    Given a feature file with examples "cli_run_defaults" and "cli_run_outputs:e1"
+    When the agent returns extra results not in the feature file
+    Then the cucumber evaluation task fails with an invalid agent response error

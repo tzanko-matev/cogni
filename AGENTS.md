@@ -90,3 +90,9 @@ We want to follow these principles in our codebase:
 | Naming         | Semantic Density                   | "Verbose, intent-revealing names to optimize vector retrieval."             |
 | Workflow       | Reflexion Support                  | Fast test suites (<10s) to enable agent self-correction loops.              |
 
+## Docstrings / comments
+
+- Each class, struct, package, function, interface and so on should
+  also contain a docstring which provides context for the reader to
+  understand the motivation behind the object. Links to specs are
+  welcome in the docstrings

@@ -36,6 +36,7 @@ Outputs:
 - `report.html` per run or range
 - CLI summary output for compare/report
 - Per-example verdicts for `cucumber_eval` tasks
+- Per-feature effort metrics for `cucumber_eval` tasks (one LLM run per feature file)
 
 ## Error handling
 

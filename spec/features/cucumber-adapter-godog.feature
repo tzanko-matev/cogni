@@ -13,6 +13,8 @@ Feature: Cucumber evaluation via Godog
     Then Cogni executes Godog for the selected feature files
     And Godog results are captured as JSON
     And each scenario result is mapped to a stable example_id
+    And Cogni evaluates each feature file with a single batch agent run
+    And the prompt includes the feature path, full feature text, and expected example IDs
 
   Scenario Outline: Example IDs use explicit tags and row IDs
     Given a scenario tagged "@id:<scenario_id>"
@@ -38,3 +40,8 @@ Feature: Cucumber evaluation via Godog
     And the Godog result for the example is "passed"
     When Cogni scores the example
     Then the example is marked correct
+
+  Scenario: Batch agent responses must cover all examples
+    Given a feature file with examples "cli_run_defaults" and "cli_run_outputs:e1"
+    When the agent returns a batch result missing "cli_run_outputs:e1"
+    Then the cucumber evaluation task fails with an invalid agent response error
