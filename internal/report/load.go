@@ -13,6 +13,7 @@ import (
 	"cogni/internal/vcs"
 )
 
+// LoadResults reads a results.json file into Results.
 func LoadResults(path string) (runner.Results, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -25,6 +26,7 @@ func LoadResults(path string) (runner.Results, error) {
 	return results, nil
 }
 
+// ResolveRun locates a run by commit ref or run ID.
 func ResolveRun(outputDir, repoRoot, ref string) (runner.Results, string, error) {
 	ref = strings.TrimSpace(ref)
 	if ref == "" {
@@ -53,6 +55,7 @@ func ResolveRun(outputDir, repoRoot, ref string) (runner.Results, string, error)
 	return results, runDir, err
 }
 
+// findLatestRunDir returns the most recent run directory for a commit.
 func findLatestRunDir(commitDir string) (string, error) {
 	entries, err := os.ReadDir(commitDir)
 	if err != nil {
@@ -71,6 +74,7 @@ func findLatestRunDir(commitDir string) (string, error) {
 	return filepath.Join(commitDir, runIDs[len(runIDs)-1]), nil
 }
 
+// findRunByID searches for a run directory by id across commits.
 func findRunByID(outputDir, runID string) (string, error) {
 	entries, err := os.ReadDir(outputDir)
 	if err != nil {

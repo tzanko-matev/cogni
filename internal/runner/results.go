@@ -2,6 +2,7 @@ package runner
 
 import "time"
 
+// Results captures the output of a cogni run.
 type Results struct {
 	RunID      string       `json:"run_id"`
 	Repo       RepoMetadata `json:"repo"`
@@ -12,6 +13,7 @@ type Results struct {
 	Summary    RunSummary   `json:"summary"`
 }
 
+// RepoMetadata describes repository state at run time.
 type RepoMetadata struct {
 	Name   string `json:"name"`
 	VCS    string `json:"vcs"`
@@ -20,6 +22,7 @@ type RepoMetadata struct {
 	Dirty  bool   `json:"dirty"`
 }
 
+// AgentInfo captures agent configuration used in a run.
 type AgentInfo struct {
 	ID             string  `json:"id"`
 	Type           string  `json:"type"`
@@ -30,6 +33,7 @@ type AgentInfo struct {
 	ToolingVersion string  `json:"tooling_version"`
 }
 
+// TaskResult records outcomes for a task.
 type TaskResult struct {
 	TaskID        string          `json:"task_id"`
 	Type          string          `json:"type"`
@@ -39,6 +43,7 @@ type TaskResult struct {
 	Cucumber      *CucumberEval   `json:"cucumber,omitempty"`
 }
 
+// AttemptResult records effort and validation for one attempt.
 type AttemptResult struct {
 	Attempt         int            `json:"attempt"`
 	Status          string         `json:"status"`
@@ -54,6 +59,7 @@ type AttemptResult struct {
 	Eval            EvalResult     `json:"eval"`
 }
 
+// EvalResult summarizes schema/citation validation.
 type EvalResult struct {
 	SchemaValid        bool     `json:"schema_valid"`
 	CitationValid      bool     `json:"citation_valid"`
@@ -62,6 +68,7 @@ type EvalResult struct {
 	MustContainMissing []string `json:"must_contain_missing,omitempty"`
 }
 
+// CucumberEval contains per-example Cucumber evaluation results.
 type CucumberEval struct {
 	AdapterID   string               `json:"adapter_id"`
 	AdapterType string               `json:"adapter_type"`
@@ -70,6 +77,7 @@ type CucumberEval struct {
 	Summary     CucumberSummary      `json:"summary"`
 }
 
+// CucumberFeatureRun captures per-feature execution metrics.
 type CucumberFeatureRun struct {
 	FeaturePath     string         `json:"feature_path"`
 	ExamplesTotal   int            `json:"examples_total"`
@@ -79,6 +87,7 @@ type CucumberFeatureRun struct {
 	ToolCalls       map[string]int `json:"tool_calls,omitempty"`
 }
 
+// CucumberExample records evaluation results for a single example.
 type CucumberExample struct {
 	ExampleID    string               `json:"example_id"`
 	FeaturePath  string               `json:"feature_path"`
@@ -90,6 +99,7 @@ type CucumberExample struct {
 	Correct      bool                 `json:"correct"`
 }
 
+// CucumberAgentResult captures agent output for an example.
 type CucumberAgentResult struct {
 	ExampleID   string             `json:"example_id"`
 	Implemented bool               `json:"implemented"`
@@ -98,11 +108,13 @@ type CucumberAgentResult struct {
 	ParseError  string             `json:"parse_error,omitempty"`
 }
 
+// CucumberEvidence describes a file/line reference from the agent.
 type CucumberEvidence struct {
 	Path  string `json:"path"`
 	Lines []int  `json:"lines,omitempty"`
 }
 
+// CucumberSummary aggregates evaluation accuracy metrics.
 type CucumberSummary struct {
 	ExamplesTotal     int     `json:"examples_total"`
 	ExamplesCorrect   int     `json:"examples_correct"`
@@ -112,6 +124,7 @@ type CucumberSummary struct {
 	NotImplemented    int     `json:"not_implemented_total"`
 }
 
+// RunSummary aggregates run-level metrics.
 type RunSummary struct {
 	TasksTotal                int     `json:"tasks_total"`
 	TasksPassed               int     `json:"tasks_passed"`

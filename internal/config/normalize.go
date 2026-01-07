@@ -2,6 +2,7 @@ package config
 
 import "cogni/internal/spec"
 
+// Normalize fills defaults and propagates agent assignments.
 func Normalize(cfg *spec.Config) {
 	if cfg.DefaultAgent == "" && len(cfg.Agents) == 1 {
 		cfg.DefaultAgent = cfg.Agents[0].ID

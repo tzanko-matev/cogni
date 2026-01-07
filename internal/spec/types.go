@@ -1,5 +1,6 @@
 package spec
 
+// Config is the top-level Cogni configuration schema.
 type Config struct {
 	Version      int             `yaml:"version"`
 	Repo         RepoConfig      `yaml:"repo"`
@@ -9,11 +10,13 @@ type Config struct {
 	Tasks        []TaskConfig    `yaml:"tasks"`
 }
 
+// RepoConfig describes repository-level settings.
 type RepoConfig struct {
 	OutputDir     string   `yaml:"output_dir"`
 	SetupCommands []string `yaml:"setup_commands"`
 }
 
+// AgentConfig configures an LLM agent.
 type AgentConfig struct {
 	ID          string  `yaml:"id"`
 	Type        string  `yaml:"type"`
@@ -23,6 +26,7 @@ type AgentConfig struct {
 	Temperature float64 `yaml:"temperature"`
 }
 
+// TaskConfig configures a single evaluation task.
 type TaskConfig struct {
 	ID             string     `yaml:"id"`
 	Type           string     `yaml:"type"`
@@ -36,18 +40,21 @@ type TaskConfig struct {
 	Budget         TaskBudget `yaml:"budget"`
 }
 
+// TaskEval configures QA evaluation rules for a task.
 type TaskEval struct {
 	JSONSchema         string   `yaml:"json_schema"`
 	MustContainStrings []string `yaml:"must_contain_strings"`
 	ValidateCitations  bool     `yaml:"validate_citations"`
 }
 
+// TaskBudget limits resource usage for a task.
 type TaskBudget struct {
 	MaxTokens  int `yaml:"max_tokens"`
 	MaxSeconds int `yaml:"max_seconds"`
 	MaxSteps   int `yaml:"max_steps"`
 }
 
+// AdapterConfig configures cucumber ground-truth adapters.
 type AdapterConfig struct {
 	ID              string            `yaml:"id"`
 	Type            string            `yaml:"type"`
@@ -59,6 +66,7 @@ type AdapterConfig struct {
 	Match           AdapterMatchConfig `yaml:"match"`
 }
 
+// AdapterMatchConfig controls adapter-level matching behavior.
 type AdapterMatchConfig struct {
 	RequireEvidence     bool `yaml:"require_evidence"`
 	NormalizeWhitespace bool `yaml:"normalize_whitespace"`

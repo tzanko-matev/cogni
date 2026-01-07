@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// WriteRunOutputs writes run outputs and prepares output directories.
 func WriteRunOutputs(results Results, outputDir string) (OutputPaths, error) {
 	if outputDir == "" {
 		return OutputPaths{}, fmt.Errorf("output directory is required")
@@ -30,6 +31,7 @@ func WriteRunOutputs(results Results, outputDir string) (OutputPaths, error) {
 	return paths, nil
 }
 
+// writeJSON writes a Results payload as pretty JSON.
 func writeJSON(path string, results Results) error {
 	payload, err := json.MarshalIndent(results, "", "  ")
 	if err != nil {
@@ -41,6 +43,7 @@ func writeJSON(path string, results Results) error {
 	return nil
 }
 
+// writePlaceholderReport writes a minimal HTML report stub.
 func writePlaceholderReport(path string, results Results) error {
 	content := fmt.Sprintf("<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>Cogni Report</title></head><body><h1>Cogni Report</h1><p>Run %s for commit %s</p></body></html>\n", results.RunID, results.Repo.Commit)
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {

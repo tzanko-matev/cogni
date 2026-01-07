@@ -7,11 +7,13 @@ import (
 	"cogni/internal/spec"
 )
 
+// TaskSelector chooses a task and optional agent override.
 type TaskSelector struct {
 	TaskID  string
 	AgentID string
 }
 
+// ParseSelectors parses selector strings of the form task@agent.
 func ParseSelectors(inputs []string) ([]TaskSelector, error) {
 	selectors := make([]TaskSelector, 0, len(inputs))
 	for _, input := range inputs {
@@ -40,6 +42,7 @@ func ParseSelectors(inputs []string) ([]TaskSelector, error) {
 	return selectors, nil
 }
 
+// ValidateSelectors ensures selectors reference existing tasks and agents.
 func ValidateSelectors(cfg spec.Config, selectors []TaskSelector) error {
 	if len(selectors) == 0 {
 		return nil

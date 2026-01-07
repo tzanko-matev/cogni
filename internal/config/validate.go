@@ -9,15 +9,18 @@ import (
 	"cogni/internal/spec"
 )
 
+// Issue captures a validation problem with a config field.
 type Issue struct {
 	Field   string
 	Message string
 }
 
+// ValidationError aggregates config validation issues.
 type ValidationError struct {
 	Issues []Issue
 }
 
+// Error renders validation errors as a multi-line string.
 func (err *ValidationError) Error() string {
 	if err == nil || len(err.Issues) == 0 {
 		return "config validation failed"
@@ -29,6 +32,7 @@ func (err *ValidationError) Error() string {
 	return strings.Join(lines, "\n")
 }
 
+// Validate checks a config for correctness and referenced files.
 func Validate(cfg *spec.Config, baseDir string) error {
 	var issues []Issue
 	add := func(field, message string) {
@@ -255,6 +259,7 @@ func Validate(cfg *spec.Config, baseDir string) error {
 	return nil
 }
 
+// hasGlob reports whether a path includes glob characters.
 func hasGlob(value string) bool {
 	return strings.ContainsAny(value, "*?[]")
 }

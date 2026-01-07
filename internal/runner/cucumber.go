@@ -15,10 +15,12 @@ import (
 	"cogni/internal/spec"
 )
 
+// cucumberGroundTruth captures whether an example is implemented.
 type cucumberGroundTruth struct {
 	Implemented bool
 }
 
+// runCucumberTask executes a cucumber evaluation task end-to-end.
 func runCucumberTask(
 	ctx context.Context,
 	repoRoot string,
@@ -304,6 +306,7 @@ func runCucumberTask(
 	return result
 }
 
+// renderCucumberPrompt fills the prompt template for a feature batch.
 func renderCucumberPrompt(template, featurePath, featureText string, exampleIDs []string) string {
 	replacer := strings.NewReplacer(
 		"{feature_path}", featurePath,
@@ -313,6 +316,7 @@ func renderCucumberPrompt(template, featurePath, featureText string, exampleIDs 
 	return replacer.Replace(template)
 }
 
+// truthLabel returns the canonical label for truth values.
 func truthLabel(implemented bool) string {
 	if implemented {
 		return "implemented"
@@ -320,6 +324,7 @@ func truthLabel(implemented bool) string {
 	return "not_implemented"
 }
 
+// convertEvidence normalizes evidence entries for result output.
 func convertEvidence(items []cucumber.Evidence) []CucumberEvidence {
 	if len(items) == 0 {
 		return nil

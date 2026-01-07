@@ -6,17 +6,20 @@ import (
 	"strings"
 )
 
+// RangeSpec identifies a start and end ref.
 type RangeSpec struct {
 	Start string
 	End   string
 }
 
+// RangeResult contains resolved refs and commit list.
 type RangeResult struct {
 	Start   string
 	End     string
 	Commits []string
 }
 
+// ParseRange parses a range spec in the form start..end.
 func ParseRange(spec string) (RangeSpec, error) {
 	trimmed := strings.TrimSpace(spec)
 	if trimmed == "" {
@@ -40,6 +43,7 @@ func ParseRange(spec string) (RangeSpec, error) {
 	}, nil
 }
 
+// ResolveRef resolves a git ref to a commit hash.
 func ResolveRef(ctx context.Context, repoRoot, ref string) (string, error) {
 	if strings.TrimSpace(ref) == "" {
 		return "", fmt.Errorf("ref is empty")
@@ -51,6 +55,7 @@ func ResolveRef(ctx context.Context, repoRoot, ref string) (string, error) {
 	return commit, nil
 }
 
+// ResolveRange resolves a RangeSpec into commits between refs.
 func ResolveRange(ctx context.Context, repoRoot string, spec RangeSpec) (RangeResult, error) {
 	start, err := ResolveRef(ctx, repoRoot, spec.Start)
 	if err != nil {

@@ -13,13 +13,16 @@ import (
 	"time"
 )
 
+// truncationMarker marks truncated output.
 const truncationMarker = "\n... [truncated]"
 
+// Limits configure read and output size caps for tool execution.
 type Limits struct {
 	MaxReadBytes   int
 	MaxOutputBytes int
 }
 
+// DefaultLimits returns the default read/output limits.
 func DefaultLimits() Limits {
 	return Limits{
 		MaxReadBytes:   200 * 1024,
@@ -27,6 +30,7 @@ func DefaultLimits() Limits {
 	}
 }
 
+// CallResult captures a tool execution outcome.
 type CallResult struct {
 	Tool        string
 	Output      string
@@ -38,27 +42,32 @@ type CallResult struct {
 	Error       string
 }
 
+// ListFilesArgs configures list_files tool execution.
 type ListFilesArgs struct {
 	Glob string
 }
 
+// SearchArgs configures search tool execution.
 type SearchArgs struct {
 	Query string
 	Paths []string
 }
 
+// ReadFileArgs configures read_file tool execution.
 type ReadFileArgs struct {
 	Path      string
 	StartLine *int
 	EndLine   *int
 }
 
+// Runner executes repository tools within a repo root.
 type Runner struct {
 	Root   string
 	Limits Limits
 	clock  func() time.Time
 }
 
+// NewRunner constructs a Runner for a repository root.
 func NewRunner(root string) (*Runner, error) {
 	if strings.TrimSpace(root) == "" {
 		return nil, fmt.Errorf("root is empty")
@@ -81,6 +90,7 @@ func NewRunner(root string) (*Runner, error) {
 	}, nil
 }
 
+// ListFiles executes the list_files tool.
 func (r *Runner) ListFiles(ctx context.Context, args ListFilesArgs) CallResult {
 	start := r.clock()
 	output, err := r.listFiles(ctx, args)
@@ -88,6 +98,7 @@ func (r *Runner) ListFiles(ctx context.Context, args ListFilesArgs) CallResult {
 	return r.finalize("list_files", start, end, output, false, err)
 }
 
+// Search executes the search tool.
 func (r *Runner) Search(ctx context.Context, args SearchArgs) CallResult {
 	start := r.clock()
 	output, err := r.search(ctx, args)
@@ -95,6 +106,7 @@ func (r *Runner) Search(ctx context.Context, args SearchArgs) CallResult {
 	return r.finalize("search", start, end, output, false, err)
 }
 
+// ReadFile executes the read_file tool.
 func (r *Runner) ReadFile(ctx context.Context, args ReadFileArgs) CallResult {
 	start := r.clock()
 	output, truncated, err := r.readFile(ctx, args)
@@ -102,6 +114,7 @@ func (r *Runner) ReadFile(ctx context.Context, args ReadFileArgs) CallResult {
 	return r.finalize("read_file", start, end, output, truncated, err)
 }
 
+// finalize assembles a CallResult with timing and truncation metadata.
 func (r *Runner) finalize(tool string, start, end time.Time, output string, truncated bool, err error) CallResult {
 	if err != nil {
 		output = fmt.Sprintf("error: %s", err.Error())
@@ -119,6 +132,7 @@ func (r *Runner) finalize(tool string, start, end time.Time, output string, trun
 	}
 }
 
+// listFiles returns file listings using ripgrep.
 func (r *Runner) listFiles(ctx context.Context, args ListFilesArgs) (string, error) {
 	rgArgs := []string{"--files"}
 	if glob := strings.TrimSpace(args.Glob); glob != "" {
@@ -127,6 +141,7 @@ func (r *Runner) listFiles(ctx context.Context, args ListFilesArgs) (string, err
 	return runRG(ctx, r.Root, rgArgs...)
 }
 
+// search runs ripgrep to find query matches.
 func (r *Runner) search(ctx context.Context, args SearchArgs) (string, error) {
 	query := strings.TrimSpace(args.Query)
 	if query == "" {
@@ -147,6 +162,7 @@ func (r *Runner) search(ctx context.Context, args SearchArgs) (string, error) {
 	return runRG(ctx, r.Root, rgArgs...)
 }
 
+// readFile returns a file slice with line numbers.
 func (r *Runner) readFile(ctx context.Context, args ReadFileArgs) (string, bool, error) {
 	_ = ctx
 	if strings.TrimSpace(args.Path) == "" {
@@ -214,6 +230,7 @@ func (r *Runner) readFile(ctx context.Context, args ReadFileArgs) (string, bool,
 	return builder.String(), truncated, nil
 }
 
+// normalizeLineRange validates and normalizes line range inputs.
 func normalizeLineRange(start, end *int) (int, int, error) {
 	startLine := 1
 	if start != nil {
@@ -235,6 +252,7 @@ func normalizeLineRange(start, end *int) (int, int, error) {
 	return startLine, endLine, nil
 }
 
+// resolvePath resolves a relative path within the repo root.
 func resolvePath(root, path string) (string, string, error) {
 	trimmed := strings.TrimSpace(path)
 	if trimmed == "" {
@@ -258,6 +276,7 @@ func resolvePath(root, path string) (string, string, error) {
 	return rel, abs, nil
 }
 
+// runRG executes ripgrep and returns stdout or an error.
 func runRG(ctx context.Context, dir string, args ...string) (string, error) {
 	if _, err := exec.LookPath("rg"); err != nil {
 		return "", fmt.Errorf("rg not found")
@@ -281,6 +300,7 @@ func runRG(ctx context.Context, dir string, args ...string) (string, error) {
 	return stdout.String(), nil
 }
 
+// applyOutputLimit truncates output to a maximum size.
 func applyOutputLimit(output string, max int, truncated bool) (string, bool) {
 	if max <= 0 {
 		return output, truncated
@@ -297,6 +317,7 @@ func applyOutputLimit(output string, max int, truncated bool) (string, bool) {
 	return output, false
 }
 
+// truncateOutput trims output and appends a truncation marker.
 func truncateOutput(output string, max int) (string, bool) {
 	if max <= 0 || len(output) <= max {
 		return output, false
@@ -307,6 +328,7 @@ func truncateOutput(output string, max int) (string, bool) {
 	return output[:max-len(truncationMarker)] + truncationMarker, true
 }
 
+// errorString formats errors for CallResult output.
 func errorString(err error) string {
 	if err == nil {
 		return ""

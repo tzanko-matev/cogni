@@ -7,6 +7,7 @@ import (
 	"cogni/internal/spec"
 )
 
+// OrderedTasks returns tasks in config order, optionally filtered by ids.
 func OrderedTasks(cfg spec.Config, selectedIDs []string) ([]spec.TaskConfig, error) {
 	if len(selectedIDs) == 0 {
 		ordered := make([]spec.TaskConfig, len(cfg.Tasks))

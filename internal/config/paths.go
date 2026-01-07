@@ -7,20 +7,24 @@ import (
 	"strings"
 )
 
+// Config path constants used by the CLI and loaders.
 const (
 	ConfigDirName    = ".cogni"
 	ConfigFileName   = "config.yml"
 	DefaultOutputDir = ".cogni/results"
 )
 
+// ConfigDir returns the .cogni directory under the repo root.
 func ConfigDir(root string) string {
 	return filepath.Join(root, ConfigDirName)
 }
 
+// ConfigPath returns the full config file path under the repo root.
 func ConfigPath(root string) string {
 	return filepath.Join(ConfigDir(root), ConfigFileName)
 }
 
+// RepoRootFromConfigPath derives the repo root from a config file path.
 func RepoRootFromConfigPath(configPath string) string {
 	dir := filepath.Dir(configPath)
 	if filepath.Base(dir) == ConfigDirName {
@@ -29,6 +33,7 @@ func RepoRootFromConfigPath(configPath string) string {
 	return dir
 }
 
+// FindConfigPath searches upward from a directory for a config file.
 func FindConfigPath(startDir string) (string, error) {
 	dir := strings.TrimSpace(startDir)
 	if dir == "" {

@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// defaultConfigTemplate is the starter config created by Scaffold.
 const defaultConfigTemplate = `version: 1
 repo:
   output_dir: "{{OUTPUT_DIR}}"
@@ -42,6 +43,7 @@ tasks:
       max_seconds: 120
 `
 
+// defaultSchema is the starter schema created by Scaffold.
 const defaultSchema = `{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
@@ -70,6 +72,7 @@ const defaultSchema = `{
 }
 `
 
+// Scaffold writes a starter config and schema into a repo.
 func Scaffold(specPath, outputDir string) error {
 	if specPath == "" {
 		return fmt.Errorf("spec path is required")

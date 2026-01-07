@@ -7,6 +7,7 @@ import (
 	"cogni/internal/spec"
 )
 
+// Load reads, parses, normalizes, and validates a config file.
 func Load(path string) (spec.Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

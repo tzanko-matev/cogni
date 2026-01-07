@@ -8,6 +8,7 @@ import (
 	"cogni/internal/runner"
 )
 
+// BuildReportHTML renders a simple HTML report for runs.
 func BuildReportHTML(runs []runner.Results) string {
 	var builder strings.Builder
 	builder.WriteString("<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>Cogni Report</title></head><body>")

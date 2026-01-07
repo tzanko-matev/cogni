@@ -18,9 +18,13 @@ import (
 	"cogni/internal/vcs"
 )
 
+// ProviderFactory builds an agent provider for a given config and model.
 type ProviderFactory func(agentConfig spec.AgentConfig, model string) (agent.Provider, error)
+
+// ToolRunnerFactory constructs the tool runner for a repo root.
 type ToolRunnerFactory func(root string) (*tools.Runner, error)
 
+// RunDependencies allows injecting factories and clocks for a run.
 type RunDependencies struct {
 	ProviderFactory   ProviderFactory
 	ToolRunnerFactory ToolRunnerFactory
@@ -29,6 +33,7 @@ type RunDependencies struct {
 	TokenCounter      agent.TokenCounter
 }
 
+// RunParams configures a run invocation.
 type RunParams struct {
 	RepoRoot      string
 	OutputDir     string
@@ -41,6 +46,7 @@ type RunParams struct {
 	Deps          RunDependencies
 }
 
+// Run executes tasks and returns results without writing outputs.
 func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error) {
 	repoRoot, err := resolveRepoRoot(ctx, params.RepoRoot)
 	if err != nil {
@@ -145,6 +151,7 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 	return results, nil
 }
 
+// RunAndWrite executes a run and writes outputs to disk.
 func RunAndWrite(ctx context.Context, cfg spec.Config, params RunParams) (Results, OutputPaths, error) {
 	repoRoot, err := resolveRepoRoot(ctx, params.RepoRoot)
 	if err != nil {
@@ -167,6 +174,7 @@ func RunAndWrite(ctx context.Context, cfg spec.Config, params RunParams) (Result
 	return results, paths, nil
 }
 
+// taskRun couples a task with its resolved agent and model.
 type taskRun struct {
 	Task    spec.TaskConfig
 	Agent   spec.AgentConfig
@@ -174,6 +182,7 @@ type taskRun struct {
 	AgentID string
 }
 
+// planTaskRuns resolves tasks, agents, and models into runnable units.
 func planTaskRuns(cfg spec.Config, selectors []TaskSelector, agentOverride string) ([]taskRun, error) {
 	if err := ValidateSelectors(cfg, selectors); err != nil {
 		return nil, err
@@ -231,6 +240,7 @@ func planTaskRuns(cfg spec.Config, selectors []TaskSelector, agentOverride strin
 	return runs, nil
 }
 
+// runTask executes a single non-cucumber task and records attempts.
 func runTask(
 	ctx context.Context,
 	repoRoot string,
@@ -343,6 +353,7 @@ func runTask(
 	return result
 }
 
+// newSession constructs a session for a task run.
 func newSession(task taskRun, repoRoot string, toolsDefs []agent.ToolDefinition, verbose bool) *agent.Session {
 	ctx := agent.TurnContext{
 		Model:                    task.Model,
@@ -364,6 +375,7 @@ func newSession(task taskRun, repoRoot string, toolsDefs []agent.ToolDefinition,
 	}
 }
 
+// latestAssistantMessage returns the most recent assistant text message.
 func latestAssistantMessage(history []agent.HistoryItem) (string, bool) {
 	for i := len(history) - 1; i >= 0; i-- {
 		item := history[i]
@@ -378,6 +390,7 @@ func latestAssistantMessage(history []agent.HistoryItem) (string, bool) {
 	return "", false
 }
 
+// summarize aggregates run results into a summary.
 func summarize(tasks []TaskResult) RunSummary {
 	summary := RunSummary{
 		TasksTotal: len(tasks),
@@ -407,6 +420,7 @@ func summarize(tasks []TaskResult) RunSummary {
 	return summary
 }
 
+// limitOrDefault returns the limit when set, otherwise the fallback.
 func limitOrDefault(limit, fallback int) int {
 	if limit > 0 {
 		return limit
@@ -417,6 +431,7 @@ func limitOrDefault(limit, fallback int) int {
 	return 0
 }
 
+// resolveRepoRoot resolves the repository root for a run.
 func resolveRepoRoot(ctx context.Context, repoRoot string) (string, error) {
 	if strings.TrimSpace(repoRoot) == "" {
 		wd, err := os.Getwd()
@@ -428,6 +443,7 @@ func resolveRepoRoot(ctx context.Context, repoRoot string) (string, error) {
 	return vcs.DiscoverRepoRoot(ctx, repoRoot)
 }
 
+// resolveOutputDir resolves relative output paths against the repo root.
 func resolveOutputDir(repoRoot, outputDir string) string {
 	if outputDir == "" || filepath.IsAbs(outputDir) {
 		return outputDir
@@ -435,6 +451,7 @@ func resolveOutputDir(repoRoot, outputDir string) string {
 	return filepath.Join(repoRoot, outputDir)
 }
 
+// loadRepoMetadata loads VCS metadata for the repo.
 func loadRepoMetadata(ctx context.Context, repoRoot string) (vcs.Metadata, error) {
 	repo, err := vcs.Discover(ctx, repoRoot)
 	if err != nil {
@@ -443,6 +460,7 @@ func loadRepoMetadata(ctx context.Context, repoRoot string) (vcs.Metadata, error
 	return repo.Metadata(ctx)
 }
 
+// ensureRunID uses the provided generator or falls back to NewRunID.
 func ensureRunID(generator func() (string, error)) (string, error) {
 	if generator != nil {
 		return generator()
@@ -450,6 +468,7 @@ func ensureRunID(generator func() (string, error)) (string, error) {
 	return NewRunID()
 }
 
+// runSetupCommands executes configured repo setup commands.
 func runSetupCommands(ctx context.Context, root string, commands []string) error {
 	for _, command := range commands {
 		if strings.TrimSpace(command) == "" {
@@ -466,6 +485,7 @@ func runSetupCommands(ctx context.Context, root string, commands []string) error
 	return nil
 }
 
+// defaultToolDefinitions returns built-in tool definitions.
 func defaultToolDefinitions() []agent.ToolDefinition {
 	disallowExtras := agent.BoolPointer(false)
 	return []agent.ToolDefinition{

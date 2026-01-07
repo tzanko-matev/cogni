@@ -10,10 +10,12 @@ import (
 	"strings"
 )
 
+// Repo represents a git repository location.
 type Repo struct {
 	Root string
 }
 
+// Metadata captures repository identity and dirty state.
 type Metadata struct {
 	Name   string
 	VCS    string
@@ -22,6 +24,7 @@ type Metadata struct {
 	Dirty  bool
 }
 
+// DiscoverRepoRoot resolves the git root for a starting directory.
 func DiscoverRepoRoot(ctx context.Context, startDir string) (string, error) {
 	dir := strings.TrimSpace(startDir)
 	if dir == "" {
@@ -38,6 +41,7 @@ func DiscoverRepoRoot(ctx context.Context, startDir string) (string, error) {
 	return root, nil
 }
 
+// Discover returns a Repo rooted at the discovered git root.
 func Discover(ctx context.Context, startDir string) (Repo, error) {
 	root, err := DiscoverRepoRoot(ctx, startDir)
 	if err != nil {
@@ -46,6 +50,7 @@ func Discover(ctx context.Context, startDir string) (Repo, error) {
 	return Repo{Root: root}, nil
 }
 
+// Metadata reads git metadata for the repository.
 func (r Repo) Metadata(ctx context.Context) (Metadata, error) {
 	if strings.TrimSpace(r.Root) == "" {
 		return Metadata{}, fmt.Errorf("repo root is empty")
@@ -71,6 +76,7 @@ func (r Repo) Metadata(ctx context.Context) (Metadata, error) {
 	}, nil
 }
 
+// runGit executes a git command and returns trimmed stdout.
 func runGit(ctx context.Context, dir string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = dir
