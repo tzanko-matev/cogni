@@ -45,6 +45,10 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the output lists these commands:$`, state.theOutputListsCommands)
 	ctx.Step(`^the exit code is non-zero$`, state.theExitCodeIsNonZero)
 	ctx.Step(`^the error message points to the invalid field$`, state.theErrorMessagePointsToInvalidField)
+	ctx.Step(`^the log file "([^"]+)" exists$`, state.theLogFileExists)
+	ctx.Step(`^the log file "([^"]+)" contains "([^"]+)"$`, state.theLogFileContains)
+	ctx.Step(`^stdout does not include verbose logs$`, state.stdoutDoesNotIncludeVerboseLogs)
+	ctx.Step(`^the console includes verbose logs$`, state.theConsoleIncludesVerboseLogs)
 }
 
 // reset clears buffers and resets state before each scenario.
