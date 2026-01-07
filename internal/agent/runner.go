@@ -65,12 +65,13 @@ type RunLimits struct {
 
 // RunOptions configures per-run behavior and logging.
 type RunOptions struct {
-	TokenCounter    TokenCounter
-	CompactionLimit int
-	Limits          RunLimits
-	Verbose         bool
-	VerboseWriter   io.Writer
-	NoColor         bool
+	TokenCounter     TokenCounter
+	CompactionLimit  int
+	Limits           RunLimits
+	Verbose          bool
+	VerboseWriter    io.Writer
+	VerboseLogWriter io.Writer
+	NoColor          bool
 }
 
 // RunMetrics captures execution effort for a run.

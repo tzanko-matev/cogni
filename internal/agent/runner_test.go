@@ -150,3 +150,36 @@ func TestRunTurnVerboseLogs(t *testing.T) {
 		t.Fatalf("expected at most 5 tool output lines, got %d: %s", len(toolLines), output)
 	}
 }
+
+// TestRunTurnVerboseLogWriterCapturesFullOutput verifies log writer output is not truncated.
+func TestRunTurnVerboseLogWriterCapturesFullOutput(t *testing.T) {
+	session := &Session{
+		Ctx: TurnContext{
+			ModelFamily: ModelFamily{BaseInstructionsTemplate: "base"},
+		},
+	}
+	provider := &fakeProvider{
+		streams: [][]StreamEvent{
+			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: ToolCallArgs{}}}},
+			{{Type: StreamEventMessage, Message: "done"}},
+		},
+	}
+	executor := &verboseExecutor{output: verboseOutput()}
+	var logBuffer bytes.Buffer
+
+	ctx := testutil.Context(t, 0)
+	_, err := RunTurn(ctx, session, provider, executor, "run", RunOptions{
+		Verbose:          false,
+		VerboseLogWriter: &logBuffer,
+	})
+	if err != nil {
+		t.Fatalf("run turn: %v", err)
+	}
+	logOutput := logBuffer.String()
+	if !strings.Contains(logOutput, "six") || !strings.Contains(logOutput, "seven") {
+		t.Fatalf("expected log output to include full tool output, got %s", logOutput)
+	}
+	if strings.Contains(logOutput, "[truncated]") {
+		t.Fatalf("expected log output to avoid truncation markers, got %s", logOutput)
+	}
+}

@@ -6,54 +6,90 @@ import (
 	"strings"
 )
 
+type verboseSink struct {
+	writer             io.Writer
+	noColor            bool
+	maxBytes           int
+	toolOutputMaxLines int
+}
+
+func collectVerboseSinks(opts RunOptions) []verboseSink {
+	sinks := make([]verboseSink, 0, 2)
+	if opts.Verbose && opts.VerboseWriter != nil {
+		sinks = append(sinks, verboseSink{
+			writer:             opts.VerboseWriter,
+			noColor:            opts.NoColor,
+			maxBytes:           verboseMaxBytes,
+			toolOutputMaxLines: verboseToolOutputMaxLines,
+		})
+	}
+	if opts.VerboseLogWriter != nil {
+		sinks = append(sinks, verboseSink{
+			writer:             opts.VerboseLogWriter,
+			noColor:            true,
+			maxBytes:           0,
+			toolOutputMaxLines: 0,
+		})
+	}
+	return sinks
+}
+
 // logVerbose emits a styled verbose line when verbosity is enabled.
 func logVerbose(opts RunOptions, style verboseStyle, message string) {
-	if !opts.Verbose || opts.VerboseWriter == nil {
-		return
+	for _, sink := range collectVerboseSinks(opts) {
+		palette := paletteFor(sink.writer, sink.noColor)
+		writeVerboseLine(sink.writer, palette, style, message)
 	}
-	palette := paletteFor(opts.VerboseWriter, opts.NoColor)
-	writeVerboseLine(opts.VerboseWriter, palette, style, message)
 }
 
 // logVerboseBlock writes a header and a multi-line body to the verbose stream.
 func logVerboseBlock(opts RunOptions, header, body string, headerStyle, bodyStyle verboseStyle) {
-	if !opts.Verbose || opts.VerboseWriter == nil {
-		return
-	}
-	palette := paletteFor(opts.VerboseWriter, opts.NoColor)
-	writeVerboseLine(opts.VerboseWriter, palette, headerStyle, header)
-	trimmed := truncateVerbose(body)
-	if strings.TrimSpace(trimmed) == "" {
-		return
-	}
-	for _, line := range strings.Split(trimmed, "\n") {
-		writeVerboseLine(opts.VerboseWriter, palette, bodyStyle, line)
+	for _, sink := range collectVerboseSinks(opts) {
+		palette := paletteFor(sink.writer, sink.noColor)
+		writeVerboseLine(sink.writer, palette, headerStyle, header)
+		trimmed := truncateVerboseWithLimit(body, sink.maxBytes, verboseTruncationMarker)
+		if strings.TrimSpace(trimmed) == "" {
+			continue
+		}
+		for _, line := range strings.Split(trimmed, "\n") {
+			writeVerboseLine(sink.writer, palette, bodyStyle, line)
+		}
 	}
 }
 
 // logVerboseToolOutput writes a tool output block with truncation rules.
 func logVerboseToolOutput(opts RunOptions, header, body string) {
-	if !opts.Verbose || opts.VerboseWriter == nil {
-		return
-	}
-	palette := paletteFor(opts.VerboseWriter, opts.NoColor)
-	writeVerboseLine(opts.VerboseWriter, palette, styleHeadingToolResult, header)
-	trimmed := truncateVerboseInline(limitOutputLines(body, verboseToolOutputMaxLines))
-	if strings.TrimSpace(trimmed) == "" {
-		return
-	}
-	for _, line := range strings.Split(trimmed, "\n") {
-		writeVerboseLine(opts.VerboseWriter, palette, styleDefault, line)
+	for _, sink := range collectVerboseSinks(opts) {
+		palette := paletteFor(sink.writer, sink.noColor)
+		writeVerboseLine(sink.writer, palette, styleHeadingToolResult, header)
+		trimmed := truncateVerboseInlineWithLimit(limitOutputLines(body, sink.toolOutputMaxLines), sink.maxBytes, verboseInlineTruncationMarker)
+		if strings.TrimSpace(trimmed) == "" {
+			continue
+		}
+		for _, line := range strings.Split(trimmed, "\n") {
+			writeVerboseLine(sink.writer, palette, styleDefault, line)
+		}
 	}
 }
 
 // logVerbosePrompt renders the prompt for verbose logging.
 func logVerbosePrompt(opts RunOptions, prompt Prompt, step int) {
-	if !opts.Verbose || opts.VerboseWriter == nil {
-		return
-	}
 	header := fmt.Sprintf("LLM prompt (step %d)", step)
-	logVerboseBlock(opts, header, formatPrompt(prompt), styleHeadingPrompt, styleDim)
+	for _, sink := range collectVerboseSinks(opts) {
+		palette := paletteFor(sink.writer, sink.noColor)
+		writeVerboseLine(sink.writer, palette, styleHeadingPrompt, header)
+		trimmed := truncateVerboseWithLimit(formatPromptWithLimits(prompt, verboseFormatLimits{
+			maxBytes:            sink.maxBytes,
+			toolOutputMaxLines:  sink.toolOutputMaxLines,
+			trimTrailingNewline: sink.maxBytes > 0,
+		}), sink.maxBytes, verboseTruncationMarker)
+		if strings.TrimSpace(trimmed) == "" {
+			continue
+		}
+		for _, line := range strings.Split(trimmed, "\n") {
+			writeVerboseLine(sink.writer, palette, styleDim, line)
+		}
+	}
 }
 
 // writeVerboseLine writes a single styled verbose line.
@@ -67,24 +103,32 @@ func writeVerboseLine(w io.Writer, palette verbosePalette, style verboseStyle, l
 
 // truncateVerbose truncates long blocks to the configured max length.
 func truncateVerbose(value string) string {
-	if verboseMaxBytes <= 0 || len(value) <= verboseMaxBytes {
-		return value
-	}
-	if verboseMaxBytes <= len(verboseTruncationMarker) {
-		return verboseTruncationMarker[:verboseMaxBytes]
-	}
-	return value[:verboseMaxBytes-len(verboseTruncationMarker)] + verboseTruncationMarker
+	return truncateVerboseWithLimit(value, verboseMaxBytes, verboseTruncationMarker)
 }
 
 // truncateVerboseInline truncates inline strings to the configured max length.
 func truncateVerboseInline(value string) string {
-	if verboseMaxBytes <= 0 || len(value) <= verboseMaxBytes {
+	return truncateVerboseInlineWithLimit(value, verboseMaxBytes, verboseInlineTruncationMarker)
+}
+
+func truncateVerboseWithLimit(value string, maxBytes int, marker string) string {
+	if maxBytes <= 0 || len(value) <= maxBytes {
 		return value
 	}
-	if verboseMaxBytes <= len(verboseInlineTruncationMarker) {
-		return verboseInlineTruncationMarker[:verboseMaxBytes]
+	if maxBytes <= len(marker) {
+		return marker[:maxBytes]
 	}
-	return value[:verboseMaxBytes-len(verboseInlineTruncationMarker)] + verboseInlineTruncationMarker
+	return value[:maxBytes-len(marker)] + marker
+}
+
+func truncateVerboseInlineWithLimit(value string, maxBytes int, marker string) string {
+	if maxBytes <= 0 || len(value) <= maxBytes {
+		return value
+	}
+	if maxBytes <= len(marker) {
+		return marker[:maxBytes]
+	}
+	return value[:maxBytes-len(marker)] + marker
 }
 
 // limitOutputLines trims multi-line strings to a maximum number of lines.

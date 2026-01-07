@@ -6,8 +6,22 @@ import (
 	"strings"
 )
 
+type verboseFormatLimits struct {
+	maxBytes            int
+	toolOutputMaxLines  int
+	trimTrailingNewline bool
+}
+
 // formatPrompt formats prompt contents for verbose logging.
 func formatPrompt(prompt Prompt) string {
+	return formatPromptWithLimits(prompt, verboseFormatLimits{
+		maxBytes:            verboseMaxBytes,
+		toolOutputMaxLines:  verboseToolOutputMaxLines,
+		trimTrailingNewline: true,
+	})
+}
+
+func formatPromptWithLimits(prompt Prompt, limits verboseFormatLimits) string {
 	var builder strings.Builder
 	if strings.TrimSpace(prompt.Instructions) != "" {
 		builder.WriteString("instructions:\n")
@@ -31,23 +45,37 @@ func formatPrompt(prompt Prompt) string {
 	if len(prompt.InputItems) > 0 {
 		builder.WriteString("input_items:\n")
 		for _, item := range prompt.InputItems {
-			builder.WriteString(formatHistoryItem(item))
+			builder.WriteString(formatHistoryItemWithLimits(item, limits))
 		}
 	}
-	return strings.TrimRight(builder.String(), "\n")
+	if limits.trimTrailingNewline {
+		return strings.TrimRight(builder.String(), "\n")
+	}
+	return builder.String()
 }
 
 // formatHistoryItem renders a single history item for verbose output.
 func formatHistoryItem(item HistoryItem) string {
+	return formatHistoryItemWithLimits(item, verboseFormatLimits{
+		maxBytes:            verboseMaxBytes,
+		toolOutputMaxLines:  verboseToolOutputMaxLines,
+		trimTrailingNewline: true,
+	})
+}
+
+func formatHistoryItemWithLimits(item HistoryItem, limits verboseFormatLimits) string {
 	switch content := item.Content.(type) {
 	case HistoryText:
 		return fmt.Sprintf("- %s: %s\n", item.Role, content.Text)
 	case ToolCall:
 		return fmt.Sprintf("- %s: tool_call id=%s name=%s args=%s\n", item.Role, content.ID, content.Name, formatArgs(content.Args))
 	case ToolOutput:
-		output := strings.TrimRight(content.Result.Output, "\n")
+		output := content.Result.Output
+		if limits.trimTrailingNewline {
+			output = strings.TrimRight(output, "\n")
+		}
 		if output != "" {
-			output = truncateVerboseInline(limitOutputLines(output, verboseToolOutputMaxLines))
+			output = truncateVerboseInlineWithLimit(limitOutputLines(output, limits.toolOutputMaxLines), limits.maxBytes, verboseInlineTruncationMarker)
 			output = indentLines(output, "  ")
 			return fmt.Sprintf("- %s: tool_output call_id=%s tool=%s bytes=%d truncated=%t error=%s\n%s\n", item.Role, content.ToolCallID, content.Result.Tool, content.Result.OutputBytes, content.Result.Truncated, content.Result.Error, output)
 		}
