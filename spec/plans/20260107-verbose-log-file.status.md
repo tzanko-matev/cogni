@@ -20,16 +20,16 @@ Date: 2026-01-07
 - `internal/agent/verbose_format.go`
 
 ## Status
-- State: IN PROGRESS
+- State: DONE
 - Progress:
   - Plan and status created.
   - Agent verbose logging supports an additional log writer with full (post-tool-truncation) output.
   - Runner + CLI wiring for `--log` implemented, including CLI flag parsing and log file creation.
   - CLI flag parsing test covers `--log`.
+  - Godog feature file and steps added for verbose log expectations.
 
 ## Next Actions
-- Add Godog feature file + steps for log file expectations.
-- Finalize status + plan as DONE after verification.
+- None.
 
 ## DONE
-- Not done.
+- DONE on 2026-01-07.

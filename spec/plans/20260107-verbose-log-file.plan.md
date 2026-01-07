@@ -67,3 +67,6 @@ Scenarios to implement:
 - `cogni run --log path.log` writes verbose logs to `path.log`.
 - `cogni run --verbose --log path.log` writes to both stdout and file.
 - No change in LLM inputs or outputs aside from logging destination.
+
+## DONE
+- Done on 2026-01-07.
