@@ -8,6 +8,7 @@ import (
 	"cogni/internal/config"
 )
 
+// resolveSpecPath normalizes a config path or finds it from CWD.
 func resolveSpecPath(specPath string) (string, error) {
 	if strings.TrimSpace(specPath) == "" {
 		return config.FindConfigPath("")

@@ -5,12 +5,14 @@ import (
 	"io"
 )
 
+// Exit codes returned by CLI commands.
 const (
 	ExitOK    = 0
 	ExitError = 1
 	ExitUsage = 2
 )
 
+// Command defines a CLI command and its handler.
 type Command struct {
 	Name    string
 	Summary string
@@ -18,6 +20,7 @@ type Command struct {
 	Run     func(args []string, stdout, stderr io.Writer) int
 }
 
+// Run dispatches the CLI to the appropriate command.
 func Run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		printUsage(stdout)
@@ -38,6 +41,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return cmd.Run(args[1:], stdout, stderr)
 }
 
+// findCommand locates a command by name.
 func findCommand(name string) *Command {
 	for _, cmd := range commands {
 		if cmd.Name == name {
@@ -47,6 +51,7 @@ func findCommand(name string) *Command {
 	return nil
 }
 
+// isHelpArg reports whether an argument triggers global help.
 func isHelpArg(arg string) bool {
 	switch arg {
 	case "-h", "--help", "help":
@@ -56,6 +61,7 @@ func isHelpArg(arg string) bool {
 	}
 }
 
+// wantsHelp checks for per-command help flags.
 func wantsHelp(args []string) bool {
 	for _, arg := range args {
 		switch arg {
@@ -66,6 +72,7 @@ func wantsHelp(args []string) bool {
 	return false
 }
 
+// printUsage prints the top-level CLI usage.
 func printUsage(w io.Writer) {
 	fmt.Fprintln(w, "Usage:")
 	fmt.Fprintln(w, "  cogni <command> [options]")
@@ -77,6 +84,7 @@ func printUsage(w io.Writer) {
 	fmt.Fprintln(w, "\nUse \"cogni <command> --help\" for more information.")
 }
 
+// printCommandUsage prints usage for a specific command.
 func printCommandUsage(cmd *Command, w io.Writer) {
 	fmt.Fprintln(w, "Usage:")
 	for _, line := range cmd.Usage {
@@ -87,6 +95,7 @@ func printCommandUsage(cmd *Command, w io.Writer) {
 	}
 }
 
+// runNotImplemented returns a handler for unimplemented commands.
 func runNotImplemented(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	return func(args []string, stdout, stderr io.Writer) int {
 		if wantsHelp(args) {
@@ -98,6 +107,7 @@ func runNotImplemented(cmd *Command) func(args []string, stdout, stderr io.Write
 	}
 }
 
+// command constructs a Command with a configured runner.
 func command(name, summary string, usage []string, runner func(cmd *Command) func(args []string, stdout, stderr io.Writer) int) *Command {
 	cmd := &Command{
 		Name:    name,
@@ -112,6 +122,7 @@ func command(name, summary string, usage []string, runner func(cmd *Command) fun
 	return cmd
 }
 
+// commands registers all CLI commands.
 var commands = []*Command{
 	command("init", "Scaffold .cogni config and schemas", []string{
 		"cogni init",

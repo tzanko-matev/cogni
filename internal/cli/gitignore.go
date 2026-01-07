@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// addGitignoreEntry appends an output directory entry to .gitignore.
 func addGitignoreEntry(repoRoot, outputDir string) (bool, error) {
 	entry, err := normalizeGitignorePath(repoRoot, outputDir)
 	if err != nil {
@@ -41,6 +42,7 @@ func addGitignoreEntry(repoRoot, outputDir string) (bool, error) {
 	return true, nil
 }
 
+// normalizeGitignorePath converts an output dir into a gitignore entry.
 func normalizeGitignorePath(repoRoot, outputDir string) (string, error) {
 	if strings.TrimSpace(outputDir) == "" {
 		return "", fmt.Errorf("output dir is required")

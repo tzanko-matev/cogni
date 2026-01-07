@@ -88,6 +88,7 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - Added docstrings across core agent runtime files.
 - Added docstrings across eval and cucumber core modules.
 - Added docstrings across runner, tools, config, report, vcs, and spec core modules.
+- Added docstrings across CLI and command entrypoints.
 
 ## Next steps
 - Finish Phase 0 by defining module split boundaries and type replacement strategy.

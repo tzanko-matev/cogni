@@ -14,6 +14,7 @@ import (
 	"cogni/internal/vcs"
 )
 
+// runInit builds the handler for the init command.
 func runInit(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	return func(args []string, stdout, stderr io.Writer) int {
 		if wantsHelp(args) {
@@ -138,8 +139,10 @@ func runInit(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	}
 }
 
+// initInput allows tests to override stdin for init prompts.
 var initInput io.Reader = os.Stdin
 
+// discoverGitRoot returns the git root or empty when not found.
 func discoverGitRoot(startDir string) string {
 	root, err := vcs.DiscoverRepoRoot(context.Background(), startDir)
 	if err != nil {

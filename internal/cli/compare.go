@@ -12,10 +12,16 @@ import (
 	"cogni/internal/vcs"
 )
 
+// resolveRun is a test seam for locating runs.
 var resolveRun = report.ResolveRun
+
+// parseRange is a test seam for parsing range specs.
 var parseRange = vcs.ParseRange
+
+// resolveRange is a test seam for resolving ranges.
 var resolveRange = vcs.ResolveRange
 
+// runCompare builds the handler for the compare command.
 func runCompare(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	return func(args []string, stdout, stderr io.Writer) int {
 		if wantsHelp(args) {
@@ -83,6 +89,7 @@ func runCompare(cmd *Command) func(args []string, stdout, stderr io.Writer) int 
 	}
 }
 
+// resolveInputDir determines the output directory and repo root.
 func resolveInputDir(inputDir, specPath string) (string, string, error) {
 	if inputDir != "" {
 		abs, err := filepath.Abs(inputDir)

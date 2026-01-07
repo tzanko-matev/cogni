@@ -12,8 +12,10 @@ import (
 	"cogni/internal/runner"
 )
 
+// buildReportHTML is a test seam for report generation.
 var buildReportHTML = report.BuildReportHTML
 
+// runReport builds the handler for the report command.
 func runReport(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	return func(args []string, stdout, stderr io.Writer) int {
 		if wantsHelp(args) {

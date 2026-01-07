@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// readLine reads a line from the reader, trimming line endings.
 func readLine(reader *bufio.Reader) (string, error) {
 	line, err := reader.ReadString('\n')
 	if err != nil {
@@ -18,6 +19,7 @@ func readLine(reader *bufio.Reader) (string, error) {
 	return strings.TrimRight(line, "\r\n"), nil
 }
 
+// promptString asks for a string value with an optional default.
 func promptString(reader *bufio.Reader, out io.Writer, label, defaultValue string) (string, error) {
 	for {
 		if defaultValue != "" {
@@ -42,6 +44,7 @@ func promptString(reader *bufio.Reader, out io.Writer, label, defaultValue strin
 	}
 }
 
+// promptYesNo prompts for a yes/no response with a default.
 func promptYesNo(reader *bufio.Reader, out io.Writer, label string, defaultYes bool) (bool, error) {
 	suffix := "y/N"
 	if defaultYes {

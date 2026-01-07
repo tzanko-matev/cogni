@@ -9,6 +9,7 @@ import (
 	"cogni/internal/config"
 )
 
+// runValidate builds the handler for the validate command.
 func runValidate(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	return func(args []string, stdout, stderr io.Writer) int {
 		if wantsHelp(args) {

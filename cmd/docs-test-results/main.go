@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// testEvent mirrors go test -json event fields.
 type testEvent struct {
 	Action  string  `json:"Action"`
 	Package string  `json:"Package"`
@@ -16,6 +17,7 @@ type testEvent struct {
 	Elapsed float64 `json:"Elapsed"`
 }
 
+// testResult captures a summarized test outcome.
 type testResult struct {
 	Package  string  `json:"package"`
 	Name     string  `json:"name"`
@@ -23,11 +25,13 @@ type testResult struct {
 	Duration float64 `json:"duration"`
 }
 
+// output is the JSON payload written to stdout.
 type output struct {
 	GeneratedAt string                `json:"generated_at"`
 	Tests       map[string]testResult `json:"tests"`
 }
 
+// main converts go test -json output into a summary payload.
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Buffer(make([]byte, 0, 64*1024), 10*1024*1024)

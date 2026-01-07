@@ -10,8 +10,10 @@ import (
 	"cogni/internal/runner"
 )
 
+// runAndWrite is a test seam for runner execution.
 var runAndWrite = runner.RunAndWrite
 
+// runRun builds the handler for the run command.
 func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	return func(args []string, stdout, stderr io.Writer) int {
 		if wantsHelp(args) {
