@@ -9,8 +9,8 @@ Created: 2026-01-07
 Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/20260107-go-guidelines-refactor.plan/)
 
 ## Current status
-- Phase 1 in progress (typing + docstrings; tests still pending).
-- Phase 2 in progress (runner/tools splits done; remaining oversized files pending).
+- Phase 2 complete; Phase 3–4 in progress (I/O isolation + deterministic tests).
+- Phase 1 nearing completion (remaining docstrings in tests/helpers).
 
 ## Clarifications
 - Guideline enforcement applies to tests too (no `any`).
@@ -24,6 +24,11 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - Updated plan with clarifications: tests must avoid `any`, all user-visible CLI behavior covered by godog, live-key suite via `just test-live`.
 - Marked the plan status as in progress.
 - Split runner/cucumber and tools modules into smaller single-responsibility files (<200 lines).
+- Split agent/openrouter, agent/verbose, eval/qa, config/validate, cucumber/expectations, agent/session, and cucumber/godog into smaller modules.
+- Split oversized test files (runner cucumber tests, cucumber step definitions, CLI e2e tests).
+- Added dependency injection for git/rg/http/filesystem boundaries and runner metadata resolution.
+- Added testutil context timeouts; removed external rg/git dependencies from default tests.
+- Tagged live LLM tests (`//go:build live`) and cucumber feature tests (`//go:build cucumber`); added `just test-live` and `just test-cucumber`.
 
 ## Phase 0 notes (inventory)
 ### Files >200 lines (targets to split)
@@ -97,12 +102,25 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - Split `internal/runner/run.go` into plan/setup/task/summary/tools/paths/types modules.
 - Split `internal/runner/cucumber.go` into ground truth, grouping, prompt, and feature evaluation helpers.
 - Split `internal/tools/runner.go` into constructor/list/search/read/paths/exec/output modules.
+- Split `internal/agent/openrouter.go`, `internal/agent/verbose.go`, `internal/eval/qa.go`, `internal/config/validate.go`, `internal/cucumber/expectations.go`, `internal/agent/session.go`, `internal/cucumber/godog.go`.
+- Split oversized test files into smaller units (<200 lines each).
+
+## Phase 3 progress
+- Introduced `gitRunner` and `Client` in `internal/vcs` for injectable git behavior.
+- Added `rgRunner` and `fileSystem` abstractions to `internal/tools.Runner`.
+- Added `HTTPDoer` for OpenRouter providers and `QADeps` filesystem abstraction for citation validation.
+- Added runner dependency hooks for repo root and metadata to avoid git in unit tests.
+
+## Phase 4 progress
+- Replaced rg and git usage in unit tests with fakes.
+- Added `testutil.Context` helper to enforce per-test context deadlines.
+- Tagged live LLM and cucumber feature suites; added Justfile targets to run them.
 
 ## Next steps
-- Split remaining oversized files (openrouter, verbose, qa, validate, expectations, tests).
-- Add docstrings for remaining functions/types (especially in tests).
-- Introduce interfaces for external dependencies and separate I/O from core logic.
-- Add deterministic tests with timeouts and the `just test-live` suite.
+- Finish docstrings for remaining tests/helpers and any missed functions.
+- Continue isolating remaining I/O boundaries (setup commands, godog exec path, feature reads) into injectable adapters.
+- Ensure remaining tests use explicit timeouts or testutil helpers consistently.
+- Verify live/cucumber suites with `just test-live` / `just test-cucumber`.
 
 ## Latest test run
 - `nix develop -c go test ./...` (2026-01-07): pass.
@@ -121,6 +139,9 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - internal/runner/cucumber_ground_truth.go
 - internal/runner/cucumber_group.go
 - internal/runner/cucumber_helpers.go
+- internal/runner/cucumber_batch_test.go
+- internal/runner/cucumber_errors_test.go
+- internal/runner/cucumber_test_helpers_test.go
 - internal/tools/runner_types.go
 - internal/tools/runner_constructor.go
 - internal/tools/runner_list.go
@@ -129,10 +150,53 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - internal/tools/runner_paths.go
 - internal/tools/runner_exec.go
 - internal/tools/runner_output.go
+- internal/tools/runner_fs.go
 - internal/agent/openrouter.go
-- internal/agent/session.go
-- internal/eval/qa.go
-- internal/cli/e2e_test.go
+- internal/agent/openrouter_messages.go
+- internal/agent/openrouter_stream.go
+- internal/agent/verbose_constants.go
+- internal/agent/verbose_palette.go
+- internal/agent/verbose_format.go
+- internal/agent/verbose_output.go
+- internal/agent/session_types.go
+- internal/agent/session_start.go
+- internal/agent/session_build.go
+- internal/eval/qa_types.go
+- internal/eval/qa_eval.go
+- internal/eval/qa_schema.go
+- internal/eval/qa_citations.go
+- internal/eval/qa_deps.go
+- internal/config/validate_types.go
+- internal/config/validate_collect.go
+- internal/config/validate_core.go
+- internal/config/validate_agents.go
+- internal/config/validate_adapters.go
+- internal/config/validate_tasks.go
+- internal/config/validate_helpers.go
+- internal/cucumber/expectations_types.go
+- internal/cucumber/expectations_load.go
+- internal/cucumber/expectations_parse.go
+- internal/cucumber/expectations_validate.go
+- internal/cucumber/godog_types.go
+- internal/cucumber/godog_run.go
+- internal/cucumber/godog_parse.go
+- internal/cucumber/godog_normalize.go
+- internal/cucumber/godog_tags.go
+- internal/testutil/context.go
+- internal/cli/e2e_helpers_test.go (live tag)
+- internal/cli/e2e_repo_helpers_test.go (live tag)
+- internal/cli/e2e_qa_core_test.go (live tag)
+- internal/cli/e2e_qa_repo_test.go (live tag)
+- internal/cli/e2e_qa_agents_test.go (live tag)
+- internal/cli/e2e_outputs_test.go (live tag)
+- internal/cli/e2e_compare_test.go (live tag)
+- internal/cli/e2e_init_test.go (live tag)
+- internal/cli/e2e_errors_test.go (live tag)
+- tests/cucumber/cucumber_test.go (cucumber tag)
+- tests/cucumber/steps_state.go (cucumber tag)
+- tests/cucumber/steps_config.go (cucumber tag)
+- tests/cucumber/steps_run.go (cucumber tag)
+- tests/cucumber/steps_assert.go (cucumber tag)
 - internal/vcs/git.go
 - internal/vcs/git_test.go
 - internal/tools/runner_test.go

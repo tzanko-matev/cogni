@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -32,19 +31,19 @@ func (r *Runner) readFile(ctx context.Context, args ReadFileArgs) (string, bool,
 		return "", false, err
 	}
 
-	file, err := os.Open(abs)
-	if err != nil {
-		return "", false, fmt.Errorf("open %s: %w", rel, err)
-	}
-	defer file.Close()
-
-	info, err := file.Stat()
+	info, err := r.fs.Stat(abs)
 	if err != nil {
 		return "", false, fmt.Errorf("stat %s: %w", rel, err)
 	}
 	if info.IsDir() {
 		return "", false, fmt.Errorf("%s is a directory", rel)
 	}
+
+	file, err := r.fs.Open(abs)
+	if err != nil {
+		return "", false, fmt.Errorf("open %s: %w", rel, err)
+	}
+	defer file.Close()
 
 	var builder strings.Builder
 	builder.WriteString(rel)

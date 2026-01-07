@@ -43,7 +43,9 @@ type ReadFileArgs struct {
 
 // Runner executes repository tools within a repo root.
 type Runner struct {
-	Root   string
-	Limits Limits
-	clock  func() time.Time
+	Root     string
+	Limits   Limits
+	clock    func() time.Time
+	rgRunner rgRunner
+	fs       fileSystem
 }

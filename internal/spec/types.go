@@ -56,13 +56,13 @@ type TaskBudget struct {
 
 // AdapterConfig configures cucumber ground-truth adapters.
 type AdapterConfig struct {
-	ID              string            `yaml:"id"`
-	Type            string            `yaml:"type"`
-	Runner          string            `yaml:"runner"`
-	Formatter       string            `yaml:"formatter"`
-	FeatureRoots    []string          `yaml:"feature_roots"`
-	Tags            []string          `yaml:"tags"`
-	ExpectationsDir string            `yaml:"expectations_dir"`
+	ID              string             `yaml:"id"`
+	Type            string             `yaml:"type"`
+	Runner          string             `yaml:"runner"`
+	Formatter       string             `yaml:"formatter"`
+	FeatureRoots    []string           `yaml:"feature_roots"`
+	Tags            []string           `yaml:"tags"`
+	ExpectationsDir string             `yaml:"expectations_dir"`
 	Match           AdapterMatchConfig `yaml:"match"`
 }
 

@@ -32,5 +32,5 @@ func (r *Runner) search(ctx context.Context, args SearchArgs) (string, error) {
 	if len(paths) > 0 {
 		rgArgs = append(rgArgs, paths...)
 	}
-	return runRG(ctx, r.Root, rgArgs...)
+	return r.rgRunner.Run(ctx, r.Root, rgArgs...)
 }

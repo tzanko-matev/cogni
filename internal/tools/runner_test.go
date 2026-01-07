@@ -3,12 +3,25 @@ package tools
 import (
 	"context"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"cogni/internal/testutil"
 )
 
+// fakeRGRunner returns canned outputs for ripgrep calls in tests.
+type fakeRGRunner struct {
+	output string
+	err    error
+}
+
+// Run satisfies rgRunner for test doubles.
+func (f fakeRGRunner) Run(_ context.Context, _ string, _ ...string) (string, error) {
+	return f.output, f.err
+}
+
+// TestReadFileRangeAndTruncation verifies read ranges and truncation logic.
 func TestReadFileRangeAndTruncation(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "sample.txt")
@@ -31,7 +44,8 @@ func TestReadFileRangeAndTruncation(t *testing.T) {
 
 	start := 1
 	end := 10
-	result := runner.ReadFile(context.Background(), ReadFileArgs{
+	ctx := testutil.Context(t, 0)
+	result := runner.ReadFile(ctx, ReadFileArgs{
 		Path:      "sample.txt",
 		StartLine: &start,
 		EndLine:   &end,
@@ -51,13 +65,15 @@ func TestReadFileRangeAndTruncation(t *testing.T) {
 	}
 }
 
+// TestReadFileOutsideRoot verifies escaping paths are rejected.
 func TestReadFileOutsideRoot(t *testing.T) {
 	root := t.TempDir()
 	runner, err := NewRunner(root)
 	if err != nil {
 		t.Fatalf("new runner: %v", err)
 	}
-	result := runner.ReadFile(context.Background(), ReadFileArgs{
+	ctx := testutil.Context(t, 0)
+	result := runner.ReadFile(ctx, ReadFileArgs{
 		Path: "../outside.txt",
 	})
 	if result.Error == "" {
@@ -68,6 +84,7 @@ func TestReadFileOutsideRoot(t *testing.T) {
 	}
 }
 
+// TestReadFileInvalidRange verifies invalid line ranges are rejected.
 func TestReadFileInvalidRange(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "sample.txt")
@@ -79,7 +96,8 @@ func TestReadFileInvalidRange(t *testing.T) {
 		t.Fatalf("new runner: %v", err)
 	}
 	start := 0
-	result := runner.ReadFile(context.Background(), ReadFileArgs{
+	ctx := testutil.Context(t, 0)
+	result := runner.ReadFile(ctx, ReadFileArgs{
 		Path:      "sample.txt",
 		StartLine: &start,
 	})
@@ -88,19 +106,16 @@ func TestReadFileInvalidRange(t *testing.T) {
 	}
 }
 
+// TestSearchNoMatches verifies empty search results return clean output.
 func TestSearchNoMatches(t *testing.T) {
-	requireRG(t)
-
 	root := t.TempDir()
-	path := filepath.Join(root, "sample.txt")
-	if err := os.WriteFile(path, []byte("hello world\n"), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
 	runner, err := NewRunner(root)
 	if err != nil {
 		t.Fatalf("new runner: %v", err)
 	}
-	result := runner.Search(context.Background(), SearchArgs{
+	runner.rgRunner = fakeRGRunner{output: ""}
+	ctx := testutil.Context(t, 0)
+	result := runner.Search(ctx, SearchArgs{
 		Query: "missing",
 	})
 	if result.Error != "" {
@@ -111,21 +126,18 @@ func TestSearchNoMatches(t *testing.T) {
 	}
 }
 
+// TestSearchMatchesAndTruncation verifies search output truncation.
 func TestSearchMatchesAndTruncation(t *testing.T) {
-	requireRG(t)
-
 	root := t.TempDir()
-	path := filepath.Join(root, "sample.txt")
-	content := "long " + strings.Repeat("x", 200) + "\n"
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
 	runner, err := NewRunner(root)
 	if err != nil {
 		t.Fatalf("new runner: %v", err)
 	}
+	output := "sample.txt:1:long " + strings.Repeat("x", 200) + "\n"
+	runner.rgRunner = fakeRGRunner{output: output}
 	runner.Limits.MaxOutputBytes = 64
-	result := runner.Search(context.Background(), SearchArgs{
+	ctx := testutil.Context(t, 0)
+	result := runner.Search(ctx, SearchArgs{
 		Query: "long",
 	})
 	if result.Error != "" {
@@ -139,21 +151,16 @@ func TestSearchMatchesAndTruncation(t *testing.T) {
 	}
 }
 
+// TestListFilesGlob verifies glob filtering for list_files.
 func TestListFilesGlob(t *testing.T) {
-	requireRG(t)
-
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "a.txt"), []byte("a"), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "b.go"), []byte("b"), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
 	runner, err := NewRunner(root)
 	if err != nil {
 		t.Fatalf("new runner: %v", err)
 	}
-	result := runner.ListFiles(context.Background(), ListFilesArgs{
+	runner.rgRunner = fakeRGRunner{output: "b.go\n"}
+	ctx := testutil.Context(t, 0)
+	result := runner.ListFiles(ctx, ListFilesArgs{
 		Glob: "*.go",
 	})
 	if result.Error != "" {
@@ -164,12 +171,5 @@ func TestListFilesGlob(t *testing.T) {
 	}
 	if strings.Contains(result.Output, "a.txt") {
 		t.Fatalf("expected output to exclude a.txt, got %q", result.Output)
-	}
-}
-
-func requireRG(t *testing.T) {
-	t.Helper()
-	if _, err := exec.LookPath("rg"); err != nil {
-		t.Skip("rg not available")
 	}
 }

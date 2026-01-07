@@ -1,12 +1,14 @@
 package runner
 
 import (
+	"context"
 	"io"
 	"time"
 
 	"cogni/internal/agent"
 	"cogni/internal/spec"
 	"cogni/internal/tools"
+	"cogni/internal/vcs"
 )
 
 // ProviderFactory builds an agent provider for a given config and model.
@@ -15,13 +17,21 @@ type ProviderFactory func(agentConfig spec.AgentConfig, model string) (agent.Pro
 // ToolRunnerFactory constructs the tool runner for a repo root.
 type ToolRunnerFactory func(root string) (*tools.Runner, error)
 
+// RepoRootResolver resolves the repository root for a run.
+type RepoRootResolver func(ctx context.Context, repoRoot string) (string, error)
+
+// RepoMetadataLoader resolves VCS metadata for a repository.
+type RepoMetadataLoader func(ctx context.Context, repoRoot string) (vcs.Metadata, error)
+
 // RunDependencies allows injecting factories and clocks for a run.
 type RunDependencies struct {
-	ProviderFactory   ProviderFactory
-	ToolRunnerFactory ToolRunnerFactory
-	RunID             func() (string, error)
-	Now               func() time.Time
-	TokenCounter      agent.TokenCounter
+	ProviderFactory    ProviderFactory
+	ToolRunnerFactory  ToolRunnerFactory
+	RepoRootResolver   RepoRootResolver
+	RepoMetadataLoader RepoMetadataLoader
+	RunID              func() (string, error)
+	Now                func() time.Time
+	TokenCounter       agent.TokenCounter
 }
 
 // RunParams configures a run invocation.

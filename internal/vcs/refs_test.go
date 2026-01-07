@@ -1,10 +1,12 @@
 package vcs
 
 import (
-	"context"
 	"testing"
+
+	"cogni/internal/testutil"
 )
 
+// TestParseRange verifies valid range parsing.
 func TestParseRange(t *testing.T) {
 	spec, err := ParseRange("main..HEAD")
 	if err != nil {
@@ -15,6 +17,7 @@ func TestParseRange(t *testing.T) {
 	}
 }
 
+// TestParseRangeErrors verifies invalid range inputs error.
 func TestParseRangeErrors(t *testing.T) {
 	cases := []string{
 		"",
@@ -30,35 +33,40 @@ func TestParseRangeErrors(t *testing.T) {
 	}
 }
 
+// TestResolveRefAndRange verifies ref and range resolution with a fake runner.
 func TestResolveRefAndRange(t *testing.T) {
-	requireGit(t)
+	ctx := testutil.Context(t, 0)
+	fake := &fakeGitRunner{responses: map[string]string{
+		"rev-parse --verify HEAD":               "commit-2",
+		"rev-parse --verify base":               "commit-0",
+		"rev-parse --verify head":               "commit-2",
+		"rev-list --reverse commit-0..commit-2": "commit-1\ncommit-2",
+	}}
+	client := NewClient(fake)
 
-	repo := setupTestRepo(t)
-	ctx := context.Background()
-
-	head, err := ResolveRef(ctx, repo.Root, "HEAD")
+	head, err := client.ResolveRef(ctx, "/repo", "HEAD")
 	if err != nil {
 		t.Fatalf("resolve ref: %v", err)
 	}
-	if head != repo.Commits[len(repo.Commits)-1] {
-		t.Fatalf("expected head %q, got %q", repo.Commits[len(repo.Commits)-1], head)
+	if head != "commit-2" {
+		t.Fatalf("expected head %q, got %q", "commit-2", head)
 	}
 
 	rangeSpec := RangeSpec{
-		Start: repo.Commits[0],
-		End:   repo.Commits[2],
+		Start: "base",
+		End:   "head",
 	}
-	resolved, err := ResolveRange(ctx, repo.Root, rangeSpec)
+	resolved, err := client.ResolveRange(ctx, "/repo", rangeSpec)
 	if err != nil {
 		t.Fatalf("resolve range: %v", err)
 	}
-	if resolved.Start != repo.Commits[0] || resolved.End != repo.Commits[2] {
+	if resolved.Start != "commit-0" || resolved.End != "commit-2" {
 		t.Fatalf("unexpected range: %+v", resolved)
 	}
 	if len(resolved.Commits) != 2 {
 		t.Fatalf("expected 2 commits, got %d", len(resolved.Commits))
 	}
-	if resolved.Commits[0] != repo.Commits[1] || resolved.Commits[1] != repo.Commits[2] {
+	if resolved.Commits[0] != "commit-1" || resolved.Commits[1] != "commit-2" {
 		t.Fatalf("unexpected commits: %+v", resolved.Commits)
 	}
 }

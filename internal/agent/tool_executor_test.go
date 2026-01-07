@@ -1,13 +1,14 @@
 package agent
 
 import (
-	"context"
 	"strings"
 	"testing"
 
+	"cogni/internal/testutil"
 	"cogni/internal/tools"
 )
 
+// TestRunnerExecutorMissingArgs verifies validation for missing tool args.
 func TestRunnerExecutorMissingArgs(t *testing.T) {
 	root := t.TempDir()
 	runner, err := tools.NewRunner(root)
@@ -16,7 +17,8 @@ func TestRunnerExecutorMissingArgs(t *testing.T) {
 	}
 	executor := RunnerExecutor{Runner: runner}
 
-	result := executor.Execute(context.Background(), ToolCall{
+	ctx := testutil.Context(t, 0)
+	result := executor.Execute(ctx, ToolCall{
 		Name: "search",
 		Args: ToolCallArgs{},
 	})
@@ -25,6 +27,7 @@ func TestRunnerExecutorMissingArgs(t *testing.T) {
 	}
 }
 
+// TestRunnerExecutorUnknownTool verifies unknown tools return errors.
 func TestRunnerExecutorUnknownTool(t *testing.T) {
 	root := t.TempDir()
 	runner, err := tools.NewRunner(root)
@@ -33,7 +36,8 @@ func TestRunnerExecutorUnknownTool(t *testing.T) {
 	}
 	executor := RunnerExecutor{Runner: runner}
 
-	result := executor.Execute(context.Background(), ToolCall{Name: "nope"})
+	ctx := testutil.Context(t, 0)
+	result := executor.Execute(ctx, ToolCall{Name: "nope"})
 	if !strings.Contains(result.Error, "unknown tool") {
 		t.Fatalf("unexpected error: %v", result.Error)
 	}

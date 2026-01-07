@@ -2,11 +2,11 @@ package agent
 
 // ToolSchema describes the JSON schema for tool parameters.
 type ToolSchema struct {
-	Type                 string               `json:"type,omitempty"`
+	Type                 string                `json:"type,omitempty"`
 	Properties           map[string]ToolSchema `json:"properties,omitempty"`
-	Items                *ToolSchema          `json:"items,omitempty"`
-	Required             []string             `json:"required,omitempty"`
-	AdditionalProperties *bool                `json:"additionalProperties,omitempty"`
+	Items                *ToolSchema           `json:"items,omitempty"`
+	Required             []string              `json:"required,omitempty"`
+	AdditionalProperties *bool                 `json:"additionalProperties,omitempty"`
 }
 
 // BoolPointer returns a pointer to the provided bool value.

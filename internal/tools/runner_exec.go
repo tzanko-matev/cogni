@@ -8,8 +8,16 @@ import (
 	"strings"
 )
 
-// runRG executes ripgrep and returns stdout or an error.
-func runRG(ctx context.Context, dir string, args ...string) (string, error) {
+// rgRunner defines how ripgrep commands are executed.
+type rgRunner interface {
+	Run(ctx context.Context, dir string, args ...string) (string, error)
+}
+
+// execRGRunner executes ripgrep via the system binary.
+type execRGRunner struct{}
+
+// Run executes ripgrep and returns stdout or an error.
+func (execRGRunner) Run(ctx context.Context, dir string, args ...string) (string, error) {
 	if _, err := exec.LookPath("rg"); err != nil {
 		return "", fmt.Errorf("rg not found")
 	}

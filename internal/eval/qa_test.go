@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// TestEvaluateQAInvalidJSON verifies invalid JSON handling.
 func TestEvaluateQAInvalidJSON(t *testing.T) {
 	result := EvaluateQA("not json", QAConfig{})
 	if result.Status != "fail" || result.FailureReason != "invalid_json" {
@@ -13,6 +14,7 @@ func TestEvaluateQAInvalidJSON(t *testing.T) {
 	}
 }
 
+// TestEvaluateQASchemaValidation verifies schema validation outcomes.
 func TestEvaluateQASchemaValidation(t *testing.T) {
 	dir := t.TempDir()
 	schemaPath := filepath.Join(dir, "schema.json")
@@ -38,6 +40,7 @@ func TestEvaluateQASchemaValidation(t *testing.T) {
 	}
 }
 
+// TestEvaluateQAMustContain verifies required tokens enforcement.
 func TestEvaluateQAMustContain(t *testing.T) {
 	result := EvaluateQA(`{"foo":"bar"}`, QAConfig{
 		MustContain: []string{"citations"},
@@ -50,6 +53,7 @@ func TestEvaluateQAMustContain(t *testing.T) {
 	}
 }
 
+// TestEvaluateQACitations verifies citation validation behavior.
 func TestEvaluateQACitations(t *testing.T) {
 	dir := t.TempDir()
 	filePath := filepath.Join(dir, "file.txt")

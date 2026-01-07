@@ -2,60 +2,13 @@ package agent
 
 import (
 	"bytes"
-	"context"
-	"fmt"
-	"io"
 	"strings"
 	"testing"
 
-	"cogni/internal/tools"
+	"cogni/internal/testutil"
 )
 
-type fakeStream struct {
-	events []StreamEvent
-	index  int
-}
-
-func (s *fakeStream) Recv() (StreamEvent, error) {
-	if s.index >= len(s.events) {
-		return StreamEvent{}, io.EOF
-	}
-	event := s.events[s.index]
-	s.index++
-	return event, nil
-}
-
-type fakeProvider struct {
-	streams [][]StreamEvent
-	calls   int
-}
-
-func (p *fakeProvider) Stream(_ context.Context, _ Prompt) (Stream, error) {
-	if p.calls >= len(p.streams) {
-		return nil, fmt.Errorf("no more streams")
-	}
-	stream := &fakeStream{events: p.streams[p.calls]}
-	p.calls++
-	return stream, nil
-}
-
-type fakeExecutor struct {
-	calls int
-}
-
-func (e *fakeExecutor) Execute(_ context.Context, call ToolCall) tools.CallResult {
-	e.calls++
-	return tools.CallResult{Tool: call.Name, Output: "ok", OutputBytes: 2}
-}
-
-type verboseExecutor struct {
-	output string
-}
-
-func (e *verboseExecutor) Execute(_ context.Context, call ToolCall) tools.CallResult {
-	return tools.CallResult{Tool: call.Name, Output: e.output, OutputBytes: len(e.output)}
-}
-
+// TestRunTurnHandlesToolCalls verifies tool-call execution flow.
 func TestRunTurnHandlesToolCalls(t *testing.T) {
 	session := &Session{
 		Ctx: TurnContext{
@@ -70,7 +23,8 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 	}
 	executor := &fakeExecutor{}
 
-	metrics, err := RunTurn(context.Background(), session, provider, executor, "run", RunOptions{})
+	ctx := testutil.Context(t, 0)
+	metrics, err := RunTurn(ctx, session, provider, executor, "run", RunOptions{})
 	if err != nil {
 		t.Fatalf("run turn: %v", err)
 	}
@@ -114,6 +68,7 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 	}
 }
 
+// TestRunTurnBudgetExceeded verifies budget enforcement behavior.
 func TestRunTurnBudgetExceeded(t *testing.T) {
 	session := &Session{
 		Ctx: TurnContext{
@@ -127,7 +82,8 @@ func TestRunTurnBudgetExceeded(t *testing.T) {
 	}
 	executor := &fakeExecutor{}
 
-	_, err := RunTurn(context.Background(), session, provider, executor, "run", RunOptions{
+	ctx := testutil.Context(t, 0)
+	_, err := RunTurn(ctx, session, provider, executor, "run", RunOptions{
 		Limits: RunLimits{MaxSteps: 1},
 	})
 	if err != ErrBudgetExceeded {
@@ -135,6 +91,7 @@ func TestRunTurnBudgetExceeded(t *testing.T) {
 	}
 }
 
+// TestRunTurnVerboseLogs verifies verbose logging output formatting.
 func TestRunTurnVerboseLogs(t *testing.T) {
 	session := &Session{
 		Ctx: TurnContext{
@@ -147,10 +104,11 @@ func TestRunTurnVerboseLogs(t *testing.T) {
 			{{Type: StreamEventMessage, Message: "done"}},
 		},
 	}
-	executor := &verboseExecutor{output: strings.Join([]string{"one", "two", "three", "four", "five", "six", "seven"}, "\n")}
+	executor := &verboseExecutor{output: verboseOutput()}
 	var logs bytes.Buffer
 
-	_, err := RunTurn(context.Background(), session, provider, executor, "run", RunOptions{
+	ctx := testutil.Context(t, 0)
+	_, err := RunTurn(ctx, session, provider, executor, "run", RunOptions{
 		Verbose:       true,
 		VerboseWriter: &logs,
 	})

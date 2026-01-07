@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,8 +8,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"cogni/internal/testutil"
 )
 
+// TestProviderFromEnvErrors verifies provider environment validation errors.
 func TestProviderFromEnvErrors(t *testing.T) {
 	t.Setenv("LLM_PROVIDER", "")
 	t.Setenv("LLM_API_KEY", "")
@@ -27,6 +29,7 @@ func TestProviderFromEnvErrors(t *testing.T) {
 	}
 }
 
+// TestOpenRouterStreamParsesMessage verifies streaming message aggregation.
 func TestOpenRouterStreamParsesMessage(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -40,7 +43,8 @@ func TestOpenRouterStreamParsesMessage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new provider: %v", err)
 	}
-	stream, err := provider.Stream(context.Background(), Prompt{
+	ctx := testutil.Context(t, 0)
+	stream, err := provider.Stream(ctx, Prompt{
 		Instructions: "base",
 		InputItems:   []HistoryItem{{Role: "user", Content: HistoryText{Text: "hi"}}},
 	})
@@ -59,6 +63,7 @@ func TestOpenRouterStreamParsesMessage(t *testing.T) {
 	}
 }
 
+// TestOpenRouterStreamParsesToolCall verifies streaming tool-call parsing.
 func TestOpenRouterStreamParsesToolCall(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -72,7 +77,8 @@ func TestOpenRouterStreamParsesToolCall(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new provider: %v", err)
 	}
-	stream, err := provider.Stream(context.Background(), Prompt{
+	ctx := testutil.Context(t, 0)
+	stream, err := provider.Stream(ctx, Prompt{
 		InputItems: []HistoryItem{{Role: "user", Content: HistoryText{Text: "hi"}}},
 	})
 	if err != nil {
@@ -101,6 +107,7 @@ func TestOpenRouterStreamParsesToolCall(t *testing.T) {
 	}
 }
 
+// TestOpenRouterRejectsToolHistoryWithoutID verifies tool history validation.
 func TestOpenRouterRejectsToolHistoryWithoutID(t *testing.T) {
 	_, err := buildOpenRouterMessages(Prompt{
 		InputItems: []HistoryItem{

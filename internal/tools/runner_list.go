@@ -19,5 +19,5 @@ func (r *Runner) listFiles(ctx context.Context, args ListFilesArgs) (string, err
 	if glob := strings.TrimSpace(args.Glob); glob != "" {
 		rgArgs = append(rgArgs, "-g", glob)
 	}
-	return runRG(ctx, r.Root, rgArgs...)
+	return r.rgRunner.Run(ctx, r.Root, rgArgs...)
 }

@@ -19,3 +19,11 @@ build:
 # Run Go tests with cache paths that are writable in the sandbox.
 test:
     GOMODCACHE=/home/tzanko/.cache/go-mod GOCACHE=/home/tzanko/.cache/go-build go test ./...
+
+# Run live-key integration tests.
+test-live:
+    GOMODCACHE=/home/tzanko/.cache/go-mod GOCACHE=/home/tzanko/.cache/go-build go test -tags=live -timeout 10m ./internal/cli
+
+# Run cucumber feature tests.
+test-cucumber:
+    GOMODCACHE=/home/tzanko/.cache/go-mod GOCACHE=/home/tzanko/.cache/go-build go test -tags=cucumber -timeout 2m ./tests/cucumber

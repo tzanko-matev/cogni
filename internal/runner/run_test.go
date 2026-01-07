@@ -4,22 +4,24 @@ import (
 	"context"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
 	"cogni/internal/agent"
 	"cogni/internal/spec"
+	"cogni/internal/testutil"
 	"cogni/internal/tools"
+	"cogni/internal/vcs"
 )
 
+// fakeStream replays a predetermined stream of events for tests.
 type fakeStream struct {
 	events []agent.StreamEvent
 	index  int
 }
 
+// Recv returns the next event or io.EOF for fakeStream.
 func (s *fakeStream) Recv() (agent.StreamEvent, error) {
 	if s.index >= len(s.events) {
 		return agent.StreamEvent{}, io.EOF
@@ -29,16 +31,19 @@ func (s *fakeStream) Recv() (agent.StreamEvent, error) {
 	return event, nil
 }
 
+// fakeProvider returns a static assistant message for tests.
 type fakeProvider struct {
 	message string
 }
 
+// Stream returns a stream containing the configured message.
 func (p fakeProvider) Stream(_ context.Context, _ agent.Prompt) (agent.Stream, error) {
 	return &fakeStream{events: []agent.StreamEvent{{Type: agent.StreamEventMessage, Message: p.message}}}, nil
 }
 
+// TestRunExecutesTask verifies a QA task run completes successfully.
 func TestRunExecutesTask(t *testing.T) {
-	repoRoot := initGitRepo(t)
+	repoRoot := t.TempDir()
 	cfg := spec.Config{
 		Repo: spec.RepoConfig{OutputDir: "./out"},
 		Agents: []spec.AgentConfig{
@@ -51,7 +56,8 @@ func TestRunExecutesTask(t *testing.T) {
 	}
 
 	fixedTime := time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)
-	results, err := Run(context.Background(), cfg, RunParams{
+	ctx := testutil.Context(t, 0)
+	results, err := Run(ctx, cfg, RunParams{
 		RepoRoot: repoRoot,
 		Deps: RunDependencies{
 			ProviderFactory: func(_ spec.AgentConfig, _ string) (agent.Provider, error) {
@@ -59,6 +65,12 @@ func TestRunExecutesTask(t *testing.T) {
 			},
 			ToolRunnerFactory: func(root string) (*tools.Runner, error) {
 				return tools.NewRunner(root)
+			},
+			RepoRootResolver: func(_ context.Context, root string) (string, error) {
+				return root, nil
+			},
+			RepoMetadataLoader: func(_ context.Context, root string) (vcs.Metadata, error) {
+				return vcs.Metadata{Name: filepath.Base(root), VCS: "git", Commit: "commit", Branch: "main", Dirty: false}, nil
 			},
 			RunID: func() (string, error) { return "run-1", nil },
 			Now:   func() time.Time { return fixedTime },
@@ -81,8 +93,9 @@ func TestRunExecutesTask(t *testing.T) {
 	}
 }
 
+// TestRunAndWriteOutputs verifies output files are written.
 func TestRunAndWriteOutputs(t *testing.T) {
-	repoRoot := initGitRepo(t)
+	repoRoot := t.TempDir()
 	outputDir := t.TempDir()
 	cfg := spec.Config{
 		Repo: spec.RepoConfig{OutputDir: outputDir},
@@ -94,7 +107,8 @@ func TestRunAndWriteOutputs(t *testing.T) {
 			{ID: "task-1", Type: "qa", Agent: "agent-1", Prompt: "prompt"},
 		},
 	}
-	_, paths, err := RunAndWrite(context.Background(), cfg, RunParams{
+	ctx := testutil.Context(t, 0)
+	_, paths, err := RunAndWrite(ctx, cfg, RunParams{
 		RepoRoot: repoRoot,
 		Deps: RunDependencies{
 			ProviderFactory: func(_ spec.AgentConfig, _ string) (agent.Provider, error) {
@@ -102,6 +116,12 @@ func TestRunAndWriteOutputs(t *testing.T) {
 			},
 			ToolRunnerFactory: func(root string) (*tools.Runner, error) {
 				return tools.NewRunner(root)
+			},
+			RepoRootResolver: func(_ context.Context, root string) (string, error) {
+				return root, nil
+			},
+			RepoMetadataLoader: func(_ context.Context, root string) (vcs.Metadata, error) {
+				return vcs.Metadata{Name: filepath.Base(root), VCS: "git", Commit: "commit", Branch: "main", Dirty: false}, nil
 			},
 			RunID: func() (string, error) { return "run-1", nil },
 			Now:   func() time.Time { return time.Now() },
@@ -115,42 +135,5 @@ func TestRunAndWriteOutputs(t *testing.T) {
 	}
 	if _, err := os.Stat(paths.ReportPath()); err != nil {
 		t.Fatalf("missing report: %v", err)
-	}
-}
-
-func initGitRepo(t *testing.T) string {
-	t.Helper()
-	requireGit(t)
-	root := t.TempDir()
-	runGit(t, root, "-c", "init.defaultBranch=main", "init")
-	path := filepath.Join(root, "README.md")
-	if err := os.WriteFile(path, []byte("init"), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
-	runGit(t, root, "add", "README.md")
-	runGit(t, root, "commit", "-m", "init")
-	return root
-}
-
-func requireGit(t *testing.T) {
-	t.Helper()
-	if _, err := exec.LookPath("git"); err != nil {
-		t.Skip("git not available")
-	}
-}
-
-func runGit(t *testing.T, dir string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-	cmd.Env = append(os.Environ(),
-		"GIT_AUTHOR_NAME=Test User",
-		"GIT_AUTHOR_EMAIL=test@example.com",
-		"GIT_COMMITTER_NAME=Test User",
-		"GIT_COMMITTER_EMAIL=test@example.com",
-	)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, string(out))
 	}
 }

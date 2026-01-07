@@ -33,8 +33,10 @@ func NewRunner(root string) (*Runner, error) {
 		return nil, fmt.Errorf("root is not a directory")
 	}
 	return &Runner{
-		Root:   abs,
-		Limits: DefaultLimits(),
-		clock:  time.Now,
+		Root:     abs,
+		Limits:   DefaultLimits(),
+		clock:    time.Now,
+		rgRunner: execRGRunner{},
+		fs:       osFileSystem{},
 	}, nil
 }

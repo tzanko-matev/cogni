@@ -13,11 +13,19 @@ import (
 
 // Run executes tasks and returns results without writing outputs.
 func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error) {
-	repoRoot, err := resolveRepoRoot(ctx, params.RepoRoot)
+	repoRootResolver := params.Deps.RepoRootResolver
+	if repoRootResolver == nil {
+		repoRootResolver = resolveRepoRoot
+	}
+	repoRoot, err := repoRootResolver(ctx, params.RepoRoot)
 	if err != nil {
 		return Results{}, err
 	}
-	repoMeta, err := loadRepoMetadata(ctx, repoRoot)
+	metadataLoader := params.Deps.RepoMetadataLoader
+	if metadataLoader == nil {
+		metadataLoader = loadRepoMetadata
+	}
+	repoMeta, err := metadataLoader(ctx, repoRoot)
 	if err != nil {
 		return Results{}, err
 	}
@@ -118,7 +126,11 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 
 // RunAndWrite executes a run and writes outputs to disk.
 func RunAndWrite(ctx context.Context, cfg spec.Config, params RunParams) (Results, OutputPaths, error) {
-	repoRoot, err := resolveRepoRoot(ctx, params.RepoRoot)
+	repoRootResolver := params.Deps.RepoRootResolver
+	if repoRootResolver == nil {
+		repoRootResolver = resolveRepoRoot
+	}
+	repoRoot, err := repoRootResolver(ctx, params.RepoRoot)
 	if err != nil {
 		return Results{}, OutputPaths{}, err
 	}
@@ -138,6 +150,3 @@ func RunAndWrite(ctx context.Context, cfg spec.Config, params RunParams) (Result
 	}
 	return results, paths, nil
 }
-
-
-

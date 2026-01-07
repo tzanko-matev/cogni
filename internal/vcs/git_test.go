@@ -2,46 +2,46 @@ package vcs
 
 import (
 	"context"
-	"os"
-	"os/exec"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"cogni/internal/testutil"
 )
 
+// TestDiscoverRepoRootAndMetadata verifies repo discovery and metadata parsing.
 func TestDiscoverRepoRootAndMetadata(t *testing.T) {
-	requireGit(t)
+	ctx := testutil.Context(t, 0)
+	root := filepath.Join(t.TempDir(), "repo")
+	subdir := filepath.Join(root, "nested")
 
-	ctx := context.Background()
-	repo := setupTestRepo(t)
+	fake := &fakeGitRunner{responses: map[string]string{
+		"rev-parse --show-toplevel":   root,
+		"rev-parse HEAD":              "commit-3",
+		"rev-parse --abbrev-ref HEAD": "main",
+		"status --porcelain":          "",
+	}}
+	client := NewClient(fake)
 
-	subdir := filepath.Join(repo.Root, "nested")
-	if err := os.MkdirAll(subdir, 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-
-	root, err := DiscoverRepoRoot(ctx, subdir)
+	actualRoot, err := client.DiscoverRepoRoot(ctx, subdir)
 	if err != nil {
 		t.Fatalf("discover repo root: %v", err)
 	}
-	expectedRoot, err := filepath.EvalSymlinks(repo.Root)
-	if err != nil {
-		t.Fatalf("eval expected root: %v", err)
-	}
-	actualRoot, err := filepath.EvalSymlinks(root)
-	if err != nil {
-		t.Fatalf("eval actual root: %v", err)
-	}
-	if actualRoot != expectedRoot {
-		t.Fatalf("expected root %q, got %q", expectedRoot, actualRoot)
+	if actualRoot != root {
+		t.Fatalf("expected root %q, got %q", root, actualRoot)
 	}
 
-	meta, err := Repo{Root: root}.Metadata(ctx)
+	repo, err := client.Discover(ctx, subdir)
+	if err != nil {
+		t.Fatalf("discover repo: %v", err)
+	}
+	meta, err := repo.Metadata(ctx)
 	if err != nil {
 		t.Fatalf("metadata: %v", err)
 	}
-	if meta.Commit != repo.Commits[len(repo.Commits)-1] {
-		t.Fatalf("expected commit %q, got %q", repo.Commits[len(repo.Commits)-1], meta.Commit)
+	if meta.Commit != "commit-3" {
+		t.Fatalf("expected commit %q, got %q", "commit-3", meta.Commit)
 	}
 	if meta.Branch != "main" {
 		t.Fatalf("expected branch main, got %q", meta.Branch)
@@ -49,11 +49,12 @@ func TestDiscoverRepoRootAndMetadata(t *testing.T) {
 	if meta.Dirty {
 		t.Fatalf("expected clean repo, got dirty")
 	}
-
-	if err := os.WriteFile(filepath.Join(repo.Root, "untracked.txt"), []byte("dirty"), 0o644); err != nil {
-		t.Fatalf("write dirty file: %v", err)
+	if meta.Name != filepath.Base(root) {
+		t.Fatalf("expected name %q, got %q", filepath.Base(root), meta.Name)
 	}
-	meta, err = Repo{Root: root}.Metadata(ctx)
+
+	fake.responses["status --porcelain"] = " M README.md"
+	meta, err = repo.Metadata(ctx)
 	if err != nil {
 		t.Fatalf("metadata dirty: %v", err)
 	}
@@ -62,66 +63,16 @@ func TestDiscoverRepoRootAndMetadata(t *testing.T) {
 	}
 }
 
-type testRepo struct {
-	Root    string
-	Commits []string
+// fakeGitRunner returns canned outputs for git commands in tests.
+type fakeGitRunner struct {
+	responses map[string]string
 }
 
-func setupTestRepo(t *testing.T) testRepo {
-	t.Helper()
-
-	root := t.TempDir()
-	runGitTest(t, root, "-c", "init.defaultBranch=main", "init")
-
-	readmePath := filepath.Join(root, "README.md")
-	if err := os.WriteFile(readmePath, []byte("initial"), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
+// Run satisfies gitRunner for test doubles.
+func (f *fakeGitRunner) Run(_ context.Context, _ string, args ...string) (string, error) {
+	key := strings.Join(args, " ")
+	if value, ok := f.responses[key]; ok {
+		return value, nil
 	}
-	runGitTest(t, root, "add", "README.md")
-	runGitTest(t, root, "commit", "-m", "initial")
-	commit1 := runGitTest(t, root, "rev-parse", "HEAD")
-
-	if err := os.WriteFile(readmePath, []byte("second"), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
-	runGitTest(t, root, "add", "README.md")
-	runGitTest(t, root, "commit", "-m", "second")
-	commit2 := runGitTest(t, root, "rev-parse", "HEAD")
-
-	notesPath := filepath.Join(root, "notes.txt")
-	if err := os.WriteFile(notesPath, []byte("third"), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
-	runGitTest(t, root, "add", "notes.txt")
-	runGitTest(t, root, "commit", "-m", "third")
-	commit3 := runGitTest(t, root, "rev-parse", "HEAD")
-
-	return testRepo{
-		Root:    root,
-		Commits: []string{commit1, commit2, commit3},
-	}
-}
-
-func requireGit(t *testing.T) {
-	t.Helper()
-	if _, err := exec.LookPath("git"); err != nil {
-		t.Skip("git not available")
-	}
-}
-
-func runGitTest(t *testing.T, dir string, args ...string) string {
-	t.Helper()
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-	cmd.Env = append(os.Environ(),
-		"GIT_AUTHOR_NAME=Test User",
-		"GIT_AUTHOR_EMAIL=test@example.com",
-		"GIT_COMMITTER_NAME=Test User",
-		"GIT_COMMITTER_EMAIL=test@example.com",
-	)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, string(out))
-	}
-	return strings.TrimSpace(string(out))
+	return "", fmt.Errorf("unexpected git args: %s", key)
 }
