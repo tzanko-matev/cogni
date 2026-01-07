@@ -11,6 +11,10 @@ Linked plan: [spec/plans/20260107-cucumber-feature-batch-eval.plan.md](/plans/20
 ## Current status
 - Not started.
 
+## Clarifications
+- Each feature file triggers one agent run, which may include multiple LLM turns.
+- Scenarios/examples are not evaluated via separate agent runs.
+
 ## What was done so far
 - Created the plan and status entries for per-feature evaluation.
 - Renamed the plan/status files to the dated naming format and removed the old filenames.

@@ -9,13 +9,14 @@ Created: 2026-01-07
 Linked status: [spec/plans/20260107-cucumber-feature-batch-eval.status.md](/plans/20260107-cucumber-feature-batch-eval.status/)
 
 ## Goal
-Replace per-example LLM calls with one LLM call per feature file for
-`cucumber_eval` tasks, while keeping correctness per example and adding
-feature-level effort metrics. Missing or extra example results must be treated
-as errors.
+Replace per-example agent runs with one agent run per feature file for
+`cucumber_eval` tasks. Each agent run may involve multiple LLM turns, but the
+unit of evaluation is the feature file (not individual scenarios). Keep
+correctness per example and add feature-level effort metrics. Missing or extra
+example results must be treated as errors.
 
 ## Scope
-- Remove per-example LLM prompting and response parsing.
+- Remove per-example agent prompting and response parsing.
 - Introduce batch (per-feature) agent response schema and strict validation.
 - Include feature path and full feature text in the LLM prompt.
 - Record feature-level effort metrics in `results.json`.
@@ -82,8 +83,9 @@ as errors.
 ### Phase 3 - Runner implementation (per-feature calls)
 - Work:
   - Group examples by feature file and load feature text.
-  - Render a single prompt per feature (include path + contents + expected IDs).
-  - Call the LLM once per feature file and parse the batch response.
+- Render a single prompt per feature (include path + contents + expected IDs).
+  - Run the agent once per feature file (allowing multiple turns) and parse the
+    final batch response.
   - Map results to per-example verdicts and compute correctness.
   - Record feature-level effort metrics for each feature run.
   - Remove per-example prompt rendering and per-example LLM calls.
