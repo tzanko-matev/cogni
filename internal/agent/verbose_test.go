@@ -6,14 +6,17 @@ import (
 	"testing"
 )
 
+// fakeTTY simulates a terminal writer for styling tests.
 type fakeTTY struct {
 	bytes.Buffer
 }
 
+// Fd returns a dummy file descriptor for fakeTTY.
 func (t *fakeTTY) Fd() uintptr {
 	return uintptr(1)
 }
 
+// TestVerboseNoColorDisablesStyling verifies NO_COLOR disables ANSI styling.
 func TestVerboseNoColorDisablesStyling(t *testing.T) {
 	t.Setenv("TERM", "xterm-256color")
 	t.Setenv("NO_COLOR", "")

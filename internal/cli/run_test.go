@@ -11,6 +11,7 @@ import (
 	"cogni/internal/spec"
 )
 
+// TestRunCommandParsesFlags verifies CLI flag parsing for run.
 func TestRunCommandParsesFlags(t *testing.T) {
 	specDir := t.TempDir()
 	specPath := filepath.Join(specDir, ".cogni", "config.yml")

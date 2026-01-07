@@ -30,7 +30,8 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 		return Results{}, err
 	}
 
-	if err := runSetupCommands(ctx, repoRoot, cfg.Repo.SetupCommands); err != nil {
+	setupRunner := params.Deps.SetupRunner
+	if err := runSetupCommands(ctx, repoRoot, cfg.Repo.SetupCommands, setupRunner); err != nil {
 		return Results{}, err
 	}
 

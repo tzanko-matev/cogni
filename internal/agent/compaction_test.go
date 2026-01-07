@@ -2,6 +2,7 @@ package agent
 
 import "testing"
 
+// TestCompactHistoryKeepsRequiredItems verifies required history items are retained.
 func TestCompactHistoryKeepsRequiredItems(t *testing.T) {
 	history := []HistoryItem{
 		{Role: "developer", Content: HistoryText{Text: "dev"}},

@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// TestNormalizeGodogResults verifies normalization of godog output.
 func TestNormalizeGodogResults(t *testing.T) {
 	feature := `Feature: Sample
 
@@ -61,6 +62,7 @@ func TestNormalizeGodogResults(t *testing.T) {
 	}
 }
 
+// TestParseGodogJSONStripsWarnings verifies warning prefixes are removed.
 func TestParseGodogJSONStripsWarnings(t *testing.T) {
 	payload := "\x1b[33mUse of godog CLI is deprecated\x1b[0m\n" +
 		"\x1b[33mSee https://example.test\x1b[0m\n" +

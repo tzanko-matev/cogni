@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// TestValidateAgentBatchResponseValid verifies valid batch responses pass.
 func TestValidateAgentBatchResponseValid(t *testing.T) {
 	output := `{"results":[{"example_id":"alpha:1","implemented":true},{"example_id":"beta:1","implemented":false}]}`
 	response, err := ParseAgentBatchResponse(output)
@@ -27,6 +28,7 @@ func TestValidateAgentBatchResponseValid(t *testing.T) {
 	}
 }
 
+// TestValidateAgentBatchResponseMissing verifies missing example IDs are flagged.
 func TestValidateAgentBatchResponseMissing(t *testing.T) {
 	output := `{"results":[{"example_id":"alpha:1","implemented":true}]}`
 	response, err := ParseAgentBatchResponse(output)
@@ -46,6 +48,7 @@ func TestValidateAgentBatchResponseMissing(t *testing.T) {
 	}
 }
 
+// TestValidateAgentBatchResponseExtra verifies extra example IDs are flagged.
 func TestValidateAgentBatchResponseExtra(t *testing.T) {
 	output := `{"results":[{"example_id":"alpha:1","implemented":true},{"example_id":"beta:1","implemented":false}]}`
 	response, err := ParseAgentBatchResponse(output)
@@ -65,6 +68,7 @@ func TestValidateAgentBatchResponseExtra(t *testing.T) {
 	}
 }
 
+// TestValidateAgentBatchResponseDuplicate verifies duplicate IDs are flagged.
 func TestValidateAgentBatchResponseDuplicate(t *testing.T) {
 	output := `{"results":[{"example_id":"alpha:1","implemented":true},{"example_id":"alpha:1","implemented":false}]}`
 	response, err := ParseAgentBatchResponse(output)
@@ -84,6 +88,7 @@ func TestValidateAgentBatchResponseDuplicate(t *testing.T) {
 	}
 }
 
+// TestValidateAgentBatchResponseEmptyID verifies empty IDs are rejected.
 func TestValidateAgentBatchResponseEmptyID(t *testing.T) {
 	output := `{"results":[{"example_id":" ","implemented":true}]}`
 	response, err := ParseAgentBatchResponse(output)

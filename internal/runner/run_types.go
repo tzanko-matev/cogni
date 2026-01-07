@@ -23,12 +23,18 @@ type RepoRootResolver func(ctx context.Context, repoRoot string) (string, error)
 // RepoMetadataLoader resolves VCS metadata for a repository.
 type RepoMetadataLoader func(ctx context.Context, repoRoot string) (vcs.Metadata, error)
 
+// SetupCommandRunner executes repo setup commands.
+type SetupCommandRunner interface {
+	Run(ctx context.Context, dir string, command string) error
+}
+
 // RunDependencies allows injecting factories and clocks for a run.
 type RunDependencies struct {
 	ProviderFactory    ProviderFactory
 	ToolRunnerFactory  ToolRunnerFactory
 	RepoRootResolver   RepoRootResolver
 	RepoMetadataLoader RepoMetadataLoader
+	SetupRunner        SetupCommandRunner
 	RunID              func() (string, error)
 	Now                func() time.Time
 	TokenCounter       agent.TokenCounter

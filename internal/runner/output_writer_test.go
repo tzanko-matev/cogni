@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// TestWriteRunOutputs verifies output files and directories are created.
 func TestWriteRunOutputs(t *testing.T) {
 	root := t.TempDir()
 	results := Results{

@@ -11,6 +11,7 @@ import (
 	"cogni/internal/vcs"
 )
 
+// TestCompareCommand verifies the compare command output flow.
 func TestCompareCommand(t *testing.T) {
 	origResolve := resolveRun
 	resolveRun = func(_ string, _ string, ref string) (runner.Results, string, error) {
@@ -35,6 +36,7 @@ func TestCompareCommand(t *testing.T) {
 	}
 }
 
+// TestReportCommand verifies report command writes HTML output.
 func TestReportCommand(t *testing.T) {
 	origResolve := resolveRun
 	origParseRange := parseRange

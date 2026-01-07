@@ -2,6 +2,7 @@ package spec
 
 import "testing"
 
+// TestParseConfigValid verifies valid config parsing succeeds.
 func TestParseConfigValid(t *testing.T) {
 	data := []byte(`version: 1
 repo:
@@ -23,6 +24,7 @@ tasks:
 	}
 }
 
+// TestParseConfigUnknownField verifies unknown fields are rejected.
 func TestParseConfigUnknownField(t *testing.T) {
 	data := []byte(`version: 1
 repo:
@@ -34,6 +36,7 @@ unknown: true
 	}
 }
 
+// TestParseConfigRejectsMultipleDocs verifies multiple YAML docs are rejected.
 func TestParseConfigRejectsMultipleDocs(t *testing.T) {
 	data := []byte("version: 1\n---\nversion: 1\n")
 	if _, err := ParseConfig(data); err == nil {

@@ -7,6 +7,7 @@ import (
 	"cogni/internal/runner"
 )
 
+// TestResolveRunByCommitAndRunID verifies run resolution by commit and run ID.
 func TestResolveRunByCommitAndRunID(t *testing.T) {
 	root := t.TempDir()
 	first := runner.Results{
@@ -41,6 +42,7 @@ func TestResolveRunByCommitAndRunID(t *testing.T) {
 	}
 }
 
+// TestBuildReportHTML verifies report HTML includes run metadata.
 func TestBuildReportHTML(t *testing.T) {
 	runs := []runner.Results{
 		{RunID: "run-1", Repo: runner.RepoMetadata{Commit: "abc"}},

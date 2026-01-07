@@ -7,6 +7,7 @@ import (
 	"cogni/internal/spec"
 )
 
+// TestOrderedTasksDefaultsToConfigOrder verifies default ordering behavior.
 func TestOrderedTasksDefaultsToConfigOrder(t *testing.T) {
 	cfg := spec.Config{
 		Tasks: []spec.TaskConfig{
@@ -27,6 +28,7 @@ func TestOrderedTasksDefaultsToConfigOrder(t *testing.T) {
 	}
 }
 
+// TestOrderedTasksSelectedUsesConfigOrder verifies selection preserves config order.
 func TestOrderedTasksSelectedUsesConfigOrder(t *testing.T) {
 	cfg := spec.Config{
 		Tasks: []spec.TaskConfig{
@@ -47,6 +49,7 @@ func TestOrderedTasksSelectedUsesConfigOrder(t *testing.T) {
 	}
 }
 
+// TestOrderedTasksUnknownIDs verifies unknown task IDs return errors.
 func TestOrderedTasksUnknownIDs(t *testing.T) {
 	cfg := spec.Config{
 		Tasks: []spec.TaskConfig{

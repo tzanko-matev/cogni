@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// TestFormatRunID verifies run ID formatting.
 func TestFormatRunID(t *testing.T) {
 	timestamp := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
 	got := FormatRunID(timestamp, "deadbeef")
@@ -14,6 +15,7 @@ func TestFormatRunID(t *testing.T) {
 	}
 }
 
+// TestNewRunIDWithRand verifies deterministic run ID generation with a reader.
 func TestNewRunIDWithRand(t *testing.T) {
 	timestamp := time.Date(2024, 6, 7, 8, 9, 10, 0, time.UTC)
 	reader := bytes.NewReader([]byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55})

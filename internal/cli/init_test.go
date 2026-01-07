@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// TestInitCommandCreatesFiles verifies init scaffolding writes files.
 func TestInitCommandCreatesFiles(t *testing.T) {
 	dir := t.TempDir()
 	specPath := filepath.Join(dir, ".cogni", "config.yml")
@@ -36,6 +37,7 @@ func TestInitCommandCreatesFiles(t *testing.T) {
 	}
 }
 
+// TestInitCommandRefusesOverwrite verifies init refuses overwriting existing config.
 func TestInitCommandRefusesOverwrite(t *testing.T) {
 	dir := t.TempDir()
 	specPath := filepath.Join(dir, ".cogni", "config.yml")

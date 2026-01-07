@@ -1,6 +1,6 @@
 # Go Guidelines Refactor Plan
 
-Status: In progress
+Status: DONE
 
 ID: 20260107-go-guidelines-refactor
 
@@ -114,3 +114,6 @@ strict explicitness, docstrings everywhere, deterministic tests with timeouts).
 - All tests have explicit timeouts and do not require external binaries or live APIs.
 - `nix develop -c go test ./...` passes reliably under 10 seconds.
 - `just test-live` runs the live-key suite in one command.
+
+## Completion
+- Completed on 2026-01-07.

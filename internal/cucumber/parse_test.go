@@ -7,6 +7,7 @@ import (
 	"testing"
 )
 
+// TestParseFeatureExampleIDs verifies example ID generation from features.
 func TestParseFeatureExampleIDs(t *testing.T) {
 	feature := `Feature: Sample
 
@@ -67,6 +68,7 @@ func TestParseFeatureExampleIDs(t *testing.T) {
 	}
 }
 
+// findLine returns the 1-based line number containing a needle.
 func findLine(body, needle string) string {
 	lines := strings.Split(body, "\n")
 	for i, line := range lines {
@@ -77,6 +79,7 @@ func findLine(body, needle string) string {
 	return "0"
 }
 
+// itoa formats a small integer without strconv for test assertions.
 func itoa(value int) string {
 	if value == 0 {
 		return "0"

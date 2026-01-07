@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// TestLoadExpectationsAndValidate verifies loading and validating expectations.
 func TestLoadExpectationsAndValidate(t *testing.T) {
 	dir := t.TempDir()
 	data := `examples:
@@ -36,6 +37,7 @@ func TestLoadExpectationsAndValidate(t *testing.T) {
 	}
 }
 
+// TestValidateExpectationsMissing verifies missing expectations are detected.
 func TestValidateExpectationsMissing(t *testing.T) {
 	expectations := map[string]Expectation{
 		"cli_run_defaults": {ExampleID: "cli_run_defaults", Implemented: true},

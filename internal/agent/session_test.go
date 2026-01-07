@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+// TestBuildInitialContext verifies initial context assembly.
 func TestBuildInitialContext(t *testing.T) {
 	ctx := TurnContext{
 		CWD:                   "/repo",
@@ -40,6 +41,7 @@ func TestBuildInitialContext(t *testing.T) {
 	}
 }
 
+// TestBuildPromptAddsApplyPatchInstructions verifies apply_patch guidance insertion.
 func TestBuildPromptAddsApplyPatchInstructions(t *testing.T) {
 	ctx := TurnContext{
 		ModelFamily: ModelFamily{
@@ -67,6 +69,7 @@ func TestBuildPromptAddsApplyPatchInstructions(t *testing.T) {
 	}
 }
 
+// TestBuildPromptOverrideAndApplyPatchTool verifies overrides skip extra instructions.
 func TestBuildPromptOverrideAndApplyPatchTool(t *testing.T) {
 	ctx := TurnContext{
 		ModelFamily: ModelFamily{

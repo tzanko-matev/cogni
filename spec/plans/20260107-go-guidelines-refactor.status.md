@@ -1,6 +1,6 @@
 # Go Guidelines Refactor Status
 
-Status: In progress
+Status: DONE
 
 ID: 20260107-go-guidelines-refactor.status
 
@@ -9,8 +9,7 @@ Created: 2026-01-07
 Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/20260107-go-guidelines-refactor.plan/)
 
 ## Current status
-- Phase 2 complete; Phase 3–4 in progress (I/O isolation + deterministic tests).
-- Phase 1 nearing completion (remaining docstrings in tests/helpers).
+- All phases complete; plan closed.
 
 ## Clarifications
 - Guideline enforcement applies to tests too (no `any`).
@@ -97,6 +96,7 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - Added docstrings across runner, tools, config, report, vcs, and spec core modules.
 - Added docstrings across CLI and command entrypoints.
 - Confirmed `rg "\\bany\\b" -g '*.go'` shows no `any` usages outside vendor files.
+- Added docstrings across remaining test files and helpers.
 
 ## Phase 2 progress
 - Split `internal/runner/run.go` into plan/setup/task/summary/tools/paths/types modules.
@@ -110,20 +110,22 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - Added `rgRunner` and `fileSystem` abstractions to `internal/tools.Runner`.
 - Added `HTTPDoer` for OpenRouter providers and `QADeps` filesystem abstraction for citation validation.
 - Added runner dependency hooks for repo root and metadata to avoid git in unit tests.
+- Added injectable setup command runner for repo setup steps.
 
 ## Phase 4 progress
 - Replaced rg and git usage in unit tests with fakes.
 - Added `testutil.Context` helper to enforce per-test context deadlines.
 - Tagged live LLM and cucumber feature suites; added Justfile targets to run them.
+- Added docstrings across remaining test helpers and test cases.
 
 ## Next steps
-- Finish docstrings for remaining tests/helpers and any missed functions.
-- Continue isolating remaining I/O boundaries (setup commands, godog exec path, feature reads) into injectable adapters.
-- Ensure remaining tests use explicit timeouts or testutil helpers consistently.
-- Verify live/cucumber suites with `just test-live` / `just test-cucumber`.
+- None. Plan completed.
 
 ## Latest test run
 - `nix develop -c go test ./...` (2026-01-07): pass.
+
+## Completion
+- Completed on 2026-01-07.
 
 ## Relevant source files (current or planned)
 - internal/runner/run.go

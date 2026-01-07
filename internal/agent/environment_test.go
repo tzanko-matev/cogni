@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestAppendEnvironmentDiff verifies environment changes are appended to history.
 func TestAppendEnvironmentDiff(t *testing.T) {
 	session := &Session{
 		Ctx: TurnContext{
@@ -47,6 +48,7 @@ func TestAppendEnvironmentDiff(t *testing.T) {
 	}
 }
 
+// TestAppendEnvironmentDiffNoChanges verifies no diff is added when unchanged.
 func TestAppendEnvironmentDiffNoChanges(t *testing.T) {
 	ctx := TurnContext{
 		CWD:            "/repo",

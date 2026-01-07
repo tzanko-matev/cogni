@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// TestRootHelp verifies global help output.
 func TestRootHelp(t *testing.T) {
 	var out, err bytes.Buffer
 	code := Run([]string{"--help"}, &out, &err)
@@ -26,6 +27,7 @@ func TestRootHelp(t *testing.T) {
 	}
 }
 
+// TestNoArgsShowsUsage verifies usage output for empty args.
 func TestNoArgsShowsUsage(t *testing.T) {
 	var out, err bytes.Buffer
 	code := Run(nil, &out, &err)
@@ -40,6 +42,7 @@ func TestNoArgsShowsUsage(t *testing.T) {
 	}
 }
 
+// TestUnknownCommand verifies unknown command handling.
 func TestUnknownCommand(t *testing.T) {
 	var out, err bytes.Buffer
 	code := Run([]string{"nope"}, &out, &err)
@@ -57,6 +60,7 @@ func TestUnknownCommand(t *testing.T) {
 	}
 }
 
+// TestCommandHelp verifies per-command help output.
 func TestCommandHelp(t *testing.T) {
 	for _, cmd := range commands {
 		var out, err bytes.Buffer

@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// TestValidateCommandSuccess verifies validate command success path.
 func TestValidateCommandSuccess(t *testing.T) {
 	dir := t.TempDir()
 	specPath := filepath.Join(dir, ".cogni", "config.yml")
@@ -46,6 +47,7 @@ tasks:
 	}
 }
 
+// TestValidateCommandFailure verifies validate command error handling.
 func TestValidateCommandFailure(t *testing.T) {
 	dir := t.TempDir()
 	specPath := filepath.Join(dir, ".cogni", "config.yml")
@@ -73,6 +75,7 @@ repo:
 	}
 }
 
+// TestValidateFindsConfigInParent verifies config discovery from parent dirs.
 func TestValidateFindsConfigInParent(t *testing.T) {
 	dir := t.TempDir()
 	specPath := filepath.Join(dir, ".cogni", "config.yml")

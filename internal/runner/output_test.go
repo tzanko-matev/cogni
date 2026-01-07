@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestOutputPaths verifies output path construction.
 func TestOutputPaths(t *testing.T) {
 	root := t.TempDir()
 	paths, err := NewOutputPaths(root, "abc123", "20240102T030405Z-deadbeef")
@@ -26,6 +27,7 @@ func TestOutputPaths(t *testing.T) {
 	}
 }
 
+// TestOutputPathsErrors verifies invalid output path inputs fail.
 func TestOutputPathsErrors(t *testing.T) {
 	cases := []struct {
 		name   string

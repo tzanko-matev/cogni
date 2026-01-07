@@ -6,6 +6,7 @@ import (
 	"cogni/internal/spec"
 )
 
+// TestParseSelectors verifies selector parsing for tasks and agents.
 func TestParseSelectors(t *testing.T) {
 	selectors, err := ParseSelectors([]string{"task-a", "task-b@agent-1"})
 	if err != nil {
@@ -22,6 +23,7 @@ func TestParseSelectors(t *testing.T) {
 	}
 }
 
+// TestParseSelectorsErrors verifies invalid selectors are rejected.
 func TestParseSelectorsErrors(t *testing.T) {
 	invalid := []string{"@agent", "task@", "task@@agent"}
 	for _, input := range invalid {
@@ -31,6 +33,7 @@ func TestParseSelectorsErrors(t *testing.T) {
 	}
 }
 
+// TestValidateSelectors verifies selector validation against config.
 func TestValidateSelectors(t *testing.T) {
 	cfg := spec.Config{
 		Agents: []spec.AgentConfig{{ID: "agent-1"}},
