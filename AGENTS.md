@@ -31,9 +31,31 @@ in the agent's environment.
 
 - This repository uses Jujutsu (`jj`) for version control.
 - Prefer `jj` commands over `git` unless a task explicitly requires `git`.
-- After each self-contained modification, create a new `jj` commit.
-  A unit of work is self-contained when all relevant checks pass (for example
-  the code builds successfully and relevant tests exist and pass).
+
+## Work process
+- Before any large coding task that would logically need multiple
+  commits to complete we must prepare a plan file and a status file in
+  /spec/plans. The plan file contains the complete plan for
+  implementing the task. The status file contains referernce to the
+  plan file, to relevant specs, relevant source files, what was done
+  so far. The status file should be continously updated as we work -
+  once per jj commit. The plan and status files should contain the
+  date when they were created as part of their names
+  (e.g. 20260102-add-the-greatest-feature.plan.md,
+  20260102-add-the-greatest-feature.status.md). After the task is
+  finished. both should be modified to contain the fact that it is
+  DONE.
+
+- After each self-contained modification, create a new `jj` commit.  A
+  unit of work is self-contained when all relevant checks pass (for
+  example the code builds successfully and relevant tests exist and
+  pass).
+
+- After each successful step and jj commit you are allowed to do a
+  **partial refactor**. This means: review the code that was just
+  written and related code. If the code doesn't follow our code quality
+  guidelines you can refactor it and create a jj commit with message
+  "refactor:...".
 
 ## Basic `jj` commands
 
@@ -68,8 +90,3 @@ We want to follow these principles in our codebase:
 | Naming         | Semantic Density                   | "Verbose, intent-revealing names to optimize vector retrieval."             |
 | Workflow       | Reflexion Support                  | Fast test suites (<10s) to enable agent self-correction loops.              |
 
-After each successful step and jj commit you are allowed to do a
-**partial refactor**. This means: review the code that was just
-written and related code. If the code doesn't follow our code quality
-guidelines you can refactor it and create a jj commit with message
-"refactor:...".

@@ -18,6 +18,7 @@ Linked plan: [spec/plans/20260107-cucumber-feature-batch-eval.plan.md](/plans/20
 ## What was done so far
 - Created the plan and status entries for per-feature evaluation.
 - Renamed the plan/status files to the dated naming format and removed the old filenames.
+- Committed the updated AGENTS.md work process guidance (no change to plan scope).
 
 ## Next steps
 - Phase 0: update specs and documentation for per-feature evaluation.
