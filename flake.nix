@@ -85,7 +85,9 @@
                 export LLM_API_KEY="$OPENROUTER_API_KEY"
               fi
               export PATH="$PWD:$PATH"
-              echo "cogni dev shell: set LLM_API_KEY to run benchmarks."
+              if [ -z "$LLM_API_KEY" ]; then
+                echo "cogni dev shell: set LLM_API_KEY to run benchmarks."
+              fi
             '';
           };
         });
