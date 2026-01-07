@@ -56,6 +56,7 @@
               git
               jujutsu
               ripgrep
+              just
               jq
               bashInteractive
               hugo
