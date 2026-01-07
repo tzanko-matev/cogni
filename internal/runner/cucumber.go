@@ -22,6 +22,7 @@ func runCucumberTask(
 	tokenCounter agent.TokenCounter,
 	verbose bool,
 	verboseWriter io.Writer,
+	verboseLogWriter io.Writer,
 	noColor bool,
 ) TaskResult {
 	result := TaskResult{TaskID: task.Task.ID, Type: task.Task.Type}
@@ -84,6 +85,7 @@ func runCucumberTask(
 			tokenCounter,
 			verbose,
 			verboseWriter,
+			verboseLogWriter,
 			noColor,
 		)
 		featureRuns = append(featureRuns, featureRun)

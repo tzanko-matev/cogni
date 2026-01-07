@@ -42,15 +42,16 @@ type RunDependencies struct {
 
 // RunParams configures a run invocation.
 type RunParams struct {
-	RepoRoot      string
-	OutputDir     string
-	AgentOverride string
-	Selectors     []TaskSelector
-	Repeat        int
-	Verbose       bool
-	VerboseWriter io.Writer
-	NoColor       bool
-	Deps          RunDependencies
+	RepoRoot         string
+	OutputDir        string
+	AgentOverride    string
+	Selectors        []TaskSelector
+	Repeat           int
+	Verbose          bool
+	VerboseWriter    io.Writer
+	VerboseLogWriter io.Writer
+	NoColor          bool
+	Deps             RunDependencies
 }
 
 // taskRun couples a task with its resolved agent and model.

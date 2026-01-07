@@ -40,6 +40,7 @@ tasks:
 	}
 
 	var gotParams runner.RunParams
+	logPath := filepath.Join(specDir, "run.log")
 	origRun := runAndWrite
 	runAndWrite = func(_ context.Context, _ spec.Config, params runner.RunParams) (runner.Results, runner.OutputPaths, error) {
 		gotParams = params
@@ -52,7 +53,7 @@ tasks:
 		t.Fatalf("run command not found")
 	}
 	var stdout, stderr bytes.Buffer
-	exitCode := cmd.Run([]string{"--spec", specPath, "--agent", "default", "--verbose", "--no-color", "task-1"}, &stdout, &stderr)
+	exitCode := cmd.Run([]string{"--spec", specPath, "--agent", "default", "--verbose", "--no-color", "--log", logPath, "task-1"}, &stdout, &stderr)
 	if exitCode != ExitOK {
 		t.Fatalf("unexpected exit: %d, stderr: %s", exitCode, stderr.String())
 	}
@@ -65,10 +66,16 @@ tasks:
 	if gotParams.VerboseWriter != &stdout {
 		t.Fatalf("expected verbose writer to be stdout")
 	}
+	if gotParams.VerboseLogWriter == nil {
+		t.Fatalf("expected verbose log writer to be set")
+	}
 	if !gotParams.NoColor {
 		t.Fatalf("expected no-color enabled")
 	}
 	if len(gotParams.Selectors) != 1 || gotParams.Selectors[0].TaskID != "task-1" {
 		t.Fatalf("unexpected selectors: %+v", gotParams.Selectors)
+	}
+	if _, err := os.Stat(logPath); err != nil {
+		t.Fatalf("expected log file to exist: %v", err)
 	}
 }

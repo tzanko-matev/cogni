@@ -53,6 +53,7 @@ func runFeatureBatch(
 	tokenCounter agent.TokenCounter,
 	verbose bool,
 	verboseWriter io.Writer,
+	verboseLogWriter io.Writer,
 	noColor bool,
 ) (CucumberFeatureRun, map[string]cucumber.AgentResponse, error, error) {
 	expectedIDs := make([]string, 0, len(featureExamples))
@@ -79,9 +80,10 @@ func runFeatureBatch(
 			MaxSeconds: time.Duration(task.Task.Budget.MaxSeconds) * time.Second,
 			MaxTokens:  task.Task.Budget.MaxTokens,
 		},
-		Verbose:       verbose,
-		VerboseWriter: verboseWriter,
-		NoColor:       noColor,
+		Verbose:          verbose,
+		VerboseWriter:    verboseWriter,
+		VerboseLogWriter: verboseLogWriter,
+		NoColor:          noColor,
 	})
 
 	featureRun := CucumberFeatureRun{

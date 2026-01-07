@@ -32,13 +32,28 @@ const (
 	styleError
 )
 
-// logVerbose emits a styled verbose line when verbosity is enabled.
-func logVerbose(enabled bool, writer io.Writer, noColor bool, style verboseStyle, message string) {
-	if !enabled || writer == nil {
-		return
+type verboseSink struct {
+	writer  io.Writer
+	noColor bool
+}
+
+func collectVerboseSinks(enabled bool, writer io.Writer, logWriter io.Writer, noColor bool) []verboseSink {
+	sinks := make([]verboseSink, 0, 2)
+	if enabled && writer != nil {
+		sinks = append(sinks, verboseSink{writer: writer, noColor: noColor})
 	}
-	palette := paletteFor(writer, noColor)
-	fmt.Fprintf(writer, "%s %s\n", palette.prefix(verbosePrefix), palette.apply(style, message))
+	if logWriter != nil {
+		sinks = append(sinks, verboseSink{writer: logWriter, noColor: true})
+	}
+	return sinks
+}
+
+// logVerbose emits a styled verbose line when verbosity is enabled.
+func logVerbose(enabled bool, writer io.Writer, logWriter io.Writer, noColor bool, style verboseStyle, message string) {
+	for _, sink := range collectVerboseSinks(enabled, writer, logWriter, noColor) {
+		palette := paletteFor(sink.writer, sink.noColor)
+		fmt.Fprintf(sink.writer, "%s %s\n", palette.prefix(verbosePrefix), palette.apply(style, message))
+	}
 }
 
 // formatToolCounts renders tool call counts in a deterministic order.

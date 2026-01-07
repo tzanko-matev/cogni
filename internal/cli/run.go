@@ -5,6 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"cogni/internal/config"
 	"cogni/internal/runner"
@@ -27,6 +30,7 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		outputDir := fs.String("output-dir", "", "Override output directory")
 		repeat := fs.Int("repeat", 1, "Repeat count")
 		verbose := fs.Bool("verbose", false, "Verbose logging")
+		logPath := fs.String("log", "", "Write verbose logs to a file")
 		noColor := fs.Bool("no-color", false, "Disable ANSI colors in verbose logs")
 		if err := fs.Parse(args); err != nil {
 			return ExitUsage
@@ -52,15 +56,34 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 
 		repoRoot := config.RepoRootFromConfigPath(resolvedSpec)
 
+		var logFile io.WriteCloser
+		if strings.TrimSpace(*logPath) != "" {
+			dir := filepath.Dir(*logPath)
+			if dir != "." {
+				if err := os.MkdirAll(dir, 0o755); err != nil {
+					fmt.Fprintf(stderr, "Failed to create log directory: %v\n", err)
+					return ExitError
+				}
+			}
+			file, err := os.OpenFile(*logPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+			if err != nil {
+				fmt.Fprintf(stderr, "Failed to open log file: %v\n", err)
+				return ExitError
+			}
+			logFile = file
+			defer func() { _ = logFile.Close() }()
+		}
+
 		results, paths, err := runAndWrite(context.Background(), cfg, runner.RunParams{
-			RepoRoot:      repoRoot,
-			OutputDir:     *outputDir,
-			AgentOverride: *agentOverride,
-			Selectors:     selectors,
-			Repeat:        *repeat,
-			Verbose:       *verbose,
-			VerboseWriter: stdout,
-			NoColor:       *noColor,
+			RepoRoot:         repoRoot,
+			OutputDir:        *outputDir,
+			AgentOverride:    *agentOverride,
+			Selectors:        selectors,
+			Repeat:           *repeat,
+			Verbose:          *verbose,
+			VerboseWriter:    stdout,
+			VerboseLogWriter: logFile,
+			NoColor:          *noColor,
 		})
 		if err != nil {
 			fmt.Fprintf(stderr, "Run failed: %v\n", err)
