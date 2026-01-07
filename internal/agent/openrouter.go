@@ -127,7 +127,7 @@ type openRouterTool struct {
 type openRouterFunctionDefinition struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
-	Parameters  any    `json:"parameters,omitempty"`
+	Parameters  *ToolSchema `json:"parameters,omitempty"`
 }
 
 type openRouterToolCall struct {
@@ -167,10 +167,14 @@ func toOpenRouterMessage(item HistoryItem) (openRouterMessage, error) {
 		role = "system"
 	}
 	switch content := item.Content.(type) {
-	case string:
-		return openRouterMessage{Role: role, Content: content}, nil
+	case HistoryText:
+		return openRouterMessage{Role: role, Content: content.Text}, nil
 	case ToolCall:
-		args, err := json.Marshal(content.Args)
+		args := content.Args
+		if args == nil {
+			args = ToolCallArgs{}
+		}
+		payload, err := json.Marshal(args)
 		if err != nil {
 			return openRouterMessage{}, fmt.Errorf("marshal tool args: %w", err)
 		}
@@ -184,7 +188,7 @@ func toOpenRouterMessage(item HistoryItem) (openRouterMessage, error) {
 				Type: "function",
 				Function: openRouterFunctionCall{
 					Name:      content.Name,
-					Arguments: string(args),
+					Arguments: string(payload),
 				},
 			}},
 		}, nil
@@ -204,7 +208,8 @@ func buildOpenRouterTools(defs []ToolDefinition) []openRouterTool {
 	for _, def := range defs {
 		params := def.Parameters
 		if params == nil {
-			params = map[string]any{"type": "object"}
+			defaultSchema := ToolSchema{Type: "object"}
+			params = &defaultSchema
 		}
 		tools = append(tools, openRouterTool{
 			Type: "function",
@@ -307,7 +312,7 @@ func parseOpenRouterStream(reader io.Reader) ([]StreamEvent, error) {
 		sort.Ints(indices)
 		for _, index := range indices {
 			acc := accumulators[index]
-			var args map[string]any
+			var args ToolCallArgs
 			if acc.Arguments.Len() > 0 {
 				if err := json.Unmarshal([]byte(acc.Arguments.String()), &args); err != nil {
 					return nil, fmt.Errorf("parse tool arguments: %w", err)

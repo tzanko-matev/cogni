@@ -13,12 +13,16 @@ func ApproxTokenCount(history []HistoryItem) int {
 	return total / 4
 }
 
-func contentString(content any) string {
+func contentString(content HistoryContent) string {
 	switch value := content.(type) {
-	case string:
-		return value
+	case HistoryText:
+		return value.Text
 	case ToolCall:
-		raw, _ := json.Marshal(value.Args)
+		args := value.Args
+		if args == nil {
+			args = ToolCallArgs{}
+		}
+		raw, _ := json.Marshal(args)
 		return value.Name + string(raw)
 	case ToolOutput:
 		return value.Result.Output

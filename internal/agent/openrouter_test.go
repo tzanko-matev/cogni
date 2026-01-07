@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,7 +42,7 @@ func TestOpenRouterStreamParsesMessage(t *testing.T) {
 	}
 	stream, err := provider.Stream(context.Background(), Prompt{
 		Instructions: "base",
-		InputItems:   []HistoryItem{{Role: "user", Content: "hi"}},
+		InputItems:   []HistoryItem{{Role: "user", Content: HistoryText{Text: "hi"}}},
 	})
 	if err != nil {
 		t.Fatalf("stream: %v", err)
@@ -72,7 +73,7 @@ func TestOpenRouterStreamParsesToolCall(t *testing.T) {
 		t.Fatalf("new provider: %v", err)
 	}
 	stream, err := provider.Stream(context.Background(), Prompt{
-		InputItems: []HistoryItem{{Role: "user", Content: "hi"}},
+		InputItems: []HistoryItem{{Role: "user", Content: HistoryText{Text: "hi"}}},
 	})
 	if err != nil {
 		t.Fatalf("stream: %v", err)
@@ -87,7 +88,12 @@ func TestOpenRouterStreamParsesToolCall(t *testing.T) {
 	if event.ToolCall.Name != "search" || event.ToolCall.ID != "call_1" {
 		t.Fatalf("unexpected tool call: %+v", event.ToolCall)
 	}
-	if event.ToolCall.Args["query"] != "hi" {
+	queryRaw, ok := event.ToolCall.Args["query"]
+	if !ok {
+		t.Fatalf("missing query arg: %+v", event.ToolCall.Args)
+	}
+	var query string
+	if err := json.Unmarshal(queryRaw, &query); err != nil || query != "hi" {
 		t.Fatalf("unexpected tool args: %+v", event.ToolCall.Args)
 	}
 	if _, err := stream.Recv(); err != io.EOF {

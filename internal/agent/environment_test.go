@@ -29,17 +29,17 @@ func TestAppendEnvironmentDiff(t *testing.T) {
 	if len(session.History) != 1 {
 		t.Fatalf("expected history item")
 	}
-	content, ok := session.History[0].Content.(string)
+	content, ok := session.History[0].Content.(HistoryText)
 	if !ok {
-		t.Fatalf("expected string content")
+		t.Fatalf("expected text content")
 	}
-	if !strings.Contains(content, "<cwd>/repo/sub</cwd>") {
-		t.Fatalf("expected cwd change, got %q", content)
+	if !strings.Contains(content.Text, "<cwd>/repo/sub</cwd>") {
+		t.Fatalf("expected cwd change, got %q", content.Text)
 	}
-	if !strings.Contains(content, "<network_access>restricted</network_access>") {
-		t.Fatalf("expected network change, got %q", content)
+	if !strings.Contains(content.Text, "<network_access>restricted</network_access>") {
+		t.Fatalf("expected network change, got %q", content.Text)
 	}
-	if strings.Contains(content, "<sandbox_mode>") {
+	if strings.Contains(content.Text, "<sandbox_mode>") {
 		t.Fatalf("did not expect sandbox mode")
 	}
 	if session.Ctx.CWD != "/repo/sub" {

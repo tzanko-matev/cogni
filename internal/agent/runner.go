@@ -34,7 +34,7 @@ type Provider interface {
 type ToolCall struct {
 	ID   string
 	Name string
-	Args map[string]any
+	Args ToolCallArgs
 }
 
 type ToolOutput struct {
@@ -74,7 +74,7 @@ func RunTurn(ctx context.Context, session *Session, provider Provider, executor 
 	start := time.Now()
 	metrics := RunMetrics{ToolCalls: map[string]int{}}
 
-	session.History = append(session.History, HistoryItem{Role: "user", Content: userText})
+	session.History = append(session.History, HistoryItem{Role: "user", Content: HistoryText{Text: userText}})
 	if opts.TokenCounter != nil && opts.CompactionLimit > 0 && opts.TokenCounter(session.History) > opts.CompactionLimit {
 		session.History = CompactHistory(session.History, opts.TokenCounter, opts.CompactionLimit)
 	}
@@ -130,13 +130,13 @@ func HandleResponseStream(ctx context.Context, session *Session, stream Stream, 
 		}
 		switch event.Type {
 		case StreamEventMessage:
-			session.History = append(session.History, HistoryItem{Role: "assistant", Content: event.Message})
+			session.History = append(session.History, HistoryItem{Role: "assistant", Content: HistoryText{Text: event.Message}})
 			logVerboseBlock(opts, "LLM output", event.Message, styleHeadingOutput, styleDefault)
 		case StreamEventToolCall:
 			if event.ToolCall.ID == "" {
 				event.ToolCall.ID = fmt.Sprintf("call-%d", len(session.History))
 			}
-			logVerbose(opts, styleHeadingToolCall, "Tool call id=%s name=%s args=%s", event.ToolCall.ID, event.ToolCall.Name, formatArgs(event.ToolCall.Args))
+			logVerbose(opts, styleHeadingToolCall, fmt.Sprintf("Tool call id=%s name=%s args=%s", event.ToolCall.ID, event.ToolCall.Name, formatArgs(event.ToolCall.Args)))
 			session.History = append(session.History, HistoryItem{Role: "assistant", Content: event.ToolCall})
 			result := executor.Execute(ctx, event.ToolCall)
 			session.History = append(session.History, HistoryItem{Role: "tool", Content: ToolOutput{

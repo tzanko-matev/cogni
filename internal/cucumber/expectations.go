@@ -1,7 +1,6 @@
 package cucumber
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -70,50 +69,56 @@ func ValidateExpectations(expectations map[string]Expectation, examples []Exampl
 	return nil
 }
 
-type expectationFile struct {
-	Examples any `json:"examples" yaml:"examples"`
-}
-
 func loadExpectationFile(path string, expectations map[string]Expectation) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("read expectations: %w", err)
 	}
-	var payload expectationFile
-	switch {
-	case strings.HasSuffix(path, ".json"):
-		if err := json.Unmarshal(data, &payload); err != nil {
-			return fmt.Errorf("parse %s: %w", filepath.Base(path), err)
-		}
-	default:
-		if err := yaml.Unmarshal(data, &payload); err != nil {
-			return fmt.Errorf("parse %s: %w", filepath.Base(path), err)
-		}
+	var doc yaml.Node
+	if err := yaml.Unmarshal(data, &doc); err != nil {
+		return fmt.Errorf("parse %s: %w", filepath.Base(path), err)
 	}
-	if payload.Examples == nil {
-		var fallback map[string]any
-		if err := yaml.Unmarshal(data, &fallback); err == nil && len(fallback) > 0 {
-			return parseExpectationMap(fallback, expectations, filepath.Base(path))
-		}
-		return fmt.Errorf("no examples found in %s", filepath.Base(path))
+	if len(doc.Content) == 0 {
+		return fmt.Errorf("no expectations found in %s", filepath.Base(path))
 	}
-	switch examples := payload.Examples.(type) {
-	case map[string]any:
-		return parseExpectationMap(examples, expectations, filepath.Base(path))
-	case []any:
-		return parseExpectationList(examples, expectations, filepath.Base(path))
+	return parseExpectationNode(doc.Content[0], expectations, filepath.Base(path))
+}
+
+func parseExpectationNode(node *yaml.Node, expectations map[string]Expectation, source string) error {
+	switch node.Kind {
+	case yaml.MappingNode:
+		examplesNode := mappingValue(node, "examples")
+		if examplesNode != nil {
+			return parseExamplesNode(examplesNode, expectations, source)
+		}
+		return parseExpectationMapNode(node, expectations, source)
+	case yaml.SequenceNode:
+		return parseExpectationListNode(node, expectations, source)
 	default:
-		return fmt.Errorf("invalid examples in %s", filepath.Base(path))
+		return fmt.Errorf("invalid expectations in %s", source)
 	}
 }
 
-func parseExpectationMap(values map[string]any, expectations map[string]Expectation, source string) error {
-	for id, raw := range values {
-		id = strings.TrimSpace(id)
+func parseExamplesNode(node *yaml.Node, expectations map[string]Expectation, source string) error {
+	switch node.Kind {
+	case yaml.MappingNode:
+		return parseExpectationMapNode(node, expectations, source)
+	case yaml.SequenceNode:
+		return parseExpectationListNode(node, expectations, source)
+	default:
+		return fmt.Errorf("invalid examples in %s", source)
+	}
+}
+
+func parseExpectationMapNode(node *yaml.Node, expectations map[string]Expectation, source string) error {
+	for i := 0; i < len(node.Content); i += 2 {
+		key := node.Content[i]
+		value := node.Content[i+1]
+		id := strings.TrimSpace(key.Value)
 		if id == "" {
 			return fmt.Errorf("empty example id in %s", source)
 		}
-		entry, err := parseExpectationValue(id, raw, source)
+		entry, err := parseExpectationValueNode(id, value, source)
 		if err != nil {
 			return err
 		}
@@ -125,21 +130,20 @@ func parseExpectationMap(values map[string]any, expectations map[string]Expectat
 	return nil
 }
 
-func parseExpectationList(values []any, expectations map[string]Expectation, source string) error {
-	for _, raw := range values {
-		entryMap, ok := raw.(map[string]any)
-		if !ok {
+func parseExpectationListNode(node *yaml.Node, expectations map[string]Expectation, source string) error {
+	for _, item := range node.Content {
+		if item.Kind != yaml.MappingNode {
 			return fmt.Errorf("invalid expectation entry in %s", source)
 		}
-		rawID, ok := entryMap["id"]
-		if !ok {
+		idNode := mappingValue(item, "id")
+		if idNode == nil {
 			return fmt.Errorf("missing id in %s", source)
 		}
-		id, ok := rawID.(string)
-		if !ok {
+		id := strings.TrimSpace(idNode.Value)
+		if id == "" {
 			return fmt.Errorf("invalid id in %s", source)
 		}
-		entry, err := parseExpectationValue(id, entryMap, source)
+		entry, err := parseExpectationValueNode(id, item, source)
 		if err != nil {
 			return err
 		}
@@ -151,44 +155,43 @@ func parseExpectationList(values []any, expectations map[string]Expectation, sou
 	return nil
 }
 
-func parseExpectationValue(id string, raw any, source string) (Expectation, error) {
+func parseExpectationValueNode(id string, node *yaml.Node, source string) (Expectation, error) {
 	id = strings.TrimSpace(id)
 	entry := Expectation{ExampleID: id}
-	switch typed := raw.(type) {
-	case bool:
-		entry.Implemented = typed
-		return entry, nil
-	case string:
-		implemented, err := parseImplementedString(typed)
+	switch node.Kind {
+	case yaml.ScalarNode:
+		implemented, err := parseImplementedString(node.Value)
 		if err != nil {
 			return Expectation{}, fmt.Errorf("invalid expectation for %q in %s: %w", id, source, err)
 		}
 		entry.Implemented = implemented
 		return entry, nil
-	case map[string]any:
-		if rawImplemented, ok := typed["implemented"]; ok {
-			switch value := rawImplemented.(type) {
-			case bool:
-				entry.Implemented = value
-			case string:
-				implemented, err := parseImplementedString(value)
-				if err != nil {
-					return Expectation{}, fmt.Errorf("invalid implemented for %q in %s: %w", id, source, err)
-				}
-				entry.Implemented = implemented
-			default:
-				return Expectation{}, fmt.Errorf("invalid implemented for %q in %s", id, source)
-			}
-		} else {
+	case yaml.MappingNode:
+		implNode := mappingValue(node, "implemented")
+		if implNode == nil {
 			return Expectation{}, fmt.Errorf("missing implemented for %q in %s", id, source)
 		}
-		if rawNotes, ok := typed["notes"].(string); ok {
-			entry.Notes = rawNotes
+		implemented, err := parseImplementedString(implNode.Value)
+		if err != nil {
+			return Expectation{}, fmt.Errorf("invalid implemented for %q in %s: %w", id, source, err)
+		}
+		entry.Implemented = implemented
+		if notesNode := mappingValue(node, "notes"); notesNode != nil {
+			entry.Notes = notesNode.Value
 		}
 		return entry, nil
 	default:
 		return Expectation{}, fmt.Errorf("invalid expectation for %q in %s", id, source)
 	}
+}
+
+func mappingValue(node *yaml.Node, key string) *yaml.Node {
+	for i := 0; i < len(node.Content); i += 2 {
+		if node.Content[i].Value == key {
+			return node.Content[i+1]
+		}
+	}
+	return nil
 }
 
 func parseImplementedString(value string) (bool, error) {

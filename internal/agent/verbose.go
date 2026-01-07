@@ -52,12 +52,13 @@ type verbosePalette struct {
 	enabled bool
 }
 
-func logVerbose(opts RunOptions, style verboseStyle, format string, args ...any) {
+// logVerbose emits a styled verbose line when verbosity is enabled.
+func logVerbose(opts RunOptions, style verboseStyle, message string) {
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
 	}
 	palette := paletteFor(opts.VerboseWriter, opts.NoColor)
-	writeVerboseLine(opts.VerboseWriter, palette, style, fmt.Sprintf(format, args...))
+	writeVerboseLine(opts.VerboseWriter, palette, style, message)
 }
 
 func logVerboseBlock(opts RunOptions, header, body string, headerStyle, bodyStyle verboseStyle) {
@@ -190,8 +191,8 @@ func formatPrompt(prompt Prompt) string {
 
 func formatHistoryItem(item HistoryItem) string {
 	switch content := item.Content.(type) {
-	case string:
-		return fmt.Sprintf("- %s: %s\n", item.Role, content)
+	case HistoryText:
+		return fmt.Sprintf("- %s: %s\n", item.Role, content.Text)
 	case ToolCall:
 		return fmt.Sprintf("- %s: tool_call id=%s name=%s args=%s\n", item.Role, content.ID, content.Name, formatArgs(content.Args))
 	case ToolOutput:
@@ -207,13 +208,13 @@ func formatHistoryItem(item HistoryItem) string {
 	}
 }
 
-func formatArgs(args map[string]any) string {
+func formatArgs(args ToolCallArgs) string {
 	if len(args) == 0 {
 		return "{}"
 	}
 	payload, err := json.Marshal(args)
 	if err != nil {
-		return fmt.Sprintf("%v", args)
+		return "<invalid args>"
 	}
 	return string(payload)
 }

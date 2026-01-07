@@ -30,8 +30,8 @@ func WriteRunOutputs(results Results, outputDir string) (OutputPaths, error) {
 	return paths, nil
 }
 
-func writeJSON(path string, value any) error {
-	payload, err := json.MarshalIndent(value, "", "  ")
+func writeJSON(path string, results Results) error {
+	payload, err := json.MarshalIndent(results, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal json: %w", err)
 	}

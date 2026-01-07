@@ -9,7 +9,7 @@ Created: 2026-01-07
 Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/20260107-go-guidelines-refactor.plan/)
 
 ## Current status
-- Phase 0 in progress (inventory and boundaries).
+- Phase 0 complete; Phase 1 in progress (typing + docstrings).
 
 ## Clarifications
 - Guideline enforcement applies to tests too (no `any`).
@@ -82,7 +82,9 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - No explicit timeouts in unit tests (many use context.Background without deadlines)
 
 ## Phase 1 progress
-- Updated runner verbose logging to avoid `...any` and added docstrings in `internal/runner/verbose.go`.
+- Eliminated `any` usage across agent/eval/cucumber/runner output paths via typed JSON handling.
+- Added typed tool schemas (`ToolSchema`), tool args (`ToolCallArgs`), and history content (`HistoryText`).
+- Reworked expectations parsing to use `yaml.Node` instead of dynamic maps.
 
 ## Next steps
 - Finish Phase 0 by defining module split boundaries and type replacement strategy.

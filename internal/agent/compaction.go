@@ -4,8 +4,10 @@ import (
 	"strings"
 )
 
+// TokenCounter estimates token usage for a history slice.
 type TokenCounter func(history []HistoryItem) int
 
+// CompactHistory trims history while keeping instructions, tool outputs, and the latest user/env messages.
 func CompactHistory(history []HistoryItem, counter TokenCounter, limit int) []HistoryItem {
 	if counter == nil || limit <= 0 {
 		return history
@@ -49,26 +51,29 @@ func CompactHistory(history []HistoryItem, counter TokenCounter, limit int) []Hi
 	return compacted
 }
 
+// isDeveloperInstructions reports whether the item holds developer guidance.
 func isDeveloperInstructions(item HistoryItem) bool {
 	return item.Role == "developer"
 }
 
+// isUserInstructions reports whether the item holds user guidance.
 func isUserInstructions(item HistoryItem) bool {
 	if item.Role != "user" {
 		return false
 	}
-	content, ok := item.Content.(string)
+	content, ok := historyText(item)
 	if !ok {
 		return false
 	}
 	return strings.HasPrefix(content, "# AGENTS.md instructions for ")
 }
 
+// isEnvironmentItem reports whether the item holds environment context or diff data.
 func isEnvironmentItem(item HistoryItem) bool {
 	if item.Role != "user" {
 		return false
 	}
-	content, ok := item.Content.(string)
+	content, ok := historyText(item)
 	if !ok {
 		return false
 	}
@@ -76,6 +81,7 @@ func isEnvironmentItem(item HistoryItem) bool {
 		strings.HasPrefix(content, "<environment_diff>")
 }
 
+// isUserMessage reports whether the item is a normal user message.
 func isUserMessage(item HistoryItem) bool {
 	if item.Role != "user" {
 		return false
@@ -84,4 +90,13 @@ func isUserMessage(item HistoryItem) bool {
 		return false
 	}
 	return true
+}
+
+// historyText extracts text from a history item when it is a HistoryText payload.
+func historyText(item HistoryItem) (string, bool) {
+	content, ok := item.Content.(HistoryText)
+	if !ok {
+		return "", false
+	}
+	return content.Text, true
 }

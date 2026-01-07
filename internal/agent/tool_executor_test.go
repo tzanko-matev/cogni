@@ -18,7 +18,7 @@ func TestRunnerExecutorMissingArgs(t *testing.T) {
 
 	result := executor.Execute(context.Background(), ToolCall{
 		Name: "search",
-		Args: map[string]any{},
+		Args: ToolCallArgs{},
 	})
 	if !strings.Contains(result.Error, "query is required") {
 		t.Fatalf("unexpected error: %v", result.Error)

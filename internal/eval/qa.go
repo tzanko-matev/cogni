@@ -38,7 +38,7 @@ func EvaluateQA(output string, cfg QAConfig) QAResult {
 		CitationValid: true,
 	}
 
-	var parsed any
+	var parsed JSONValue
 	if err := json.Unmarshal([]byte(output), &parsed); err != nil {
 		result.Status = "fail"
 		result.FailureReason = "invalid_json"
@@ -89,7 +89,7 @@ func EvaluateQA(output string, cfg QAConfig) QAResult {
 	return result
 }
 
-func validateSchema(parsed any, schemaPath, repoRoot string) (bool, []string, error) {
+func validateSchema(parsed JSONValue, schemaPath, repoRoot string) (bool, []string, error) {
 	path := schemaPath
 	if repoRoot != "" && !filepath.IsAbs(path) {
 		path = filepath.Join(repoRoot, path)
@@ -104,13 +104,13 @@ func validateSchema(parsed any, schemaPath, repoRoot string) (bool, []string, er
 	if err != nil {
 		return false, nil, fmt.Errorf("compile schema: %w", err)
 	}
-	if err := schema.Validate(parsed); err != nil {
+	if err := schema.Validate(parsed.ToInterface()); err != nil {
 		return false, []string{err.Error()}, nil
 	}
 	return true, nil, nil
 }
 
-func findMissingMustContain(raw string, parsed any, required []string) []string {
+func findMissingMustContain(raw string, parsed JSONValue, required []string) []string {
 	missing := make([]string, 0)
 	for _, item := range required {
 		item = strings.TrimSpace(item)
@@ -128,19 +128,20 @@ func findMissingMustContain(raw string, parsed any, required []string) []string 
 	return missing
 }
 
-func containsKey(value any, key string) bool {
-	switch typed := value.(type) {
-	case map[string]any:
-		if _, ok := typed[key]; ok {
+func containsKey(value JSONValue, key string) bool {
+	if object, ok := value.ObjectValue(); ok {
+		if _, found := object[key]; found {
 			return true
 		}
-		for _, v := range typed {
+		for _, v := range object {
 			if containsKey(v, key) {
 				return true
 			}
 		}
-	case []any:
-		for _, v := range typed {
+		return false
+	}
+	if array, ok := value.ArrayValue(); ok {
+		for _, v := range array {
 			if containsKey(v, key) {
 				return true
 			}
@@ -155,7 +156,7 @@ type Citation struct {
 	End   int
 }
 
-func validateCitations(parsed any, repoRoot string) (bool, []string) {
+func validateCitations(parsed JSONValue, repoRoot string) (bool, []string) {
 	citations, err := extractCitations(parsed)
 	if err != nil {
 		return false, []string{err.Error()}
@@ -197,8 +198,8 @@ func validateCitations(parsed any, repoRoot string) (bool, []string) {
 	return len(errors) == 0, errors
 }
 
-func extractCitations(parsed any) ([]Citation, error) {
-	root, ok := parsed.(map[string]any)
+func extractCitations(parsed JSONValue) ([]Citation, error) {
+	root, ok := parsed.ObjectValue()
 	if !ok {
 		return nil, fmt.Errorf("citations require a JSON object")
 	}
@@ -206,28 +207,42 @@ func extractCitations(parsed any) ([]Citation, error) {
 	if !ok {
 		return nil, fmt.Errorf("citations not found")
 	}
-	items, ok := raw.([]any)
+	items, ok := raw.ArrayValue()
 	if !ok {
 		return nil, fmt.Errorf("citations must be an array")
 	}
 	citations := make([]Citation, 0, len(items))
 	for _, item := range items {
-		entry, ok := item.(map[string]any)
+		entry, ok := item.ObjectValue()
 		if !ok {
 			return nil, fmt.Errorf("citation entry must be an object")
 		}
-		path, _ := entry["path"].(string)
-		linesRaw, ok := entry["lines"].([]any)
+		pathValue, ok := entry["path"]
+		if !ok {
+			return nil, fmt.Errorf("citation path is required")
+		}
+		path, ok := pathValue.StringValue()
+		if !ok {
+			return nil, fmt.Errorf("citation path must be a string")
+		}
+		linesValue, ok := entry["lines"]
+		if !ok {
+			return nil, fmt.Errorf("citation lines must be provided")
+		}
+		linesRaw, ok := linesValue.ArrayValue()
 		if !ok || len(linesRaw) != 2 {
 			return nil, fmt.Errorf("citation lines must be a two-item array")
 		}
-		start, ok := linesRaw[0].(float64)
+		start, ok := linesRaw[0].NumberValue()
 		if !ok {
 			return nil, fmt.Errorf("citation start line must be a number")
 		}
-		end, ok := linesRaw[1].(float64)
+		end, ok := linesRaw[1].NumberValue()
 		if !ok {
 			return nil, fmt.Errorf("citation end line must be a number")
+		}
+		if float64(int(start)) != start || float64(int(end)) != end {
+			return nil, fmt.Errorf("citation line numbers must be integers")
 		}
 		citations = append(citations, Citation{
 			Path:  path,

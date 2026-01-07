@@ -63,7 +63,7 @@ func FindConfigPath(startDir string) (string, error) {
 
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return "", fmt.Errorf("no %s found in %s or any parent directory", filepath.Join(ConfigDirName, ConfigFileName), dir)
+			return "", fmt.Errorf("no %s found in %s or parent directories", filepath.Join(ConfigDirName, ConfigFileName), dir)
 		}
 		dir = parent
 	}

@@ -17,11 +17,11 @@ func TestBuildInitialContext(t *testing.T) {
 	if len(items) != 3 {
 		t.Fatalf("expected 3 items, got %d", len(items))
 	}
-	if items[0].Role != "developer" || items[0].Content != "dev instructions" {
+	if items[0].Role != "developer" || items[0].Content != (HistoryText{Text: "dev instructions"}) {
 		t.Fatalf("unexpected developer item: %+v", items[0])
 	}
 	expectedUser := "# AGENTS.md instructions for /repo\n\n<INSTRUCTIONS>\nuser instructions\n</INSTRUCTIONS>"
-	if items[1].Role != "user" || items[1].Content != expectedUser {
+	if items[1].Role != "user" || items[1].Content != (HistoryText{Text: expectedUser}) {
 		t.Fatalf("unexpected user item: %+v", items[1])
 	}
 	expectedEnv := "<environment_context>\n" +
@@ -35,7 +35,7 @@ func TestBuildInitialContext(t *testing.T) {
 		"  </writable_roots>\n" +
 		"  <shell>bash</shell>\n" +
 		"</environment_context>"
-	if items[2].Role != "user" || items[2].Content != expectedEnv {
+	if items[2].Role != "user" || items[2].Content != (HistoryText{Text: expectedEnv}) {
 		t.Fatalf("unexpected environment item: %+v", items[2])
 	}
 }
@@ -52,7 +52,7 @@ func TestBuildPromptAddsApplyPatchInstructions(t *testing.T) {
 		},
 		Features: FeatureFlags{ParallelTools: true},
 	}
-	history := []HistoryItem{{Role: "user", Content: "hello"}}
+	history := []HistoryItem{{Role: "user", Content: HistoryText{Text: "hello"}}}
 
 	prompt := BuildPrompt(ctx, history)
 	expected := "base\n" + ApplyPatchInstructions

@@ -64,7 +64,7 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 	}
 	provider := &fakeProvider{
 		streams: [][]StreamEvent{
-			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: map[string]any{}}}},
+			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: ToolCallArgs{}}}},
 			{{Type: StreamEventMessage, Message: "done"}},
 		},
 	}
@@ -103,7 +103,7 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 	if output.ToolCallID != call.ID {
 		t.Fatalf("expected tool output to reference call id")
 	}
-	if session.History[3].Content != "done" {
+	if session.History[3].Content != (HistoryText{Text: "done"}) {
 		t.Fatalf("expected assistant message, got %v", session.History[3].Content)
 	}
 	if metrics.Steps != 2 {
@@ -122,7 +122,7 @@ func TestRunTurnBudgetExceeded(t *testing.T) {
 	}
 	provider := &fakeProvider{
 		streams: [][]StreamEvent{
-			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: map[string]any{}}}},
+			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: ToolCallArgs{}}}},
 		},
 	}
 	executor := &fakeExecutor{}
@@ -143,7 +143,7 @@ func TestRunTurnVerboseLogs(t *testing.T) {
 	}
 	provider := &fakeProvider{
 		streams: [][]StreamEvent{
-			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: map[string]any{}}}},
+			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: ToolCallArgs{}}}},
 			{{Type: StreamEventMessage, Message: "done"}},
 		},
 	}

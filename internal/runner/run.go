@@ -370,9 +370,9 @@ func latestAssistantMessage(history []agent.HistoryItem) (string, bool) {
 		if item.Role != "assistant" {
 			continue
 		}
-		text, ok := item.Content.(string)
+		text, ok := item.Content.(agent.HistoryText)
 		if ok {
-			return text, true
+			return text.Text, true
 		}
 	}
 	return "", false
@@ -467,46 +467,44 @@ func runSetupCommands(ctx context.Context, root string, commands []string) error
 }
 
 func defaultToolDefinitions() []agent.ToolDefinition {
+	disallowExtras := agent.BoolPointer(false)
 	return []agent.ToolDefinition{
 		{
 			Name:        "list_files",
 			Description: "List files in the repository",
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"glob": map[string]any{"type": "string"},
+			Parameters: &agent.ToolSchema{
+				Type: "object",
+				Properties: map[string]agent.ToolSchema{
+					"glob": agent.StringSchema(),
 				},
-				"additionalProperties": false,
+				AdditionalProperties: disallowExtras,
 			},
 		},
 		{
 			Name:        "search",
 			Description: "Search for a query string in files",
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"query": map[string]any{"type": "string"},
-					"paths": map[string]any{
-						"type":  "array",
-						"items": map[string]any{"type": "string"},
-					},
+			Parameters: &agent.ToolSchema{
+				Type: "object",
+				Properties: map[string]agent.ToolSchema{
+					"query": agent.StringSchema(),
+					"paths": agent.ArraySchema(agent.StringSchema()),
 				},
-				"required":             []string{"query"},
-				"additionalProperties": false,
+				Required:             []string{"query"},
+				AdditionalProperties: disallowExtras,
 			},
 		},
 		{
 			Name:        "read_file",
 			Description: "Read a file from the repository",
-			Parameters: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"path":       map[string]any{"type": "string"},
-					"start_line": map[string]any{"type": "integer"},
-					"end_line":   map[string]any{"type": "integer"},
+			Parameters: &agent.ToolSchema{
+				Type: "object",
+				Properties: map[string]agent.ToolSchema{
+					"path":       agent.StringSchema(),
+					"start_line": agent.IntegerSchema(),
+					"end_line":   agent.IntegerSchema(),
 				},
-				"required":             []string{"path"},
-				"additionalProperties": false,
+				Required:             []string{"path"},
+				AdditionalProperties: disallowExtras,
 			},
 		},
 	}

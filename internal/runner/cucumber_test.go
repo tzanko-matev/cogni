@@ -19,19 +19,28 @@ type cucumberProvider struct {
 	responseIDs     []string
 }
 
+type cucumberBatchResult struct {
+	ExampleID   string `json:"example_id"`
+	Implemented bool   `json:"implemented"`
+}
+
+type cucumberBatchResponse struct {
+	Results []cucumberBatchResult `json:"results"`
+}
+
 func (p cucumberProvider) Stream(_ context.Context, prompt agent.Prompt) (agent.Stream, error) {
 	exampleIDs := p.responseIDs
 	if len(exampleIDs) == 0 {
 		exampleIDs = extractExampleIDs(prompt)
 	}
-	results := make([]map[string]any, 0, len(exampleIDs))
+	results := make([]cucumberBatchResult, 0, len(exampleIDs))
 	for _, exampleID := range exampleIDs {
-		results = append(results, map[string]any{
-			"example_id":  exampleID,
-			"implemented": p.implementedByID[exampleID],
+		results = append(results, cucumberBatchResult{
+			ExampleID:   exampleID,
+			Implemented: p.implementedByID[exampleID],
 		})
 	}
-	payload, err := json.Marshal(map[string]any{"results": results})
+	payload, err := json.Marshal(cucumberBatchResponse{Results: results})
 	if err != nil {
 		return nil, err
 	}
@@ -45,12 +54,12 @@ func extractExampleIDs(prompt agent.Prompt) []string {
 		if item.Role != "user" {
 			continue
 		}
-		text, ok := item.Content.(string)
+		text, ok := item.Content.(agent.HistoryText)
 		if !ok {
 			continue
 		}
-		if strings.Contains(text, "example_ids:") {
-			parts := strings.SplitN(text, "example_ids:", 2)
+		if strings.Contains(text.Text, "example_ids:") {
+			parts := strings.SplitN(text.Text, "example_ids:", 2)
 			if len(parts) != 2 {
 				return nil
 			}

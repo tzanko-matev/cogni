@@ -40,10 +40,11 @@ type ToolConfig struct {
 	Tools []ToolDefinition
 }
 
+// ToolDefinition describes a callable tool exposed to the agent.
 type ToolDefinition struct {
 	Name        string
 	Description string
-	Parameters  any
+	Parameters  *ToolSchema
 }
 
 type ModelFamily struct {
@@ -67,9 +68,10 @@ type TurnContext struct {
 	Verbose                  bool
 }
 
+// HistoryItem captures a single turn item with a role and typed content.
 type HistoryItem struct {
 	Role    string
-	Content any
+	Content HistoryContent
 }
 
 type Prompt struct {
@@ -130,18 +132,18 @@ func BuildInitialContext(ctx TurnContext) []HistoryItem {
 	if strings.TrimSpace(ctx.DeveloperInstructions) != "" {
 		items = append(items, HistoryItem{
 			Role:    "developer",
-			Content: ctx.DeveloperInstructions,
+			Content: HistoryText{Text: ctx.DeveloperInstructions},
 		})
 	}
 	if strings.TrimSpace(ctx.UserInstructions) != "" {
 		items = append(items, HistoryItem{
 			Role:    "user",
-			Content: formatUserInstructions(ctx.CWD, ctx.UserInstructions),
+			Content: HistoryText{Text: formatUserInstructions(ctx.CWD, ctx.UserInstructions)},
 		})
 	}
 	items = append(items, HistoryItem{
 		Role:    "user",
-		Content: formatEnvironmentContext(ctx),
+		Content: HistoryText{Text: formatEnvironmentContext(ctx)},
 	})
 	return items
 }

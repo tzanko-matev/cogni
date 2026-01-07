@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// AppendEnvironmentDiff appends a diff message when environment context changes.
 func AppendEnvironmentDiff(session *Session, next TurnContext) bool {
 	if session == nil {
 		return false
@@ -15,12 +16,13 @@ func AppendEnvironmentDiff(session *Session, next TurnContext) bool {
 	}
 	session.History = append(session.History, HistoryItem{
 		Role:    "user",
-		Content: diff,
+		Content: HistoryText{Text: diff},
 	})
 	session.Ctx = next
 	return true
 }
 
+// formatEnvironmentDiff renders a diff block for the environment context.
 func formatEnvironmentDiff(current, next TurnContext) string {
 	var builder strings.Builder
 	changed := false
@@ -62,6 +64,7 @@ func formatEnvironmentDiff(current, next TurnContext) string {
 	return builder.String()
 }
 
+// stringSliceEqual checks whether two string slices are identical.
 func stringSliceEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
