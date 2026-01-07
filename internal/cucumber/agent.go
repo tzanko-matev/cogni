@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// AgentResponse describes one example verdict from the agent.
 type AgentResponse struct {
 	ExampleID   string     `json:"example_id"`
 	Implemented bool       `json:"implemented"`
@@ -14,21 +15,25 @@ type AgentResponse struct {
 	Notes       string     `json:"notes,omitempty"`
 }
 
+// AgentBatchResponse wraps a set of agent responses.
 type AgentBatchResponse struct {
 	Results []AgentResponse `json:"results"`
 }
 
+// Evidence captures a file reference used by the agent.
 type Evidence struct {
 	Path  string `json:"path"`
 	Lines []int  `json:"lines"`
 }
 
+// BatchValidationError captures missing, extra, and duplicate example IDs.
 type BatchValidationError struct {
 	Missing   []string
 	Extra     []string
 	Duplicate []string
 }
 
+// Error formats batch validation errors for display.
 func (err BatchValidationError) Error() string {
 	parts := make([]string, 0, 3)
 	if len(err.Missing) > 0 {
@@ -43,6 +48,7 @@ func (err BatchValidationError) Error() string {
 	return fmt.Sprintf("invalid example_id set (%s)", strings.Join(parts, " "))
 }
 
+// ParseAgentBatchResponse parses a JSON batch response from an agent.
 func ParseAgentBatchResponse(output string) (AgentBatchResponse, error) {
 	var response AgentBatchResponse
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
@@ -51,6 +57,7 @@ func ParseAgentBatchResponse(output string) (AgentBatchResponse, error) {
 	return response, nil
 }
 
+// ValidateAgentBatchResponse validates agent responses against expected IDs.
 func ValidateAgentBatchResponse(expectedIDs []string, response AgentBatchResponse) (map[string]AgentResponse, error) {
 	expected := make(map[string]struct{}, len(expectedIDs))
 	for _, id := range expectedIDs {

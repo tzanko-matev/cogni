@@ -10,6 +10,7 @@ import (
 	"github.com/cucumber/messages-go/v16"
 )
 
+// Example identifies a single scenario example in a feature file.
 type Example struct {
 	ID           string
 	FeaturePath  string
@@ -21,6 +22,7 @@ type Example struct {
 	TagID        string
 }
 
+// ParseFeatureFile parses a feature file into example identifiers.
 func ParseFeatureFile(path string) ([]Example, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -81,6 +83,7 @@ func ParseFeatureFile(path string) ([]Example, error) {
 	return examples, nil
 }
 
+// collectScenarios flattens scenarios from a feature and its rules.
 func collectScenarios(feature *messages.Feature) []*messages.Scenario {
 	if feature == nil {
 		return nil
@@ -107,6 +110,7 @@ func collectScenarios(feature *messages.Feature) []*messages.Scenario {
 	return scenarios
 }
 
+// scenarioTagID extracts a tagged example id from tags.
 func scenarioTagID(tags []*messages.Tag) string {
 	for _, tag := range tags {
 		if tag == nil {
@@ -120,6 +124,7 @@ func scenarioTagID(tags []*messages.Tag) string {
 	return ""
 }
 
+// idColumnIndex locates an "id" column in an examples table header.
 func idColumnIndex(header *messages.TableRow) int {
 	if header == nil {
 		return -1
@@ -135,6 +140,7 @@ func idColumnIndex(header *messages.TableRow) int {
 	return -1
 }
 
+// buildExampleID constructs a stable example identifier.
 func buildExampleID(featurePath, scenarioName, tagID, rowID string, rowIndex, exampleLine, scenarioLine int) string {
 	rowIndex = normalizeRowIndex(rowIndex)
 	rowID = strings.TrimSpace(rowID)
@@ -154,6 +160,7 @@ func buildExampleID(featurePath, scenarioName, tagID, rowID string, rowIndex, ex
 	return fmt.Sprintf("%s:%d:%d", filepath.ToSlash(featurePath), line, rowIndex)
 }
 
+// normalizeRowIndex clamps row indexes to be at least 1.
 func normalizeRowIndex(index int) int {
 	if index < 1 {
 		return 1
@@ -161,6 +168,7 @@ func normalizeRowIndex(index int) int {
 	return index
 }
 
+// lineFromLocation extracts the line number from a Gherkin location.
 func lineFromLocation(location *messages.Location) int {
 	if location == nil {
 		return 0

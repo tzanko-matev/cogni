@@ -10,25 +10,30 @@ import (
 	"strings"
 )
 
+// CukeFeatureJSON matches godog JSON output for a feature.
 type CukeFeatureJSON struct {
 	URI      string        `json:"uri"`
 	Elements []CukeElement `json:"elements"`
 }
 
+// CukeElement describes a scenario element from godog JSON.
 type CukeElement struct {
 	Name  string     `json:"name"`
 	Line  int        `json:"line"`
 	Steps []CukeStep `json:"steps"`
 }
 
+// CukeStep captures step status information from godog.
 type CukeStep struct {
 	Result CukeResult `json:"result"`
 }
 
+// CukeResult contains a step execution status from godog.
 type CukeResult struct {
 	Status string `json:"status"`
 }
 
+// GodogScenarioResult captures a normalized scenario outcome.
 type GodogScenarioResult struct {
 	ExampleID    string
 	Status       string
@@ -37,6 +42,7 @@ type GodogScenarioResult struct {
 	Line         int
 }
 
+// RunGodogJSON executes godog and parses its JSON output.
 func RunGodogJSON(ctx context.Context, repoRoot string, featurePaths []string, tags []string) ([]CukeFeatureJSON, error) {
 	if len(featurePaths) == 0 {
 		return nil, fmt.Errorf("no feature paths provided")
@@ -68,6 +74,7 @@ func RunGodogJSON(ctx context.Context, repoRoot string, featurePaths []string, t
 	return features, nil
 }
 
+// ParseGodogJSON parses raw JSON output from godog.
 func ParseGodogJSON(data []byte) ([]CukeFeatureJSON, error) {
 	data = cleanGodogOutput(data)
 	var features []CukeFeatureJSON
@@ -77,6 +84,7 @@ func ParseGodogJSON(data []byte) ([]CukeFeatureJSON, error) {
 	return features, nil
 }
 
+// NormalizeGodogResults maps godog output to example ids and statuses.
 func NormalizeGodogResults(repoRoot string, features []CukeFeatureJSON, index ExampleIndex) ([]GodogScenarioResult, error) {
 	results := make([]GodogScenarioResult, 0)
 	for _, feature := range features {
@@ -99,6 +107,7 @@ func NormalizeGodogResults(repoRoot string, features []CukeFeatureJSON, index Ex
 	return results, nil
 }
 
+// deriveScenarioStatus reduces step statuses to a scenario status.
 func deriveScenarioStatus(steps []CukeStep) string {
 	hasPending := false
 	hasUndefined := false
@@ -127,6 +136,7 @@ func deriveScenarioStatus(steps []CukeStep) string {
 	}
 }
 
+// tagExpression builds a godog tag expression from tags.
 func tagExpression(tags []string) string {
 	if len(tags) == 0 {
 		return ""
@@ -145,6 +155,7 @@ func tagExpression(tags []string) string {
 	return strings.Join(parts, " and ")
 }
 
+// withoutEnv removes env entries that match a key prefix.
 func withoutEnv(env []string, key string) []string {
 	prefix := key + "="
 	filtered := make([]string, 0, len(env))
@@ -157,6 +168,7 @@ func withoutEnv(env []string, key string) []string {
 	return filtered
 }
 
+// cleanGodogOutput strips non-JSON noise from godog output.
 func cleanGodogOutput(data []byte) []byte {
 	if len(data) == 0 {
 		return data
@@ -177,6 +189,7 @@ func cleanGodogOutput(data []byte) []byte {
 	return stripped
 }
 
+// stripANSICodes removes ANSI escape sequences from output.
 func stripANSICodes(data []byte) []byte {
 	out := make([]byte, 0, len(data))
 	for i := 0; i < len(data); {

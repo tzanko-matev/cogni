@@ -10,6 +10,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
+// QAConfig configures validation for QA-style responses.
 type QAConfig struct {
 	JSONSchemaPath    string
 	MustContain       []string
@@ -17,12 +18,14 @@ type QAConfig struct {
 	RepoRoot          string
 }
 
+// QAArtifacts captures validation errors and missing requirements.
 type QAArtifacts struct {
 	SchemaErrors       []string
 	CitationErrors     []string
 	MustContainMissing []string
 }
 
+// QAResult summarizes validation status and artifacts.
 type QAResult struct {
 	Status        string
 	FailureReason string
@@ -31,6 +34,7 @@ type QAResult struct {
 	Artifacts     QAArtifacts
 }
 
+// EvaluateQA validates a QA response payload against schema and citation rules.
 func EvaluateQA(output string, cfg QAConfig) QAResult {
 	result := QAResult{
 		Status:        "pass",
@@ -89,6 +93,7 @@ func EvaluateQA(output string, cfg QAConfig) QAResult {
 	return result
 }
 
+// validateSchema compiles and validates JSON against a schema file.
 func validateSchema(parsed JSONValue, schemaPath, repoRoot string) (bool, []string, error) {
 	path := schemaPath
 	if repoRoot != "" && !filepath.IsAbs(path) {
@@ -110,6 +115,7 @@ func validateSchema(parsed JSONValue, schemaPath, repoRoot string) (bool, []stri
 	return true, nil, nil
 }
 
+// findMissingMustContain checks raw text and parsed JSON for required tokens.
 func findMissingMustContain(raw string, parsed JSONValue, required []string) []string {
 	missing := make([]string, 0)
 	for _, item := range required {
@@ -128,6 +134,7 @@ func findMissingMustContain(raw string, parsed JSONValue, required []string) []s
 	return missing
 }
 
+// containsKey reports whether a JSON object tree contains the given key.
 func containsKey(value JSONValue, key string) bool {
 	if object, ok := value.ObjectValue(); ok {
 		if _, found := object[key]; found {
@@ -150,12 +157,14 @@ func containsKey(value JSONValue, key string) bool {
 	return false
 }
 
+// Citation describes a file path and line range reference.
 type Citation struct {
 	Path  string
 	Start int
 	End   int
 }
 
+// validateCitations ensures citations point to valid files and ranges.
 func validateCitations(parsed JSONValue, repoRoot string) (bool, []string) {
 	citations, err := extractCitations(parsed)
 	if err != nil {
@@ -198,6 +207,7 @@ func validateCitations(parsed JSONValue, repoRoot string) (bool, []string) {
 	return len(errors) == 0, errors
 }
 
+// extractCitations extracts citation entries from a QA response.
 func extractCitations(parsed JSONValue) ([]Citation, error) {
 	root, ok := parsed.ObjectValue()
 	if !ok {

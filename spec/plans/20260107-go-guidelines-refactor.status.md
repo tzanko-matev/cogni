@@ -86,6 +86,7 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - Added typed tool schemas (`ToolSchema`), tool args (`ToolCallArgs`), and history content (`HistoryText`).
 - Reworked expectations parsing to use `yaml.Node` instead of dynamic maps.
 - Added docstrings across core agent runtime files.
+- Added docstrings across eval and cucumber core modules.
 
 ## Next steps
 - Finish Phase 0 by defining module split boundaries and type replacement strategy.

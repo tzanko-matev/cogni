@@ -8,10 +8,12 @@ import (
 	"strings"
 )
 
+// ExampleIndex maps feature paths and lines to examples.
 type ExampleIndex struct {
 	byPath map[string]map[int]Example
 }
 
+// BuildExampleIndex parses features and builds a line-based index.
 func BuildExampleIndex(repoRoot string, featurePaths []string) (ExampleIndex, error) {
 	resolved, err := ExpandFeaturePaths(repoRoot, featurePaths)
 	if err != nil {
@@ -47,6 +49,7 @@ func BuildExampleIndex(repoRoot string, featurePaths []string) (ExampleIndex, er
 	return index, nil
 }
 
+// FindByLine locates an example by feature path and line number.
 func (idx ExampleIndex) FindByLine(repoRoot, featurePath string, line int) (Example, bool) {
 	if line == 0 {
 		return Example{}, false
@@ -60,6 +63,7 @@ func (idx ExampleIndex) FindByLine(repoRoot, featurePath string, line int) (Exam
 	return example, ok
 }
 
+// Examples returns all indexed examples in a deterministic order.
 func (idx ExampleIndex) Examples() []Example {
 	examples := make([]Example, 0)
 	paths := make([]string, 0, len(idx.byPath))
@@ -80,6 +84,7 @@ func (idx ExampleIndex) Examples() []Example {
 	return examples
 }
 
+// ExpandFeaturePaths expands directories/globs into feature file paths.
 func ExpandFeaturePaths(repoRoot string, entries []string) ([]string, error) {
 	paths := make([]string, 0)
 	seen := make(map[string]struct{})
@@ -120,6 +125,7 @@ func ExpandFeaturePaths(repoRoot string, entries []string) ([]string, error) {
 	return paths, nil
 }
 
+// resolvePath resolves a repo-relative path.
 func resolvePath(repoRoot, path string) string {
 	if filepath.IsAbs(path) || repoRoot == "" {
 		return filepath.Clean(path)
@@ -127,11 +133,13 @@ func resolvePath(repoRoot, path string) string {
 	return filepath.Clean(filepath.Join(repoRoot, path))
 }
 
+// normalizePath cleans and normalizes a feature path.
 func normalizePath(repoRoot, path string) string {
 	abs := resolvePath(repoRoot, path)
 	return filepath.Clean(abs)
 }
 
+// collectFeatureFiles walks a directory to find .feature files.
 func collectFeatureFiles(root string) ([]string, error) {
 	paths := make([]string, 0)
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
@@ -152,6 +160,7 @@ func collectFeatureFiles(root string) ([]string, error) {
 	return paths, nil
 }
 
+// appendUnique appends a path if it has not been seen.
 func appendUnique(paths []string, seen map[string]struct{}, path string) []string {
 	normalized := filepath.Clean(path)
 	if _, ok := seen[normalized]; ok {
@@ -161,6 +170,7 @@ func appendUnique(paths []string, seen map[string]struct{}, path string) []strin
 	return append(paths, normalized)
 }
 
+// hasGlob reports whether a path includes glob characters.
 func hasGlob(value string) bool {
 	return strings.ContainsAny(value, "*?[]")
 }

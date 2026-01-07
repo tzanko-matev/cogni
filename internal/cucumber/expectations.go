@@ -9,12 +9,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Expectation records the expected implementation status for an example.
 type Expectation struct {
 	ExampleID   string
 	Implemented bool
 	Notes       string
 }
 
+// LoadExpectations reads expectation files from a directory.
 func LoadExpectations(dir string) (map[string]Expectation, error) {
 	dir = strings.TrimSpace(dir)
 	if dir == "" {
@@ -47,6 +49,7 @@ func LoadExpectations(dir string) (map[string]Expectation, error) {
 	return expectations, nil
 }
 
+// ValidateExpectations ensures expectations cover the provided examples.
 func ValidateExpectations(expectations map[string]Expectation, examples []Example) error {
 	byID := make(map[string]Example, len(examples))
 	for _, example := range examples {
@@ -69,6 +72,7 @@ func ValidateExpectations(expectations map[string]Expectation, examples []Exampl
 	return nil
 }
 
+// loadExpectationFile parses a single expectations file into the map.
 func loadExpectationFile(path string, expectations map[string]Expectation) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -84,6 +88,7 @@ func loadExpectationFile(path string, expectations map[string]Expectation) error
 	return parseExpectationNode(doc.Content[0], expectations, filepath.Base(path))
 }
 
+// parseExpectationNode dispatches to map or list parsing based on node kind.
 func parseExpectationNode(node *yaml.Node, expectations map[string]Expectation, source string) error {
 	switch node.Kind {
 	case yaml.MappingNode:
@@ -99,6 +104,7 @@ func parseExpectationNode(node *yaml.Node, expectations map[string]Expectation, 
 	}
 }
 
+// parseExamplesNode parses the "examples" section of a file.
 func parseExamplesNode(node *yaml.Node, expectations map[string]Expectation, source string) error {
 	switch node.Kind {
 	case yaml.MappingNode:
@@ -110,6 +116,7 @@ func parseExamplesNode(node *yaml.Node, expectations map[string]Expectation, sou
 	}
 }
 
+// parseExpectationMapNode parses a mapping of ids to expectations.
 func parseExpectationMapNode(node *yaml.Node, expectations map[string]Expectation, source string) error {
 	for i := 0; i < len(node.Content); i += 2 {
 		key := node.Content[i]
@@ -130,6 +137,7 @@ func parseExpectationMapNode(node *yaml.Node, expectations map[string]Expectatio
 	return nil
 }
 
+// parseExpectationListNode parses a list of expectation entries.
 func parseExpectationListNode(node *yaml.Node, expectations map[string]Expectation, source string) error {
 	for _, item := range node.Content {
 		if item.Kind != yaml.MappingNode {
@@ -155,6 +163,7 @@ func parseExpectationListNode(node *yaml.Node, expectations map[string]Expectati
 	return nil
 }
 
+// parseExpectationValueNode parses a single expectation entry for an id.
 func parseExpectationValueNode(id string, node *yaml.Node, source string) (Expectation, error) {
 	id = strings.TrimSpace(id)
 	entry := Expectation{ExampleID: id}
@@ -185,6 +194,7 @@ func parseExpectationValueNode(id string, node *yaml.Node, source string) (Expec
 	}
 }
 
+// mappingValue returns the value node for a key in a mapping node.
 func mappingValue(node *yaml.Node, key string) *yaml.Node {
 	for i := 0; i < len(node.Content); i += 2 {
 		if node.Content[i].Value == key {
@@ -194,6 +204,7 @@ func mappingValue(node *yaml.Node, key string) *yaml.Node {
 	return nil
 }
 
+// parseImplementedString normalizes implemented/not_implemented values.
 func parseImplementedString(value string) (bool, error) {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "true", "implemented", "yes":
