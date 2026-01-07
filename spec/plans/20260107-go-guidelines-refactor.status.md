@@ -9,7 +9,8 @@ Created: 2026-01-07
 Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/20260107-go-guidelines-refactor.plan/)
 
 ## Current status
-- Phase 0 complete; Phase 1 in progress (typing + docstrings).
+- Phase 1 in progress (typing + docstrings; tests still pending).
+- Phase 2 in progress (runner/tools splits done; remaining oversized files pending).
 
 ## Clarifications
 - Guideline enforcement applies to tests too (no `any`).
@@ -22,6 +23,7 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - Prepared a phased refactor plan with acceptance criteria.
 - Updated plan with clarifications: tests must avoid `any`, all user-visible CLI behavior covered by godog, live-key suite via `just test-live`.
 - Marked the plan status as in progress.
+- Split runner/cucumber and tools modules into smaller single-responsibility files (<200 lines).
 
 ## Phase 0 notes (inventory)
 ### Files >200 lines (targets to split)
@@ -89,20 +91,46 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - Added docstrings across eval and cucumber core modules.
 - Added docstrings across runner, tools, config, report, vcs, and spec core modules.
 - Added docstrings across CLI and command entrypoints.
+- Confirmed `rg "\\bany\\b" -g '*.go'` shows no `any` usages outside vendor files.
+
+## Phase 2 progress
+- Split `internal/runner/run.go` into plan/setup/task/summary/tools/paths/types modules.
+- Split `internal/runner/cucumber.go` into ground truth, grouping, prompt, and feature evaluation helpers.
+- Split `internal/tools/runner.go` into constructor/list/search/read/paths/exec/output modules.
 
 ## Next steps
-- Finish Phase 0 by defining module split boundaries and type replacement strategy.
-- Begin Phase 1 docstrings + typing cleanup.
+- Split remaining oversized files (openrouter, verbose, qa, validate, expectations, tests).
+- Add docstrings for remaining functions/types (especially in tests).
+- Introduce interfaces for external dependencies and separate I/O from core logic.
+- Add deterministic tests with timeouts and the `just test-live` suite.
 
 ## Latest test run
 - `nix develop -c go test ./...` (2026-01-07): pass.
 
 ## Relevant source files (current or planned)
 - internal/runner/run.go
+- internal/runner/run_plan.go
+- internal/runner/run_task.go
+- internal/runner/run_summary.go
+- internal/runner/run_tools.go
+- internal/runner/run_paths.go
+- internal/runner/run_setup.go
+- internal/runner/run_types.go
 - internal/runner/cucumber.go
+- internal/runner/cucumber_feature.go
+- internal/runner/cucumber_ground_truth.go
+- internal/runner/cucumber_group.go
+- internal/runner/cucumber_helpers.go
+- internal/tools/runner_types.go
+- internal/tools/runner_constructor.go
+- internal/tools/runner_list.go
+- internal/tools/runner_search.go
+- internal/tools/runner_read.go
+- internal/tools/runner_paths.go
+- internal/tools/runner_exec.go
+- internal/tools/runner_output.go
 - internal/agent/openrouter.go
 - internal/agent/session.go
-- internal/tools/runner.go
 - internal/eval/qa.go
 - internal/cli/e2e_test.go
 - internal/vcs/git.go

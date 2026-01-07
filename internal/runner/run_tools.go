@@ -1,0 +1,48 @@
+package runner
+
+import "cogni/internal/agent"
+
+// defaultToolDefinitions returns built-in tool definitions.
+func defaultToolDefinitions() []agent.ToolDefinition {
+	disallowExtras := agent.BoolPointer(false)
+	return []agent.ToolDefinition{
+		{
+			Name:        "list_files",
+			Description: "List files in the repository",
+			Parameters: &agent.ToolSchema{
+				Type: "object",
+				Properties: map[string]agent.ToolSchema{
+					"glob": agent.StringSchema(),
+				},
+				AdditionalProperties: disallowExtras,
+			},
+		},
+		{
+			Name:        "search",
+			Description: "Search for a query string in files",
+			Parameters: &agent.ToolSchema{
+				Type: "object",
+				Properties: map[string]agent.ToolSchema{
+					"query": agent.StringSchema(),
+					"paths": agent.ArraySchema(agent.StringSchema()),
+				},
+				Required:             []string{"query"},
+				AdditionalProperties: disallowExtras,
+			},
+		},
+		{
+			Name:        "read_file",
+			Description: "Read a file from the repository",
+			Parameters: &agent.ToolSchema{
+				Type: "object",
+				Properties: map[string]agent.ToolSchema{
+					"path":       agent.StringSchema(),
+					"start_line": agent.IntegerSchema(),
+					"end_line":   agent.IntegerSchema(),
+				},
+				Required:             []string{"path"},
+				AdditionalProperties: disallowExtras,
+			},
+		},
+	}
+}
