@@ -249,7 +249,7 @@ func runTask(
 	var failureReason *string
 
 	for attemptIndex := 1; attemptIndex <= repeat; attemptIndex++ {
-		logVerbose(verbose, verboseWriter, noColor, styleTask, "Task %s attempt %d/%d agent=%s model=%s", task.Task.ID, attemptIndex, repeat, task.AgentID, task.Model)
+		logVerbose(verbose, verboseWriter, noColor, styleTask, fmt.Sprintf("Task %s attempt %d/%d agent=%s model=%s", task.Task.ID, attemptIndex, repeat, task.AgentID, task.Model))
 		provider, err := providerFactory(task.Agent, task.Model)
 		if err != nil {
 			reason := "runtime_error"
@@ -271,9 +271,9 @@ func runTask(
 			NoColor:       noColor,
 		})
 		if runErr != nil {
-			logVerbose(verbose, verboseWriter, noColor, styleError, "Task %s attempt %d error=%v", task.Task.ID, attemptIndex, runErr)
+			logVerbose(verbose, verboseWriter, noColor, styleError, fmt.Sprintf("Task %s attempt %d error=%v", task.Task.ID, attemptIndex, runErr))
 		}
-		logVerbose(verbose, verboseWriter, noColor, styleMetrics, "Metrics task=%s attempt=%d steps=%d tokens=%d wall_time=%s tool_calls=%s", task.Task.ID, attemptIndex, runMetrics.Steps, runMetrics.Tokens, runMetrics.WallTime, formatToolCounts(runMetrics.ToolCalls))
+		logVerbose(verbose, verboseWriter, noColor, styleMetrics, fmt.Sprintf("Metrics task=%s attempt=%d steps=%d tokens=%d wall_time=%s tool_calls=%s", task.Task.ID, attemptIndex, runMetrics.Steps, runMetrics.Tokens, runMetrics.WallTime, formatToolCounts(runMetrics.ToolCalls)))
 
 		output, ok := latestAssistantMessage(session.History)
 		if !ok {

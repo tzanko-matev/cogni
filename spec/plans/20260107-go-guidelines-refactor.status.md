@@ -37,6 +37,25 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - internal/runner/cucumber_test.go (250)
 - internal/cli/e2e_test.go (644)
 
+### Planned module boundaries
+- internal/runner/run.go -> run_plan.go (planning + selection), run_execute.go (task execution), run_summary.go (summaries), run_tools.go (tool defs), run_paths.go (repo/output paths), run_setup.go (setup commands).
+- internal/runner/cucumber.go -> cucumber_ground_truth.go, cucumber_prompt.go, cucumber_execute.go, cucumber_evaluate.go.
+- internal/agent/openrouter.go -> openrouter_client.go (HTTP), openrouter_messages.go (message/tool build), openrouter_stream.go (stream parsing).
+- internal/tools/runner.go -> runner_files.go (list/read), runner_search.go, runner_limits.go (output limiting), runner_paths.go (resolve/normalize).
+- internal/eval/qa.go -> qa_parse.go (JSON parsing), qa_schema.go, qa_citations.go, qa_helpers.go.
+- internal/agent/verbose.go -> verbose_format.go (format/indent), verbose_output.go (logging), verbose_palette.go.
+- internal/config/validate.go -> validate_core.go (validation logic), validate_errors.go (error types), validate_rules.go (rule helpers).
+- internal/cucumber/expectations.go -> expectations_parse.go, expectations_validate.go, expectations_types.go.
+- tests/cucumber/steps_test.go -> steps_config.go, steps_run.go, steps_assert.go.
+- internal/runner/cucumber_test.go -> cucumber_batch_test.go, cucumber_errors_test.go.
+- internal/cli/e2e_test.go -> e2e_config_test.go, e2e_history_test.go, e2e_cucumber_test.go, e2e_outputs_test.go (plus live suite file with build tag).
+
+### Type replacement strategy
+- Replace `map[string]any` tool args with `map[string]json.RawMessage` + typed decoders per tool.
+- Replace `HistoryItem.Content` with a sealed `HistoryContent` interface and concrete types (`HistoryText`, `HistoryToolCall`, `HistoryToolOutput`).
+- Replace tool parameter schemas with explicit `ToolSchema` structs instead of `map[string]any`.
+- For JSON parsing in eval/cucumber, use typed response structs or `json.RawMessage` + validators; avoid `any` in all packages and tests.
+
 ### `any` usage (must remove, including tests)
 - internal/agent/session.go (ToolDefinition.Parameters, HistoryItem.Content)
 - internal/agent/openrouter.go (openRouterFunctionDefinition.Parameters)
@@ -62,12 +81,15 @@ Linked plan: [spec/plans/20260107-go-guidelines-refactor.plan.md](/plans/2026010
 - rg binary: internal/tools/runner_test.go
 - No explicit timeouts in unit tests (many use context.Background without deadlines)
 
+## Phase 1 progress
+- Updated runner verbose logging to avoid `...any` and added docstrings in `internal/runner/verbose.go`.
+
 ## Next steps
 - Finish Phase 0 by defining module split boundaries and type replacement strategy.
 - Begin Phase 1 docstrings + typing cleanup.
 
 ## Latest test run
-- Not run in this update.
+- `nix develop -c go test ./...` (2026-01-07): pass.
 
 ## Relevant source files (current or planned)
 - internal/runner/run.go

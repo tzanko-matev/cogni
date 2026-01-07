@@ -22,6 +22,7 @@ const (
 	ansiBlue  = "\x1b[34m"
 )
 
+// verboseStyle selects how verbose output lines are styled.
 type verboseStyle int
 
 const (
@@ -31,15 +32,16 @@ const (
 	styleError
 )
 
-func logVerbose(enabled bool, writer io.Writer, noColor bool, style verboseStyle, format string, args ...any) {
+// logVerbose emits a styled verbose line when verbosity is enabled.
+func logVerbose(enabled bool, writer io.Writer, noColor bool, style verboseStyle, message string) {
 	if !enabled || writer == nil {
 		return
 	}
 	palette := paletteFor(writer, noColor)
-	line := fmt.Sprintf(format, args...)
-	fmt.Fprintf(writer, "%s %s\n", palette.prefix(verbosePrefix), palette.apply(style, line))
+	fmt.Fprintf(writer, "%s %s\n", palette.prefix(verbosePrefix), palette.apply(style, message))
 }
 
+// formatToolCounts renders tool call counts in a deterministic order.
 func formatToolCounts(counts map[string]int) string {
 	if len(counts) == 0 {
 		return "none"
@@ -56,10 +58,12 @@ func formatToolCounts(counts map[string]int) string {
 	return strings.Join(parts, " ")
 }
 
+// verbosePalette holds whether styling is enabled for verbose output.
 type verbosePalette struct {
 	enabled bool
 }
 
+// paletteFor determines whether styling should be enabled for a writer.
 func paletteFor(writer io.Writer, noColor bool) verbosePalette {
 	if noColor {
 		return verbosePalette{enabled: false}
@@ -67,6 +71,7 @@ func paletteFor(writer io.Writer, noColor bool) verbosePalette {
 	return verbosePalette{enabled: shouldUseStyling(writer)}
 }
 
+// shouldUseStyling returns true when ANSI styles should be used.
 func shouldUseStyling(writer io.Writer) bool {
 	if writer == nil {
 		return false
@@ -86,6 +91,7 @@ func shouldUseStyling(writer io.Writer) bool {
 	return false
 }
 
+// prefix styles the verbose prefix marker.
 func (p verbosePalette) prefix(text string) string {
 	if !p.enabled {
 		return text
@@ -93,6 +99,7 @@ func (p verbosePalette) prefix(text string) string {
 	return ansiDim + ansiGray + text + ansiReset
 }
 
+// apply applies the selected style to text when enabled.
 func (p verbosePalette) apply(style verboseStyle, text string) string {
 	if !p.enabled {
 		return text
