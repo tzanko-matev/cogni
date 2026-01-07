@@ -34,6 +34,7 @@ const (
 	ansiGray    = "\x1b[90m"
 )
 
+// verboseStyle selects how verbose output is styled.
 type verboseStyle int
 
 const (
@@ -48,6 +49,7 @@ const (
 	styleHeadingError
 )
 
+// verbosePalette controls ANSI styling for verbose output.
 type verbosePalette struct {
 	enabled bool
 }
@@ -61,6 +63,7 @@ func logVerbose(opts RunOptions, style verboseStyle, message string) {
 	writeVerboseLine(opts.VerboseWriter, palette, style, message)
 }
 
+// logVerboseBlock writes a header and a multi-line body to the verbose stream.
 func logVerboseBlock(opts RunOptions, header, body string, headerStyle, bodyStyle verboseStyle) {
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
@@ -76,6 +79,7 @@ func logVerboseBlock(opts RunOptions, header, body string, headerStyle, bodyStyl
 	}
 }
 
+// logVerboseToolOutput writes a tool output block with truncation rules.
 func logVerboseToolOutput(opts RunOptions, header, body string) {
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
@@ -91,6 +95,7 @@ func logVerboseToolOutput(opts RunOptions, header, body string) {
 	}
 }
 
+// logVerbosePrompt renders the prompt for verbose logging.
 func logVerbosePrompt(opts RunOptions, prompt Prompt, step int) {
 	if !opts.Verbose || opts.VerboseWriter == nil {
 		return
@@ -99,6 +104,7 @@ func logVerbosePrompt(opts RunOptions, prompt Prompt, step int) {
 	logVerboseBlock(opts, header, formatPrompt(prompt), styleHeadingPrompt, styleDim)
 }
 
+// writeVerboseLine writes a single styled verbose line.
 func writeVerboseLine(w io.Writer, palette verbosePalette, style verboseStyle, line string) {
 	prefix := verbosePrefix
 	if palette.enabled {
@@ -107,6 +113,7 @@ func writeVerboseLine(w io.Writer, palette verbosePalette, style verboseStyle, l
 	fmt.Fprintf(w, "%s %s\n", prefix, palette.apply(style, line))
 }
 
+// paletteFor selects a palette based on the writer and color settings.
 func paletteFor(writer io.Writer, noColor bool) verbosePalette {
 	if noColor {
 		return verbosePalette{enabled: false}
@@ -114,6 +121,7 @@ func paletteFor(writer io.Writer, noColor bool) verbosePalette {
 	return verbosePalette{enabled: shouldUseStyling(writer)}
 }
 
+// shouldUseStyling reports whether ANSI styling should be enabled.
 func shouldUseStyling(writer io.Writer) bool {
 	if writer == nil {
 		return false
@@ -133,6 +141,7 @@ func shouldUseStyling(writer io.Writer) bool {
 	return false
 }
 
+// apply wraps text with ANSI codes for the requested style.
 func (p verbosePalette) apply(style verboseStyle, text string) string {
 	if !p.enabled {
 		return text
@@ -159,6 +168,7 @@ func (p verbosePalette) apply(style verboseStyle, text string) string {
 	}
 }
 
+// formatPrompt formats prompt contents for verbose logging.
 func formatPrompt(prompt Prompt) string {
 	var builder strings.Builder
 	if strings.TrimSpace(prompt.Instructions) != "" {
@@ -189,6 +199,7 @@ func formatPrompt(prompt Prompt) string {
 	return strings.TrimRight(builder.String(), "\n")
 }
 
+// formatHistoryItem renders a single history item for verbose output.
 func formatHistoryItem(item HistoryItem) string {
 	switch content := item.Content.(type) {
 	case HistoryText:
@@ -208,6 +219,7 @@ func formatHistoryItem(item HistoryItem) string {
 	}
 }
 
+// formatArgs renders tool call arguments for verbose logging.
 func formatArgs(args ToolCallArgs) string {
 	if len(args) == 0 {
 		return "{}"
@@ -219,6 +231,7 @@ func formatArgs(args ToolCallArgs) string {
 	return string(payload)
 }
 
+// indentLines prefixes each line in a string with a prefix.
 func indentLines(value, prefix string) string {
 	lines := strings.Split(value, "\n")
 	for i, line := range lines {
@@ -227,6 +240,7 @@ func indentLines(value, prefix string) string {
 	return strings.Join(lines, "\n")
 }
 
+// truncateVerbose truncates long blocks to the configured max length.
 func truncateVerbose(value string) string {
 	if verboseMaxBytes <= 0 || len(value) <= verboseMaxBytes {
 		return value
@@ -237,6 +251,7 @@ func truncateVerbose(value string) string {
 	return value[:verboseMaxBytes-len(verboseTruncationMarker)] + verboseTruncationMarker
 }
 
+// truncateVerboseInline truncates inline strings to the configured max length.
 func truncateVerboseInline(value string) string {
 	if verboseMaxBytes <= 0 || len(value) <= verboseMaxBytes {
 		return value
@@ -247,6 +262,7 @@ func truncateVerboseInline(value string) string {
 	return value[:verboseMaxBytes-len(verboseInlineTruncationMarker)] + verboseInlineTruncationMarker
 }
 
+// limitOutputLines trims multi-line strings to a maximum number of lines.
 func limitOutputLines(value string, maxLines int) string {
 	if maxLines <= 0 {
 		return value

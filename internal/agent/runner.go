@@ -10,6 +10,7 @@ import (
 	"cogni/internal/tools"
 )
 
+// StreamEventType identifies streamed event kinds.
 type StreamEventType int
 
 const (
@@ -17,43 +18,52 @@ const (
 	StreamEventToolCall
 )
 
+// StreamEvent carries either a message or tool call from the model stream.
 type StreamEvent struct {
 	Type     StreamEventType
 	Message  string
 	ToolCall ToolCall
 }
 
+// Stream yields incremental model events.
 type Stream interface {
 	Recv() (StreamEvent, error)
 }
 
+// Provider streams model responses for a prompt.
 type Provider interface {
 	Stream(ctx context.Context, prompt Prompt) (Stream, error)
 }
 
+// ToolCall describes a tool invocation emitted by the model.
 type ToolCall struct {
 	ID   string
 	Name string
 	Args ToolCallArgs
 }
 
+// ToolOutput represents the result of a tool invocation.
 type ToolOutput struct {
 	ToolCallID string
 	Result     tools.CallResult
 }
 
+// ToolExecutor executes tool calls.
 type ToolExecutor interface {
 	Execute(ctx context.Context, call ToolCall) tools.CallResult
 }
 
+// ErrBudgetExceeded signals that a run exceeded configured limits.
 var ErrBudgetExceeded = errors.New("budget_exceeded")
 
+// RunLimits bounds steps, time, and token usage.
 type RunLimits struct {
 	MaxSteps   int
 	MaxSeconds time.Duration
 	MaxTokens  int
 }
 
+// RunOptions configures per-run behavior and logging.
 type RunOptions struct {
 	TokenCounter    TokenCounter
 	CompactionLimit int
@@ -63,6 +73,7 @@ type RunOptions struct {
 	NoColor         bool
 }
 
+// RunMetrics captures execution effort for a run.
 type RunMetrics struct {
 	ToolCalls map[string]int
 	WallTime  time.Duration
@@ -70,6 +81,7 @@ type RunMetrics struct {
 	Steps     int
 }
 
+// RunTurn executes a single agent turn, including any follow-up tool calls.
 func RunTurn(ctx context.Context, session *Session, provider Provider, executor ToolExecutor, userText string, opts RunOptions) (RunMetrics, error) {
 	start := time.Now()
 	metrics := RunMetrics{ToolCalls: map[string]int{}}
@@ -118,6 +130,7 @@ func RunTurn(ctx context.Context, session *Session, provider Provider, executor 
 	return metrics, nil
 }
 
+// HandleResponseStream consumes streamed output and executes any tools.
 func HandleResponseStream(ctx context.Context, session *Session, stream Stream, executor ToolExecutor, metrics *RunMetrics, opts RunOptions) (bool, error) {
 	needsFollowUp := false
 	for {
@@ -158,6 +171,7 @@ func HandleResponseStream(ctx context.Context, session *Session, stream Stream, 
 	return needsFollowUp, nil
 }
 
+// exceededLimits reports whether any limits have been exceeded.
 func exceededLimits(start time.Time, limits RunLimits, counter TokenCounter, history []HistoryItem, steps int) bool {
 	if limits.MaxSeconds > 0 && time.Since(start) > limits.MaxSeconds {
 		return true

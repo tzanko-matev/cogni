@@ -13,6 +13,7 @@ func ApproxTokenCount(history []HistoryItem) int {
 	return total / 4
 }
 
+// contentString extracts content text for token estimation.
 func contentString(content HistoryContent) string {
 	switch value := content.(type) {
 	case HistoryText:

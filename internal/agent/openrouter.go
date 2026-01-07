@@ -13,8 +13,10 @@ import (
 	"strings"
 )
 
+// defaultOpenRouterBaseURL is the default OpenRouter API base URL.
 const defaultOpenRouterBaseURL = "https://openrouter.ai/api/v1"
 
+// OpenRouterProvider implements Provider for the OpenRouter API.
 type OpenRouterProvider struct {
 	APIKey  string
 	BaseURL string
@@ -22,6 +24,7 @@ type OpenRouterProvider struct {
 	Model   string
 }
 
+// ProviderFromEnv builds a provider using environment configuration.
 func ProviderFromEnv(provider, model string, client *http.Client) (Provider, error) {
 	if provider == "" {
 		provider = strings.TrimSpace(os.Getenv("LLM_PROVIDER"))
@@ -39,6 +42,7 @@ func ProviderFromEnv(provider, model string, client *http.Client) (Provider, err
 	return NewOpenRouterProvider(model, apiKey, "", client)
 }
 
+// NewOpenRouterProvider constructs an OpenRouter provider with explicit settings.
 func NewOpenRouterProvider(model, apiKey, baseURL string, client *http.Client) (*OpenRouterProvider, error) {
 	if strings.TrimSpace(model) == "" {
 		return nil, fmt.Errorf("model is required")
@@ -60,6 +64,7 @@ func NewOpenRouterProvider(model, apiKey, baseURL string, client *http.Client) (
 	}, nil
 }
 
+// Stream sends a prompt to OpenRouter and returns a stream of events.
 func (p *OpenRouterProvider) Stream(ctx context.Context, prompt Prompt) (Stream, error) {
 	messages, err := buildOpenRouterMessages(prompt)
 	if err != nil {
@@ -104,6 +109,7 @@ func (p *OpenRouterProvider) Stream(ctx context.Context, prompt Prompt) (Stream,
 	return &staticStream{events: events}, nil
 }
 
+// openRouterRequest is the JSON payload sent to OpenRouter.
 type openRouterRequest struct {
 	Model      string              `json:"model"`
 	Stream     bool                `json:"stream"`
@@ -112,6 +118,7 @@ type openRouterRequest struct {
 	ToolChoice string              `json:"tool_choice,omitempty"`
 }
 
+// openRouterMessage represents a single OpenRouter chat message.
 type openRouterMessage struct {
 	Role       string               `json:"role"`
 	Content    string               `json:"content,omitempty"`
@@ -119,28 +126,33 @@ type openRouterMessage struct {
 	ToolCallID string               `json:"tool_call_id,omitempty"`
 }
 
+// openRouterTool describes a function tool for OpenRouter.
 type openRouterTool struct {
 	Type     string                       `json:"type"`
 	Function openRouterFunctionDefinition `json:"function"`
 }
 
+// openRouterFunctionDefinition describes a tool's function signature.
 type openRouterFunctionDefinition struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	Parameters  *ToolSchema `json:"parameters,omitempty"`
 }
 
+// openRouterToolCall represents a tool call emitted by OpenRouter.
 type openRouterToolCall struct {
 	ID       string                 `json:"id"`
 	Type     string                 `json:"type"`
 	Function openRouterFunctionCall `json:"function"`
 }
 
+// openRouterFunctionCall describes the name and arguments of a tool call.
 type openRouterFunctionCall struct {
 	Name      string `json:"name"`
 	Arguments string `json:"arguments"`
 }
 
+// buildOpenRouterMessages converts a prompt into OpenRouter message payloads.
 func buildOpenRouterMessages(prompt Prompt) ([]openRouterMessage, error) {
 	messages := make([]openRouterMessage, 0, len(prompt.InputItems)+1)
 	if strings.TrimSpace(prompt.Instructions) != "" {
@@ -161,6 +173,7 @@ func buildOpenRouterMessages(prompt Prompt) ([]openRouterMessage, error) {
 	return messages, nil
 }
 
+// toOpenRouterMessage converts a history item into an OpenRouter message.
 func toOpenRouterMessage(item HistoryItem) (openRouterMessage, error) {
 	role := item.Role
 	if role == "developer" {
@@ -203,6 +216,7 @@ func toOpenRouterMessage(item HistoryItem) (openRouterMessage, error) {
 	}
 }
 
+// buildOpenRouterTools converts tool definitions into OpenRouter tool payloads.
 func buildOpenRouterTools(defs []ToolDefinition) []openRouterTool {
 	tools := make([]openRouterTool, 0, len(defs))
 	for _, def := range defs {
@@ -223,20 +237,24 @@ func buildOpenRouterTools(defs []ToolDefinition) []openRouterTool {
 	return tools
 }
 
+// openRouterStreamChunk is a partial SSE payload.
 type openRouterStreamChunk struct {
 	Choices []openRouterStreamChoice `json:"choices"`
 }
 
+// openRouterStreamChoice contains a delta event from OpenRouter.
 type openRouterStreamChoice struct {
 	Delta        openRouterStreamDelta `json:"delta"`
 	FinishReason string                `json:"finish_reason"`
 }
 
+// openRouterStreamDelta contains incremental content or tool calls.
 type openRouterStreamDelta struct {
 	Content   string                     `json:"content"`
 	ToolCalls []openRouterStreamToolCall `json:"tool_calls"`
 }
 
+// openRouterStreamToolCall represents a streaming tool call delta.
 type openRouterStreamToolCall struct {
 	Index    int                    `json:"index"`
 	ID       string                 `json:"id"`
@@ -244,12 +262,14 @@ type openRouterStreamToolCall struct {
 	Function openRouterFunctionCall `json:"function"`
 }
 
+// toolCallAccumulator gathers streaming tool call fragments.
 type toolCallAccumulator struct {
 	ID        string
 	Name      string
 	Arguments strings.Builder
 }
 
+// parseOpenRouterStream reads SSE output and converts it into stream events.
 func parseOpenRouterStream(reader io.Reader) ([]StreamEvent, error) {
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
@@ -336,11 +356,13 @@ func parseOpenRouterStream(reader io.Reader) ([]StreamEvent, error) {
 	return events, nil
 }
 
+// staticStream exposes a slice of events as a Stream.
 type staticStream struct {
 	events []StreamEvent
 	index  int
 }
 
+// Recv returns the next event or io.EOF when complete.
 func (s *staticStream) Recv() (StreamEvent, error) {
 	if s.index >= len(s.events) {
 		return StreamEvent{}, io.EOF

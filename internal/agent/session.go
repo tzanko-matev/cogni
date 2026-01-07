@@ -5,8 +5,10 @@ import (
 	"strings"
 )
 
+// ApplyPatchInstructions is appended when a model family requires explicit patch guidance.
 const ApplyPatchInstructions = "When editing files, use the apply_patch tool."
 
+// SessionConfig captures the inputs needed to start an agent session.
 type SessionConfig struct {
 	Model                    string
 	ModelOverride            string
@@ -24,6 +26,7 @@ type SessionConfig struct {
 	AuthMode                 string
 }
 
+// SandboxPolicy describes sandbox execution constraints for the agent.
 type SandboxPolicy struct {
 	Mode          string
 	NetworkAccess string
@@ -31,11 +34,13 @@ type SandboxPolicy struct {
 	Shell         string
 }
 
+// FeatureFlags toggles optional agent behaviors.
 type FeatureFlags struct {
 	ParallelTools bool
 	SkillsEnabled bool
 }
 
+// ToolConfig declares the tools available to the agent.
 type ToolConfig struct {
 	Tools []ToolDefinition
 }
@@ -47,12 +52,14 @@ type ToolDefinition struct {
 	Parameters  *ToolSchema
 }
 
+// ModelFamily captures model-specific behavior and prompt templates.
 type ModelFamily struct {
 	BaseInstructionsTemplate           string
 	NeedsSpecialApplyPatchInstructions bool
 	SupportsParallelToolCalls          bool
 }
 
+// TurnContext holds contextual metadata used to build prompts.
 type TurnContext struct {
 	Model                    string
 	ModelFamily              ModelFamily
@@ -74,6 +81,7 @@ type HistoryItem struct {
 	Content HistoryContent
 }
 
+// Prompt is the fully assembled request sent to a provider.
 type Prompt struct {
 	Instructions      string
 	InputItems        []HistoryItem
@@ -82,15 +90,18 @@ type Prompt struct {
 	OutputSchema      string
 }
 
+// Session tracks conversation history and context for a run.
 type Session struct {
 	Ctx     TurnContext
 	History []HistoryItem
 }
 
+// ModelFamilyLoader resolves model family metadata for a provider and model.
 type ModelFamilyLoader interface {
 	Load(provider, model string) (ModelFamily, error)
 }
 
+// StartSession initializes a session using the provided configuration.
 func StartSession(config SessionConfig, loader ModelFamilyLoader) (*Session, error) {
 	model := strings.TrimSpace(config.Model)
 	if config.ModelOverride != "" {
@@ -127,6 +138,7 @@ func StartSession(config SessionConfig, loader ModelFamilyLoader) (*Session, err
 	}, nil
 }
 
+// BuildInitialContext builds the initial history items for a session.
 func BuildInitialContext(ctx TurnContext) []HistoryItem {
 	items := make([]HistoryItem, 0, 3)
 	if strings.TrimSpace(ctx.DeveloperInstructions) != "" {
@@ -148,6 +160,7 @@ func BuildInitialContext(ctx TurnContext) []HistoryItem {
 	return items
 }
 
+// BuildPrompt assembles a provider prompt from context and history.
 func BuildPrompt(ctx TurnContext, history []HistoryItem) Prompt {
 	instructions := strings.TrimSpace(ctx.BaseInstructionsOverride)
 	if instructions == "" {
@@ -168,10 +181,12 @@ func BuildPrompt(ctx TurnContext, history []HistoryItem) Prompt {
 	}
 }
 
+// formatUserInstructions wraps AGENTS.md instructions for the model.
 func formatUserInstructions(cwd, instructions string) string {
 	return fmt.Sprintf("# AGENTS.md instructions for %s\n\n<INSTRUCTIONS>\n%s\n</INSTRUCTIONS>", cwd, instructions)
 }
 
+// formatEnvironmentContext renders the environment metadata block.
 func formatEnvironmentContext(ctx TurnContext) string {
 	var builder strings.Builder
 	builder.WriteString("<environment_context>\n")
@@ -189,6 +204,7 @@ func formatEnvironmentContext(ctx TurnContext) string {
 	return builder.String()
 }
 
+// hasTool reports whether a named tool is present.
 func hasTool(tools []ToolDefinition, name string) bool {
 	for _, tool := range tools {
 		if tool.Name == name {
