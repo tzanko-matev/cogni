@@ -1,6 +1,6 @@
 # Cucumber Feature-Batch Evaluation Plan
 
-Status: Planned
+Status: Done
 
 ID: 20260107-cucumber-feature-batch-eval
 

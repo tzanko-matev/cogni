@@ -63,24 +63,31 @@ type EvalResult struct {
 }
 
 type CucumberEval struct {
-	AdapterID   string            `json:"adapter_id"`
-	AdapterType string            `json:"adapter_type"`
-	Examples    []CucumberExample `json:"examples"`
-	Summary     CucumberSummary   `json:"summary"`
+	AdapterID   string               `json:"adapter_id"`
+	AdapterType string               `json:"adapter_type"`
+	FeatureRuns []CucumberFeatureRun `json:"feature_runs,omitempty"`
+	Examples    []CucumberExample    `json:"examples"`
+	Summary     CucumberSummary      `json:"summary"`
+}
+
+type CucumberFeatureRun struct {
+	FeaturePath     string         `json:"feature_path"`
+	ExamplesTotal   int            `json:"examples_total"`
+	TokensTotal     int            `json:"tokens_total,omitempty"`
+	WallTimeSeconds float64        `json:"wall_time_seconds,omitempty"`
+	AgentSteps      int            `json:"agent_steps,omitempty"`
+	ToolCalls       map[string]int `json:"tool_calls,omitempty"`
 }
 
 type CucumberExample struct {
-	ExampleID       string               `json:"example_id"`
-	FeaturePath     string               `json:"feature_path"`
-	ScenarioName    string               `json:"scenario_name"`
-	ScenarioLine    int                  `json:"scenario_line,omitempty"`
-	ExampleLine     int                  `json:"example_line,omitempty"`
-	GroundTruth     string               `json:"ground_truth"`
-	Agent           *CucumberAgentResult `json:"agent,omitempty"`
-	Correct         bool                 `json:"correct"`
-	TokensTotal     int                  `json:"tokens_total,omitempty"`
-	WallTimeSeconds float64              `json:"wall_time_seconds,omitempty"`
-	ToolCalls       map[string]int       `json:"tool_calls,omitempty"`
+	ExampleID    string               `json:"example_id"`
+	FeaturePath  string               `json:"feature_path"`
+	ScenarioName string               `json:"scenario_name"`
+	ScenarioLine int                  `json:"scenario_line,omitempty"`
+	ExampleLine  int                  `json:"example_line,omitempty"`
+	GroundTruth  string               `json:"ground_truth"`
+	Agent        *CucumberAgentResult `json:"agent,omitempty"`
+	Correct      bool                 `json:"correct"`
 }
 
 type CucumberAgentResult struct {

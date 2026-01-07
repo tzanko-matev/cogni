@@ -2,7 +2,10 @@ package runner
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -104,25 +107,42 @@ func runCucumberTask(
 	}
 
 	exampleResults := make([]CucumberExample, 0, len(examples))
+	featureRuns := make([]CucumberFeatureRun, 0)
 	correctCount := 0
 	implementedCount := 0
 	notImplementedCount := 0
+	var failureReason *string
 
+	features := make([]string, 0)
+	examplesByFeature := make(map[string][]cucumber.Example)
+	seenFeatures := make(map[string]struct{})
 	for _, example := range examples {
-		gt, ok := groundTruth[example.ID]
-		if !ok {
-			reason := "adapter_error"
+		if _, seen := seenFeatures[example.FeaturePath]; !seen {
+			features = append(features, example.FeaturePath)
+			seenFeatures[example.FeaturePath] = struct{}{}
+		}
+		examplesByFeature[example.FeaturePath] = append(examplesByFeature[example.FeaturePath], example)
+	}
+
+	for _, featurePath := range features {
+		featureExamples := examplesByFeature[featurePath]
+		if len(featureExamples) == 0 {
+			continue
+		}
+		expectedIDs := make([]string, 0, len(featureExamples))
+		for _, example := range featureExamples {
+			expectedIDs = append(expectedIDs, example.ID)
+		}
+
+		featureText, err := os.ReadFile(featurePath)
+		if err != nil {
+			reason := "invalid_features"
 			result.Status = "error"
 			result.FailureReason = &reason
 			return result
 		}
-		if gt.Implemented {
-			implementedCount++
-		} else {
-			notImplementedCount++
-		}
 
-		prompt := renderCucumberPrompt(task.Task.PromptTemplate, example)
+		prompt := renderCucumberPrompt(task.Task.PromptTemplate, featurePath, string(featureText), expectedIDs)
 		provider, err := providerFactory(task.Agent, task.Model)
 		if err != nil {
 			reason := "runtime_error"
@@ -144,45 +164,96 @@ func runCucumberTask(
 			NoColor:       noColor,
 		})
 
+		featureRuns = append(featureRuns, CucumberFeatureRun{
+			FeaturePath:     featurePath,
+			ExamplesTotal:   len(featureExamples),
+			TokensTotal:     runMetrics.Tokens,
+			WallTimeSeconds: runMetrics.WallTime.Seconds(),
+			AgentSteps:      runMetrics.Steps,
+			ToolCalls:       runMetrics.ToolCalls,
+		})
+
 		output, ok := latestAssistantMessage(session.History)
 		if !ok {
 			output = ""
 		}
 
-		agentResult := &CucumberAgentResult{}
-		correct := false
+		var responseMap map[string]cucumber.AgentResponse
+		var parseErr error
 		if runErr == nil {
-			response, err := cucumber.ParseAgentResponse(output)
+			response, err := cucumber.ParseAgentBatchResponse(output)
 			if err != nil {
-				agentResult.ParseError = err.Error()
+				parseErr = err
 			} else {
-				agentResult.ExampleID = response.ExampleID
-				agentResult.Implemented = response.Implemented
-				agentResult.Notes = response.Notes
-				agentResult.Evidence = convertEvidence(response.Evidence)
-				correct = response.Implemented == gt.Implemented
+				responseMap, parseErr = cucumber.ValidateAgentBatchResponse(expectedIDs, response)
 			}
 		} else {
-			agentResult.ParseError = runErr.Error()
+			parseErr = runErr
 		}
 
-		if correct {
-			correctCount++
+		if runErr != nil {
+			reason := "runtime_error"
+			if errors.Is(runErr, agent.ErrBudgetExceeded) {
+				reason = "budget_exceeded"
+			}
+			if failureReason == nil {
+				failureReason = &reason
+			}
+		} else if parseErr != nil {
+			reason := "invalid_agent_response"
+			if failureReason == nil {
+				failureReason = &reason
+			}
 		}
 
-		exampleResults = append(exampleResults, CucumberExample{
-			ExampleID:       example.ID,
-			FeaturePath:     example.FeaturePath,
-			ScenarioName:    example.ScenarioName,
-			ScenarioLine:    example.ScenarioLine,
-			ExampleLine:     example.ExampleLine,
-			GroundTruth:     truthLabel(gt.Implemented),
-			Agent:           agentResult,
-			Correct:         correct,
-			TokensTotal:     runMetrics.Tokens,
-			WallTimeSeconds: runMetrics.WallTime.Seconds(),
-			ToolCalls:       runMetrics.ToolCalls,
-		})
+		var batchValidation cucumber.BatchValidationError
+		hasBatchValidation := errors.As(parseErr, &batchValidation)
+
+		for _, example := range featureExamples {
+			gt, ok := groundTruth[example.ID]
+			if !ok {
+				reason := "adapter_error"
+				result.Status = "error"
+				result.FailureReason = &reason
+				return result
+			}
+			if gt.Implemented {
+				implementedCount++
+			} else {
+				notImplementedCount++
+			}
+
+			agentResult := &CucumberAgentResult{}
+			correct := false
+			if parseErr == nil || hasBatchValidation {
+				if response, ok := responseMap[example.ID]; ok {
+					agentResult.ExampleID = response.ExampleID
+					agentResult.Implemented = response.Implemented
+					agentResult.Notes = response.Notes
+					agentResult.Evidence = convertEvidence(response.Evidence)
+					correct = response.Implemented == gt.Implemented
+				} else if parseErr != nil {
+					agentResult.ParseError = fmt.Sprintf("missing example_id %q", example.ID)
+				}
+			} else {
+				agentResult.ParseError = parseErr.Error()
+			}
+
+			if correct {
+				correctCount++
+			}
+
+			exampleResults = append(exampleResults, CucumberExample{
+				ExampleID:    example.ID,
+				FeaturePath:  example.FeaturePath,
+				ScenarioName: example.ScenarioName,
+				ScenarioLine: example.ScenarioLine,
+				ExampleLine:  example.ExampleLine,
+				GroundTruth:  truthLabel(gt.Implemented),
+				Agent:        agentResult,
+				Correct:      correct,
+			})
+		}
 	}
 
 	total := len(exampleResults)
@@ -193,6 +264,7 @@ func runCucumberTask(
 	result.Cucumber = &CucumberEval{
 		AdapterID:   task.Task.Adapter,
 		AdapterType: adapter.Type,
+		FeatureRuns: featureRuns,
 		Examples:    exampleResults,
 		Summary: CucumberSummary{
 			ExamplesTotal:     total,
@@ -211,6 +283,17 @@ func runCucumberTask(
 		return result
 	}
 
+	if failureReason != nil {
+		result.FailureReason = failureReason
+		switch *failureReason {
+		case "runtime_error", "invalid_agent_response":
+			result.Status = "error"
+		default:
+			result.Status = "fail"
+		}
+		return result
+	}
+
 	if correctCount == total {
 		result.Status = "pass"
 		return result
@@ -221,11 +304,11 @@ func runCucumberTask(
 	return result
 }
 
-func renderCucumberPrompt(template string, example cucumber.Example) string {
+func renderCucumberPrompt(template, featurePath, featureText string, exampleIDs []string) string {
 	replacer := strings.NewReplacer(
-		"{example_id}", example.ID,
-		"{feature_path}", example.FeaturePath,
-		"{scenario_name}", example.ScenarioName,
+		"{feature_path}", featurePath,
+		"{feature_text}", featureText,
+		"{example_ids}", strings.Join(exampleIDs, "\n"),
 	)
 	return replacer.Replace(template)
 }
