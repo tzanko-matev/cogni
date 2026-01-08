@@ -66,7 +66,7 @@ type RunLimits struct {
 // RunOptions configures per-run behavior and logging.
 type RunOptions struct {
 	TokenCounter     TokenCounter
-	CompactionLimit  int
+	Compaction       CompactionConfig
 	Limits           RunLimits
 	Verbose          bool
 	VerboseWriter    io.Writer
@@ -88,10 +88,21 @@ func RunTurn(ctx context.Context, session *Session, provider Provider, executor 
 	metrics := RunMetrics{ToolCalls: map[string]int{}}
 
 	session.History = append(session.History, HistoryItem{Role: "user", Content: HistoryText{Text: userText}})
-	if opts.TokenCounter != nil && opts.CompactionLimit > 0 && opts.TokenCounter(session.History) > opts.CompactionLimit {
-		session.History = CompactHistory(session.History, opts.TokenCounter, opts.CompactionLimit)
-	}
 	for {
+		if opts.TokenCounter != nil {
+			compacted, stats, err := CompactHistory(ctx, session.History, provider, opts.TokenCounter, opts.Compaction)
+			if err != nil {
+				metrics.WallTime = time.Since(start)
+				if opts.TokenCounter != nil {
+					metrics.Tokens = opts.TokenCounter(session.History)
+				}
+				return metrics, err
+			}
+			if stats != nil {
+				session.History = compacted
+				logVerbose(opts, styleHeadingMetrics, fmt.Sprintf("Compaction tokens=%d->%d summary_tokens=%d", stats.BeforeTokens, stats.AfterTokens, stats.SummaryTokens))
+			}
+		}
 		if exceededLimits(start, opts.Limits, opts.TokenCounter, session.History, metrics.Steps) {
 			metrics.WallTime = time.Since(start)
 			if opts.TokenCounter != nil {

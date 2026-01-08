@@ -75,10 +75,14 @@ func runFeatureBatch(
 	if err != nil {
 		return CucumberFeatureRun{}, nil, nil, featureProviderError{err: err}
 	}
+	compactionConfig, compactionErr := buildCompactionConfig(task.Task, repoRoot)
+	if compactionErr != nil {
+		return CucumberFeatureRun{}, nil, nil, featureProviderError{err: compactionErr}
+	}
 	session := newSession(task, repoRoot, toolDefs, verbose)
 	runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, promptText, agent.RunOptions{
-		TokenCounter:    tokenCounter,
-		CompactionLimit: task.Task.Budget.MaxTokens,
+		TokenCounter: tokenCounter,
+		Compaction:   compactionConfig,
 		Limits: agent.RunLimits{
 			MaxSteps:   limitOrDefault(task.Task.Budget.MaxSteps, task.Agent.MaxSteps),
 			MaxSeconds: time.Duration(task.Task.Budget.MaxSeconds) * time.Second,

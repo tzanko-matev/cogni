@@ -28,6 +28,13 @@ func runTask(
 	result := TaskResult{TaskID: task.Task.ID, Type: task.Task.Type}
 	attempts := make([]AttemptResult, 0, repeat)
 	var failureReason *string
+	compactionConfig, compactionErr := buildCompactionConfig(task.Task, repoRoot)
+	if compactionErr != nil {
+		reason := "runtime_error"
+		result.Status = "error"
+		result.FailureReason = &reason
+		return result
+	}
 
 	for attemptIndex := 1; attemptIndex <= repeat; attemptIndex++ {
 		logVerbose(verbose, verboseWriter, verboseLogWriter, noColor, styleTask, fmt.Sprintf("Task %s attempt %d/%d agent=%s model=%s", task.Task.ID, attemptIndex, repeat, task.AgentID, task.Model))
@@ -40,8 +47,8 @@ func runTask(
 		}
 		session := newSession(task, repoRoot, toolsDefs, verbose)
 		runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, task.Task.Prompt, agent.RunOptions{
-			TokenCounter:    tokenCounter,
-			CompactionLimit: task.Task.Budget.MaxTokens,
+			TokenCounter: tokenCounter,
+			Compaction:   compactionConfig,
 			Limits: agent.RunLimits{
 				MaxSteps:   limitOrDefault(task.Task.Budget.MaxSteps, task.Agent.MaxSteps),
 				MaxSeconds: time.Duration(task.Task.Budget.MaxSeconds) * time.Second,

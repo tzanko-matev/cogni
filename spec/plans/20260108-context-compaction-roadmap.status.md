@@ -27,8 +27,11 @@ Date: 2026-01-08
   - Identified integration points in runner and agent history handling.
   - Added compaction config schema + validation and documented config updates.
   - Updated builtin agent compaction docs to reflect soft/hard limits and summaries.
+  - Implemented summary-aware compaction with soft limits, summary prompts, and tool retention policies.
+  - Wired compaction into the run loop with verbose logging and summary insertion.
+  - Added unit + integration tests for compaction behavior and summary insertion.
 
 ## Next Actions
-- Implement summary-aware compaction logic + summary prompt defaults.
-- Wire compaction into run loop with soft/hard limits and verbose logging.
-- Add unit/integration tests for summary insertion and tool output retention.
+- Persist compaction metadata in results output.
+- Add provider capability flags for remote compaction support.
+- Final verification and mark roadmap DONE.

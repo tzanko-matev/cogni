@@ -1,54 +1,82 @@
 package agent
 
 import (
+	"context"
+	"fmt"
 	"strings"
 )
 
 // TokenCounter estimates token usage for a history slice.
 type TokenCounter func(history []HistoryItem) int
 
-// CompactHistory trims history while keeping instructions, tool outputs, and the latest user/env messages.
-func CompactHistory(history []HistoryItem, counter TokenCounter, limit int) []HistoryItem {
-	if counter == nil || limit <= 0 {
-		return history
+// CompactHistory summarizes and trims history when the compaction soft limit is exceeded.
+func CompactHistory(ctx context.Context, history []HistoryItem, provider Provider, counter TokenCounter, cfg CompactionConfig) ([]HistoryItem, *CompactionStats, error) {
+	cfg = NormalizeCompactionConfig(cfg)
+	if counter == nil || cfg.SoftLimit <= 0 {
+		return history, nil, nil
 	}
-	if counter(history) <= limit {
-		return history
+	beforeTokens := counter(history)
+	if beforeTokens <= cfg.SoftLimit {
+		return history, nil, nil
 	}
-
-	keep := make([]bool, len(history))
-	lastEnv := -1
-	lastUser := -1
-	for i := len(history) - 1; i >= 0; i-- {
-		item := history[i]
-		if lastEnv == -1 && isEnvironmentItem(item) {
-			lastEnv = i
-		}
-		if lastUser == -1 && isUserMessage(item) {
-			lastUser = i
-		}
+	if provider == nil {
+		return history, nil, fmt.Errorf("compaction provider is required")
 	}
 
-	if lastEnv >= 0 {
-		keep[lastEnv] = true
-	}
-	if lastUser >= 0 {
-		keep[lastUser] = true
-	}
+	filtered := filterSummaryItems(history)
+	keep := make([]bool, len(filtered))
 
-	for i, item := range history {
-		if isDeveloperInstructions(item) || isUserInstructions(item) || item.Role == "tool" {
+	for i, item := range filtered {
+		if isDeveloperInstructions(item) || isUserInstructions(item) {
 			keep[i] = true
 		}
 	}
+	if envIndex := lastEnvironmentIndex(filtered); envIndex >= 0 {
+		keep[envIndex] = true
+	}
 
-	compacted := make([]HistoryItem, 0, len(history))
-	for i, item := range history {
+	userKeep, lastUserIndex := selectRecentUserMessages(filtered, counter, cfg.RecentUserTokenBudget)
+	mergeKeep(keep, userKeep)
+
+	toolKeep := selectToolOutputs(filtered, lastUserIndex, cfg.RecentToolOutputLimit)
+	mergeKeep(keep, toolKeep)
+	mergeKeep(keep, selectToolCallsForOutputs(filtered, toolKeep))
+
+	summaryItems := collectSummaryItems(filtered, keep)
+	summary := ""
+	if len(summaryItems) > 0 {
+		var err error
+		summary, err = SummarizeHistory(ctx, provider, summaryItems, cfg.SummaryPrompt, counter, cfg.HardLimit)
+		if err != nil {
+			return history, nil, err
+		}
+		summary = strings.TrimSpace(summary)
+	}
+
+	compacted := make([]HistoryItem, 0, len(filtered)+1)
+	for i, item := range filtered {
 		if keep[i] {
 			compacted = append(compacted, item)
 		}
 	}
-	return compacted
+	if summary != "" {
+		compacted = append(compacted, HistoryItem{
+			Role:    "assistant",
+			Content: HistoryText{Text: SummaryPrefix + summary},
+		})
+	}
+
+	stats := &CompactionStats{
+		BeforeTokens: beforeTokens,
+		AfterTokens:  counter(compacted),
+	}
+	if summary != "" {
+		stats.SummaryTokens = countTokens(counter, HistoryItem{
+			Role:    "assistant",
+			Content: HistoryText{Text: SummaryPrefix + summary},
+		})
+	}
+	return compacted, stats, nil
 }
 
 // isDeveloperInstructions reports whether the item holds developer guidance.
@@ -90,6 +118,15 @@ func isUserMessage(item HistoryItem) bool {
 		return false
 	}
 	return true
+}
+
+// isSummaryItem reports whether the item is a compaction summary message.
+func isSummaryItem(item HistoryItem) bool {
+	content, ok := historyText(item)
+	if !ok {
+		return false
+	}
+	return strings.HasPrefix(content, SummaryPrefix)
 }
 
 // historyText extracts text from a history item when it is a HistoryText payload.
