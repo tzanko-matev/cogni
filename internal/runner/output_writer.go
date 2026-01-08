@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -45,7 +46,10 @@ func writeJSON(path string, results Results) error {
 
 // writePlaceholderReport writes a minimal HTML report stub.
 func writePlaceholderReport(path string, results Results) error {
-	content := fmt.Sprintf("<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>Cogni Report</title></head><body><h1>Cogni Report</h1><p>Run %s for commit %s</p></body></html>\n", results.RunID, results.Repo.Commit)
+	content, err := renderRunReportHTML(context.Background(), results)
+	if err != nil {
+		return fmt.Errorf("render report: %w", err)
+	}
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		return fmt.Errorf("write report: %w", err)
 	}

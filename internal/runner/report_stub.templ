@@ -1,0 +1,16 @@
+package runner
+
+// RunReportStub renders the default HTML report for a single run.
+templ RunReportStub(results Results) {
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Cogni Report</title>
+  </head>
+  <body>
+    <h1>Cogni Report</h1>
+    <p>Run {results.RunID} on commit {results.Repo.Commit}</p>
+  </body>
+</html>
+}

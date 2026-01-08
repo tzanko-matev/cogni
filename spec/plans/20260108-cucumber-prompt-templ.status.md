@@ -12,7 +12,8 @@ Linked plan: [spec/plans/20260108-cucumber-prompt-templ.plan.md](/plans/20260108
 - Cucumber prompt rendering now uses a compiled `templ` component.
 - `prompt_template` was removed from task config/types and validation; tests now
   rely on the built-in prompt.
-- Report HTML and scaffold config templating still pending.
+- Report HTML and single-run placeholder reports now render via `templ`.
+- Scaffold config templating still pending.
 
 ## What was done so far
 - Added `internal/prompt` with a compiled `templ` cucumber prompt and render helper.
@@ -20,9 +21,10 @@ Linked plan: [spec/plans/20260108-cucumber-prompt-templ.plan.md](/plans/20260108
 - Removed `prompt_template` from `spec.TaskConfig` and cucumber validation.
 - Updated cucumber tests and fixtures to drop `prompt_template`.
 - Regenerated templ output and updated `go.mod`, `go.sum`, and `vendor/`.
+- Added `templ` report templates for both multi-run reports and single-run stubs.
+- Updated report rendering and output writer to use the compiled templates.
 
 ## Next steps
-- Convert report HTML rendering to templ (report + placeholder report).
 - Convert scaffolded config output to templ.
 - Update specs/docs to describe the built-in cucumber prompt.
 - Clean up remaining placeholder-based templating references.
