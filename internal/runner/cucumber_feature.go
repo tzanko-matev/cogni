@@ -10,6 +10,7 @@ import (
 
 	"cogni/internal/agent"
 	"cogni/internal/cucumber"
+	"cogni/internal/prompt"
 )
 
 // featureInputError signals a failure to read feature inputs.
@@ -66,13 +67,16 @@ func runFeatureBatch(
 		return CucumberFeatureRun{}, nil, nil, featureInputError{err: fmt.Errorf("read feature %s: %w", featurePath, err)}
 	}
 
-	prompt := renderCucumberPrompt(task.Task.PromptTemplate, featurePath, string(featureText), expectedIDs)
+	promptText, err := prompt.RenderCucumberPrompt(ctx, featurePath, string(featureText), expectedIDs)
+	if err != nil {
+		return CucumberFeatureRun{}, nil, nil, featureInputError{err: fmt.Errorf("render cucumber prompt: %w", err)}
+	}
 	provider, err := providerFactory(task.Agent, task.Model)
 	if err != nil {
 		return CucumberFeatureRun{}, nil, nil, featureProviderError{err: err}
 	}
 	session := newSession(task, repoRoot, toolDefs, verbose)
-	runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, prompt, agent.RunOptions{
+	runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, promptText, agent.RunOptions{
 		TokenCounter:    tokenCounter,
 		CompactionLimit: task.Task.Budget.MaxTokens,
 		Limits: agent.RunLimits{

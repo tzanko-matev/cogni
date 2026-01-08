@@ -6,16 +6,6 @@ import (
 	"cogni/internal/cucumber"
 )
 
-// renderCucumberPrompt fills the prompt template for a feature batch.
-func renderCucumberPrompt(template, featurePath, featureText string, exampleIDs []string) string {
-	replacer := strings.NewReplacer(
-		"{feature_path}", featurePath,
-		"{feature_text}", featureText,
-		"{example_ids}", strings.Join(exampleIDs, "\n"),
-	)
-	return replacer.Replace(template)
-}
-
 // truthLabel returns the canonical label for truth values.
 func truthLabel(implemented bool) string {
 	if implemented {

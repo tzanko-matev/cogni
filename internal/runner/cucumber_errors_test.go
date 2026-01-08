@@ -65,7 +65,6 @@ func TestRunCucumberEvalManualMissingIDs(t *testing.T) {
 			Type:           "cucumber_eval",
 			Agent:          "agent-1",
 			Adapter:        "manual",
-			PromptTemplate: "example_ids:\n{example_ids}",
 			Features:       []string{featurePath},
 		}},
 	}

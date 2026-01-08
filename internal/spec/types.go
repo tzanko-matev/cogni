@@ -33,7 +33,6 @@ type TaskConfig struct {
 	Agent          string     `yaml:"agent"`
 	Model          string     `yaml:"model"`
 	Prompt         string     `yaml:"prompt"`
-	PromptTemplate string     `yaml:"prompt_template"`
 	Adapter        string     `yaml:"adapter"`
 	Features       []string   `yaml:"features"`
 	Eval           TaskEval   `yaml:"eval"`

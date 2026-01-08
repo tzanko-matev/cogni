@@ -78,7 +78,6 @@ func TestE2ECucumberEvalCompareAcrossCommits(t *testing.T) {
 			Agent:          "default",
 			Adapter:        "manual",
 			Features:       []string{"spec/features/sample.feature"},
-			PromptTemplate: "Feature path: {feature_path}\nFeature text:\n{feature_text}\nExpected Example IDs:\n{example_ids}\nReturn ONLY JSON: {\"results\":[{\"example_id\":\"<id>\",\"implemented\":true}]}",
 		}},
 	}
 	specPath := writeConfig(t, repoRoot, cfg)

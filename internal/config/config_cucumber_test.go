@@ -15,7 +15,6 @@ func TestValidateCucumberEvalRequiresAdapter(t *testing.T) {
 		ID:             "cucumber",
 		Type:           "cucumber_eval",
 		Agent:          "default",
-		PromptTemplate: "template",
 		Features:       []string{featurePath},
 	}}
 
@@ -43,7 +42,6 @@ func TestValidateCucumberEvalValidConfig(t *testing.T) {
 		Type:           "cucumber_eval",
 		Agent:          "default",
 		Adapter:        "manual",
-		PromptTemplate: "template",
 		Features:       []string{featurePath},
 	}}
 
@@ -66,7 +64,6 @@ func TestValidateCucumberAdapterRequiresExpectationsDir(t *testing.T) {
 		Type:           "cucumber_eval",
 		Agent:          "default",
 		Adapter:        "manual",
-		PromptTemplate: "template",
 		Features:       []string{featurePath},
 	}}
 

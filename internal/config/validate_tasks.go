@@ -72,9 +72,6 @@ func validateQATask(task spec.TaskConfig, fieldPrefix, baseDir string, add issue
 
 // validateCucumberTask enforces cucumber evaluation task requirements.
 func validateCucumberTask(task spec.TaskConfig, fieldPrefix, baseDir string, adapterIDs map[string]struct{}, add issueAdder) {
-	if strings.TrimSpace(task.PromptTemplate) == "" {
-		add(fieldPrefix+".prompt_template", "is required")
-	}
 	adapterID := strings.TrimSpace(task.Adapter)
 	if adapterID == "" {
 		add(fieldPrefix+".adapter", "is required")

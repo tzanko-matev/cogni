@@ -3,6 +3,7 @@ module cogni
 go 1.25
 
 require (
+	github.com/a-h/templ v0.3.977
 	github.com/cucumber/gherkin-go/v19 v19.0.3
 	github.com/cucumber/godog v0.12.6
 	github.com/cucumber/messages-go/v16 v16.0.1
@@ -19,5 +20,5 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/spf13/cobra v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 )

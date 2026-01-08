@@ -14,6 +14,7 @@ docs-serve-with-tests: docs-test-results
 
 # Build the cogni CLI.
 build:
+    go generate ./...
     go build -o cogni ./cmd/cogni
 
 # Run Go tests with cache paths that are writable in the sandbox.

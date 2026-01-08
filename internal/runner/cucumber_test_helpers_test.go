@@ -57,21 +57,50 @@ func extractExampleIDs(prompt agent.Prompt) []string {
 		if !ok {
 			continue
 		}
-		if strings.Contains(text.Text, "example_ids:") {
-			parts := strings.SplitN(text.Text, "example_ids:", 2)
-			if len(parts) != 2 {
-				return nil
-			}
-			lines := strings.Split(parts[1], "\n")
-			ids := make([]string, 0, len(lines))
-			for _, line := range lines {
-				id := strings.TrimSpace(line)
-				if id != "" {
-					ids = append(ids, id)
-				}
-			}
+		if ids := parseExampleIDsFromHeader(text.Text); len(ids) > 0 {
+			return ids
+		}
+		if ids := parseExampleIDsFromMarker(text.Text); len(ids) > 0 {
 			return ids
 		}
 	}
 	return nil
+}
+
+// parseExampleIDsFromHeader collects IDs listed after the built-in prompt header.
+func parseExampleIDsFromHeader(promptText string) []string {
+	const header = "Expected Example IDs (one per line):"
+	lines := strings.Split(promptText, "\n")
+	for i, line := range lines {
+		if strings.TrimSpace(line) != header {
+			continue
+		}
+		return collectExampleIDs(lines[i+1:])
+	}
+	return nil
+}
+
+// parseExampleIDsFromMarker collects IDs listed after the legacy prompt marker.
+func parseExampleIDsFromMarker(promptText string) []string {
+	if !strings.Contains(promptText, "example_ids:") {
+		return nil
+	}
+	parts := strings.SplitN(promptText, "example_ids:", 2)
+	if len(parts) != 2 {
+		return nil
+	}
+	return collectExampleIDs(strings.Split(parts[1], "\n"))
+}
+
+// collectExampleIDs trims IDs until a blank or footer line.
+func collectExampleIDs(lines []string) []string {
+	ids := make([]string, 0, len(lines))
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "For each example ID") || strings.HasPrefix(trimmed, "Return ONLY JSON") {
+			break
+		}
+		ids = append(ids, trimmed)
+	}
+	return ids
 }
