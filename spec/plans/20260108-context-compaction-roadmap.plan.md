@@ -76,3 +76,6 @@ Introduce a Codex-style compaction pipeline that prevents unbounded prompt growt
 - Compaction produces a summary + recent context and keeps prompts within limits.
 - Runs no longer fail from history growth when a summary can compress the context.
 - Tests cover compaction behavior and summary insertion.
+
+## Status
+DONE (2026-01-08)

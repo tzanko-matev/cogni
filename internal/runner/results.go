@@ -45,18 +45,20 @@ type TaskResult struct {
 
 // AttemptResult records effort and validation for one attempt.
 type AttemptResult struct {
-	Attempt         int            `json:"attempt"`
-	Status          string         `json:"status"`
-	AgentID         string         `json:"agent_id"`
-	Model           string         `json:"model"`
-	TokensIn        int            `json:"tokens_in"`
-	TokensOut       int            `json:"tokens_out"`
-	TokensTotal     int            `json:"tokens_total"`
-	WallTimeSeconds float64        `json:"wall_time_seconds"`
-	AgentSteps      int            `json:"agent_steps"`
-	ToolCalls       map[string]int `json:"tool_calls"`
-	UniqueFilesRead int            `json:"unique_files_read"`
-	Eval            EvalResult     `json:"eval"`
+	Attempt           int            `json:"attempt"`
+	Status            string         `json:"status"`
+	AgentID           string         `json:"agent_id"`
+	Model             string         `json:"model"`
+	TokensIn          int            `json:"tokens_in"`
+	TokensOut         int            `json:"tokens_out"`
+	TokensTotal       int            `json:"tokens_total"`
+	WallTimeSeconds   float64        `json:"wall_time_seconds"`
+	AgentSteps        int            `json:"agent_steps"`
+	ToolCalls         map[string]int `json:"tool_calls"`
+	UniqueFilesRead   int            `json:"unique_files_read"`
+	Compactions       int            `json:"compactions"`
+	LastSummaryTokens int            `json:"last_summary_tokens"`
+	Eval              EvalResult     `json:"eval"`
 }
 
 // EvalResult summarizes schema/citation validation.
@@ -79,12 +81,14 @@ type CucumberEval struct {
 
 // CucumberFeatureRun captures per-feature execution metrics.
 type CucumberFeatureRun struct {
-	FeaturePath     string         `json:"feature_path"`
-	ExamplesTotal   int            `json:"examples_total"`
-	TokensTotal     int            `json:"tokens_total,omitempty"`
-	WallTimeSeconds float64        `json:"wall_time_seconds,omitempty"`
-	AgentSteps      int            `json:"agent_steps,omitempty"`
-	ToolCalls       map[string]int `json:"tool_calls,omitempty"`
+	FeaturePath       string         `json:"feature_path"`
+	ExamplesTotal     int            `json:"examples_total"`
+	TokensTotal       int            `json:"tokens_total,omitempty"`
+	WallTimeSeconds   float64        `json:"wall_time_seconds,omitempty"`
+	AgentSteps        int            `json:"agent_steps,omitempty"`
+	ToolCalls         map[string]int `json:"tool_calls,omitempty"`
+	Compactions       int            `json:"compactions,omitempty"`
+	LastSummaryTokens int            `json:"last_summary_tokens,omitempty"`
 }
 
 // CucumberExample records evaluation results for a single example.

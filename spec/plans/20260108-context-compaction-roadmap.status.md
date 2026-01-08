@@ -21,7 +21,7 @@ Date: 2026-01-08
 - `internal/runner/run_task.go`
 
 ## Status
-- State: TODO
+- State: DONE
 - Progress:
   - Investigated current compaction flow (token-limit based, no summaries).
   - Identified integration points in runner and agent history handling.
@@ -30,8 +30,8 @@ Date: 2026-01-08
   - Implemented summary-aware compaction with soft limits, summary prompts, and tool retention policies.
   - Wired compaction into the run loop with verbose logging and summary insertion.
   - Added unit + integration tests for compaction behavior and summary insertion.
+  - Added compaction metadata to results output (count + last summary size).
+  - Added provider capability flags for remote compaction support.
 
 ## Next Actions
-- Persist compaction metadata in results output.
-- Add provider capability flags for remote compaction support.
-- Final verification and mark roadmap DONE.
+- None (DONE).

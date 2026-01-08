@@ -27,6 +27,11 @@ type OpenRouterProvider struct {
 	Model   string
 }
 
+// CompactionCapabilities reports compaction features for OpenRouter.
+func (p *OpenRouterProvider) CompactionCapabilities() CompactionCapabilities {
+	return CompactionCapabilities{Remote: false}
+}
+
 // ProviderFromEnv builds a provider using environment configuration.
 func ProviderFromEnv(provider, model string, client HTTPDoer) (Provider, error) {
 	if provider == "" {

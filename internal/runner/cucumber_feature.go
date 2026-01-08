@@ -95,12 +95,14 @@ func runFeatureBatch(
 	})
 
 	featureRun := CucumberFeatureRun{
-		FeaturePath:     featurePath,
-		ExamplesTotal:   len(featureExamples),
-		TokensTotal:     runMetrics.Tokens,
-		WallTimeSeconds: runMetrics.WallTime.Seconds(),
-		AgentSteps:      runMetrics.Steps,
-		ToolCalls:       runMetrics.ToolCalls,
+		FeaturePath:       featurePath,
+		ExamplesTotal:     len(featureExamples),
+		TokensTotal:       runMetrics.Tokens,
+		WallTimeSeconds:   runMetrics.WallTime.Seconds(),
+		AgentSteps:        runMetrics.Steps,
+		ToolCalls:         runMetrics.ToolCalls,
+		Compactions:       runMetrics.Compactions,
+		LastSummaryTokens: runMetrics.LastSummaryTokens,
 	}
 
 	output, ok := latestAssistantMessage(session.History)

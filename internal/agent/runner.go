@@ -76,10 +76,12 @@ type RunOptions struct {
 
 // RunMetrics captures execution effort for a run.
 type RunMetrics struct {
-	ToolCalls map[string]int
-	WallTime  time.Duration
-	Tokens    int
-	Steps     int
+	ToolCalls         map[string]int
+	WallTime          time.Duration
+	Tokens            int
+	Steps             int
+	Compactions       int
+	LastSummaryTokens int
 }
 
 // RunTurn executes a single agent turn, including any follow-up tool calls.
@@ -100,6 +102,8 @@ func RunTurn(ctx context.Context, session *Session, provider Provider, executor 
 			}
 			if stats != nil {
 				session.History = compacted
+				metrics.Compactions++
+				metrics.LastSummaryTokens = stats.SummaryTokens
 				logVerbose(opts, styleHeadingMetrics, fmt.Sprintf("Compaction tokens=%d->%d summary_tokens=%d", stats.BeforeTokens, stats.AfterTokens, stats.SummaryTokens))
 			}
 		}
