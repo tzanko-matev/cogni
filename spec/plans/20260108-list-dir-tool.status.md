@@ -1,6 +1,6 @@
 # List Dir Tool Status
 
-Status: In progress
+Status: Done
 
 ID: 20260108-list-dir-tool.status
 
@@ -9,7 +9,7 @@ Created: 2026-01-08
 Linked plan: [spec/plans/20260108-list-dir-tool.plan.md](/plans/20260108-list-dir-tool.plan/)
 
 ## Current status
-- Phase 3 complete: list_dir unit tests added for traversal, pagination, and errors.
+- Done. list_dir tool shipped with tests and documentation updates.
 
 ## What was done so far
 - Added `list_dir` tool schema to the tool registry.
@@ -17,9 +17,10 @@ Linked plan: [spec/plans/20260108-list-dir-tool.plan.md](/plans/20260108-list-di
 - Implemented BFS traversal, suffix handling, and pagination for list_dir output.
 - Extended filesystem abstraction with directory reads and symlink-aware stats.
 - Added list_dir unit tests for depth handling, pagination, symlinks, and errors.
+- Updated documentation references to include list_dir in tool lists.
 
 ## Next steps
-- Review output/error message consistency and update docs if needed.
+- None.
 
 ## Latest test run
 - 2026-01-08: `nix shell nixpkgs#go -c go test ./internal/tools ./internal/agent`
@@ -30,7 +31,10 @@ Linked plan: [spec/plans/20260108-list-dir-tool.plan.md](/plans/20260108-list-di
 - internal/tools/runner_types.go
 - internal/tools/runner_list_dir.go
 - internal/tools/runner_list_dir_helpers.go
-- internal/tools/runner_list_dir_test.go
+- internal/tools/runner_list_dir_depth_test.go
+- internal/tools/runner_list_dir_pagination_test.go
+- internal/tools/runner_list_dir_errors_test.go
+- internal/tools/runner_list_dir_test_helpers.go
 - internal/tools/runner_paths.go
 - internal/tools/runner_fs.go
 - internal/tools/runner_list.go

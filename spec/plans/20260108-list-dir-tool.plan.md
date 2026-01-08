@@ -1,10 +1,11 @@
 # List Dir Tool Plan
 
-Status: In progress
+Status: Done
 
 ID: 20260108-list-dir-tool
 
 Created: 2026-01-08
+Completed: 2026-01-08
 
 Linked status: [spec/plans/20260108-list-dir-tool.status.md](/plans/20260108-list-dir-tool.status/)
 
