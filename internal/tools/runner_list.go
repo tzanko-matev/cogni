@@ -29,7 +29,7 @@ func normalizeListFilesGlob(glob string) string {
 		return ""
 	}
 	switch trimmed {
-	case "*", "**", "**/*", "./*", "./**", "./**/*":
+	case "*", "**":
 		return ""
 	default:
 		return trimmed

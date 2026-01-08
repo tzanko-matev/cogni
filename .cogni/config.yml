@@ -20,10 +20,6 @@ tasks:
     adapter: godog_default
     features:
       - "spec/features/*.feature"
-    prompt_template: |
-      Read the source code. For the example {example_id}, decide if it is fully
-      implemented. List relevant file names and line numbers.
-      Return JSON with example_id, implemented, evidence, notes.
 
 adapters:
   - id: godog_default

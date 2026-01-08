@@ -8,7 +8,7 @@ func defaultToolDefinitions() []agent.ToolDefinition {
 	return []agent.ToolDefinition{
 		{
 			Name:        "list_files",
-			Description: "List files in the repository",
+			Description: "List files in the repository. The glob argument follows .gitignore rules. Equivalent to `rg --files -g {glob}`",
 			Parameters: &agent.ToolSchema{
 				Type: "object",
 				Properties: map[string]agent.ToolSchema{

@@ -15,23 +15,8 @@
       ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
       mkPkgs = system: import nixpkgs { inherit system; };
-      mkCogni = system:
-        let
-          pkgs = mkPkgs system;
-        in
-        pkgs.buildGoModule {
-          pname = "cogni";
-          version = "0.1.0";
-          src = ./.;
-          subPackages = [ "cmd/cogni" ];
-          vendorHash = null;
-        };
     in
     {
-      packages = forAllSystems (system: {
-        cogni = mkCogni system;
-        default = mkCogni system;
-      });
       devShells = forAllSystems (system:
         let
           pkgs = mkPkgs system;
@@ -48,7 +33,6 @@
         {
           default = pkgs.mkShell {
             packages = with pkgs; [
-              (mkCogni system)
               go
               gopls
               gotools
