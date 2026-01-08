@@ -6,9 +6,9 @@ import (
 )
 
 // renderRunReportHTML renders the single-run report template into a string.
-func renderRunReportHTML(ctx context.Context, results Results) (string, error) {
+func renderRunReportHTML(results Results) (string, error) {
 	var builder strings.Builder
-	if err := RunReportStub(results).Render(ctx, &builder); err != nil {
+	if err := RunReportStub(results).Render(context.Background(), &builder); err != nil {
 		return "", err
 	}
 	return builder.String(), nil

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -71,7 +70,7 @@ func Scaffold(specPath, outputDir string) error {
 		return fmt.Errorf("stat schema file: %w", err)
 	}
 
-	configBody, err := renderScaffoldConfig(context.Background(), dir)
+	configBody, err := renderScaffoldConfig(dir)
 	if err != nil {
 		return fmt.Errorf("render scaffold config: %w", err)
 	}

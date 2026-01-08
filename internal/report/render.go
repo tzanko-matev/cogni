@@ -7,10 +7,10 @@ import (
 	"cogni/internal/runner"
 )
 
-// RenderReportHTML renders the report template into a string.
-func RenderReportHTML(ctx context.Context, runs []runner.Results) (string, error) {
+// renderReportHTML renders the report template into a string.
+func renderReportHTML(runs []runner.Results) (string, error) {
 	var builder strings.Builder
-	if err := ReportPage(runs).Render(ctx, &builder); err != nil {
+	if err := ReportPage(runs).Render(context.Background(), &builder); err != nil {
 		return "", err
 	}
 	return builder.String(), nil

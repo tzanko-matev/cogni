@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -46,7 +45,7 @@ func writeJSON(path string, results Results) error {
 
 // writePlaceholderReport writes a minimal HTML report stub.
 func writePlaceholderReport(path string, results Results) error {
-	content, err := renderRunReportHTML(context.Background(), results)
+	content, err := renderRunReportHTML(results)
 	if err != nil {
 		return fmt.Errorf("render report: %w", err)
 	}

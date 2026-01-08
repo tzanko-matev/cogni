@@ -1,10 +1,11 @@
 # Cucumber Prompt Templating Plan
 
-Status: Planned
+Status: Done
 
 ID: 20260108-cucumber-prompt-templ
 
 Created: 2026-01-08
+Completed: 2026-01-08
 
 Linked status: [spec/plans/20260108-cucumber-prompt-templ.status.md](/plans/20260108-cucumber-prompt-templ.status/)
 
