@@ -66,10 +66,12 @@
               # Ensure Nix Python + packages are found even if PATH is reordered by shell init.
               export PATH="${pythonEnv}/bin:$PATH"
               export NIX_PYTHONPATH="${pythonSitePackages}:$NIX_PYTHONPATH"
-              export GOPATH="$HOME/.cache/go"
-              export GOMODCACHE="$HOME/.cache/go-mod"
-              export GOCACHE="$HOME/.cache/go-build"
-              export GOBIN="$HOME/.cache/go/bin"
+              project_root="$(pwd)"
+              cache_root="$project_root/.cache"
+              export GOPATH="$cache_root/go"
+              export GOMODCACHE="$cache_root/go-mod"
+              export GOCACHE="$cache_root/go-build"
+              export GOBIN="$cache_root/go/bin"
               mkdir -p "$GOPATH" "$GOMODCACHE" "$GOCACHE" "$GOBIN"
               export PATH="$GOBIN:$PATH"
               if ! command -v godog >/dev/null 2>&1; then
@@ -84,10 +86,10 @@
               if [ -z "$LLM_API_KEY" ] && [ -n "$OPENROUTER_API_KEY" ]; then
                 export LLM_API_KEY="$OPENROUTER_API_KEY"
               fi
-              export PATH="$PWD:$PATH"
               if [ -z "$LLM_API_KEY" ]; then
                 echo "cogni dev shell: set LLM_API_KEY to run benchmarks."
               fi
+              export PATH="$project_root:$PATH"
             '';
           };
         });
