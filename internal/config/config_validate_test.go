@@ -67,3 +67,48 @@ func TestValidateRejectsNegativeBudgets(t *testing.T) {
 		t.Fatalf("expected budget error, got %q", err.Error())
 	}
 }
+
+// TestValidateRejectsInvalidCompaction verifies invalid compaction settings are rejected.
+func TestValidateRejectsInvalidCompaction(t *testing.T) {
+	cfg := validConfig()
+	cfg.Tasks[0].Compaction.MaxTokens = -1
+	cfg.Tasks[0].Compaction.RecentUserTokenBudget = -5
+	cfg.Tasks[0].Compaction.RecentToolOutputLimit = -2
+
+	err := Validate(&cfg, ".")
+	if err == nil {
+		t.Fatalf("expected validation error")
+	}
+	if !strings.Contains(err.Error(), "compaction") {
+		t.Fatalf("expected compaction error, got %q", err.Error())
+	}
+}
+
+// TestValidateRejectsCompactionPromptConflict verifies summary prompt conflicts are flagged.
+func TestValidateRejectsCompactionPromptConflict(t *testing.T) {
+	cfg := validConfig()
+	cfg.Tasks[0].Compaction.SummaryPrompt = "summary"
+	cfg.Tasks[0].Compaction.SummaryPromptFile = "summary.txt"
+
+	err := Validate(&cfg, ".")
+	if err == nil {
+		t.Fatalf("expected validation error")
+	}
+	if !strings.Contains(err.Error(), "summary_prompt") {
+		t.Fatalf("expected summary prompt error, got %q", err.Error())
+	}
+}
+
+// TestValidateRejectsMissingCompactionPromptFile verifies missing summary prompt files are flagged.
+func TestValidateRejectsMissingCompactionPromptFile(t *testing.T) {
+	cfg := validConfig()
+	cfg.Tasks[0].Compaction.SummaryPromptFile = "missing-summary.txt"
+
+	err := Validate(&cfg, t.TempDir())
+	if err == nil {
+		t.Fatalf("expected validation error")
+	}
+	if !strings.Contains(err.Error(), "summary_prompt_file") {
+		t.Fatalf("expected summary prompt file error, got %q", err.Error())
+	}
+}

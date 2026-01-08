@@ -37,6 +37,7 @@ type TaskConfig struct {
 	Features       []string   `yaml:"features"`
 	Eval           TaskEval   `yaml:"eval"`
 	Budget         TaskBudget `yaml:"budget"`
+	Compaction     TaskCompaction `yaml:"compaction"`
 }
 
 // TaskEval configures QA evaluation rules for a task.
@@ -51,6 +52,15 @@ type TaskBudget struct {
 	MaxTokens  int `yaml:"max_tokens"`
 	MaxSeconds int `yaml:"max_seconds"`
 	MaxSteps   int `yaml:"max_steps"`
+}
+
+// TaskCompaction configures history compaction for a task.
+type TaskCompaction struct {
+	MaxTokens             int    `yaml:"max_tokens"`
+	SummaryPrompt         string `yaml:"summary_prompt"`
+	SummaryPromptFile     string `yaml:"summary_prompt_file"`
+	RecentUserTokenBudget int    `yaml:"recent_user_token_budget"`
+	RecentToolOutputLimit int    `yaml:"recent_tool_output_limit"`
 }
 
 // AdapterConfig configures cucumber ground-truth adapters.

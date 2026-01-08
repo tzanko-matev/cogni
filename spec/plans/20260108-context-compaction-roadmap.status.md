@@ -25,8 +25,10 @@ Date: 2026-01-08
 - Progress:
   - Investigated current compaction flow (token-limit based, no summaries).
   - Identified integration points in runner and agent history handling.
+  - Added compaction config schema + validation and documented config updates.
+  - Updated builtin agent compaction docs to reflect soft/hard limits and summaries.
 
 ## Next Actions
-- Confirm compaction policy details (tool output retention + soft vs hard limits).
-- Decide summary prompt location + format and whether to expose config overrides.
-
+- Implement summary-aware compaction logic + summary prompt defaults.
+- Wire compaction into run loop with soft/hard limits and verbose logging.
+- Add unit/integration tests for summary insertion and tool output retention.

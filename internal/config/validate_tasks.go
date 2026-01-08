@@ -42,6 +42,30 @@ func validateTasks(cfg *spec.Config, baseDir string, agentIDs, adapterIDs map[st
 		if task.Budget.MaxSteps < 0 {
 			add(fieldPrefix+".budget.max_steps", "must be >= 0")
 		}
+		if task.Compaction.MaxTokens < 0 {
+			add(fieldPrefix+".compaction.max_tokens", "must be >= 0")
+		}
+		if task.Compaction.RecentUserTokenBudget < 0 {
+			add(fieldPrefix+".compaction.recent_user_token_budget", "must be >= 0")
+		}
+		if task.Compaction.RecentToolOutputLimit < 0 {
+			add(fieldPrefix+".compaction.recent_tool_output_limit", "must be >= 0")
+		}
+		if strings.TrimSpace(task.Compaction.SummaryPrompt) != "" && strings.TrimSpace(task.Compaction.SummaryPromptFile) != "" {
+			add(fieldPrefix+".compaction.summary_prompt", "cannot be set with summary_prompt_file")
+		}
+		if strings.TrimSpace(task.Compaction.SummaryPromptFile) != "" {
+			promptPath := task.Compaction.SummaryPromptFile
+			if !filepath.IsAbs(promptPath) {
+				promptPath = filepath.Join(baseDir, promptPath)
+			}
+			info, err := os.Stat(promptPath)
+			if err != nil {
+				add(fieldPrefix+".compaction.summary_prompt_file", fmt.Sprintf("file not found at %q", task.Compaction.SummaryPromptFile))
+			} else if info.IsDir() {
+				add(fieldPrefix+".compaction.summary_prompt_file", fmt.Sprintf("path %q is a directory", task.Compaction.SummaryPromptFile))
+			}
+		}
 		switch taskType {
 		case "qa":
 			validateQATask(task, fieldPrefix, baseDir, add)

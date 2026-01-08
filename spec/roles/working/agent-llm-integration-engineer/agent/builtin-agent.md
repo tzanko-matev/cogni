@@ -133,9 +133,11 @@ Implement a REPL loop similar to `on_user_input(session, user_text)`:
 
 1. Append the user message to history.
 2. If `skills_enabled` is true, append skill injections from the user text.
-3. If token usage exceeds the compaction limit, compact history.
+3. Before each model request, if token usage exceeds the compaction *soft* limit,
+   compact history (summarize older context, keep recent context).
 4. Enter a loop:
    - Drain any pending inputs and append to history.
+   - Re-check compaction against the soft limit after tool outputs.
    - Build a prompt from the current context and history.
    - Stream a model response.
    - Handle the stream; if tools were called, run them and loop again.
@@ -209,14 +211,23 @@ instead of repeating the full environment block. Example:
 
 ## History compaction
 
-Compaction is allowed only when token usage exceeds the limit. The compacted
-history must preserve:
+Compaction runs when token usage exceeds the **soft** limit. The compacted
+history must preserve and rebuild context in this order:
 
 - Developer instructions (if any).
 - User instructions (if any).
 - The most recent environment block or diff.
-- The latest user request.
-- Tool call inputs and outputs that affect state.
+- The most recent user messages within a token budget (drop oldest).
+- A summary message prefixed with the summary marker.
+- Tool call inputs and outputs retained by policy (e.g. last N outputs or the
+  outputs after the most recent user message).
+
+Additional rules:
+
+- Drop prior summary messages to avoid summary-of-summary drift.
+- If summary input exceeds the hard limit, trim oldest items before retrying.
+- If the prompt still exceeds the hard limit after compaction, raise
+  `ErrBudgetExceeded`.
 
 ## Error handling and validation
 
