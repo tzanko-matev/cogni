@@ -28,6 +28,14 @@ type ListFilesArgs struct {
 	Glob string
 }
 
+// ListDirArgs configures list_dir tool execution.
+type ListDirArgs struct {
+	Path   string
+	Offset *int
+	Limit  *int
+	Depth  *int
+}
+
 // SearchArgs configures search tool execution.
 type SearchArgs struct {
 	Query string

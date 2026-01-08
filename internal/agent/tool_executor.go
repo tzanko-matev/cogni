@@ -25,6 +25,29 @@ func (e RunnerExecutor) Execute(ctx context.Context, call ToolCall) tools.CallRe
 			return errorResult(call.Name, err.Error())
 		}
 		return e.Runner.ListFiles(ctx, tools.ListFilesArgs{Glob: glob})
+	case "list_dir":
+		path, err := call.Args.RequiredString("path")
+		if err != nil {
+			return errorResult(call.Name, err.Error())
+		}
+		offset, err := call.Args.OptionalInt("offset")
+		if err != nil {
+			return errorResult(call.Name, err.Error())
+		}
+		limit, err := call.Args.OptionalInt("limit")
+		if err != nil {
+			return errorResult(call.Name, err.Error())
+		}
+		depth, err := call.Args.OptionalInt("depth")
+		if err != nil {
+			return errorResult(call.Name, err.Error())
+		}
+		return e.Runner.ListDir(ctx, tools.ListDirArgs{
+			Path:   path,
+			Offset: offset,
+			Limit:  limit,
+			Depth:  depth,
+		})
 	case "search":
 		query, err := call.Args.RequiredString("query")
 		if err != nil {

@@ -18,6 +18,21 @@ func defaultToolDefinitions() []agent.ToolDefinition {
 			},
 		},
 		{
+			Name:        "list_dir",
+			Description: "List directory entries in the repository with depth limits and pagination",
+			Parameters: &agent.ToolSchema{
+				Type: "object",
+				Properties: map[string]agent.ToolSchema{
+					"path":   agent.StringSchema(),
+					"offset": agent.IntegerSchema(),
+					"limit":  agent.IntegerSchema(),
+					"depth":  agent.IntegerSchema(),
+				},
+				Required:             []string{"path"},
+				AdditionalProperties: disallowExtras,
+			},
+		},
+		{
 			Name:        "search",
 			Description: "Search for a query string in files",
 			Parameters: &agent.ToolSchema{
