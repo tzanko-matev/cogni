@@ -45,6 +45,10 @@ in the agent's environment.
   20260102-add-the-greatest-feature.status.md). After the task is
   finished. both should be modified to contain the fact that it is
   DONE.
+  
+- Every step of the PLAN must also contain the tests that test this
+  step. However bigger e2e tests can be postponed towards the end of
+  the plan.
 
 - After each self-contained modification, create a new `jj` commit.  A
   unit of work is self-contained when all relevant checks pass (for
