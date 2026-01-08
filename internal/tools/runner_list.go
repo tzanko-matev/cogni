@@ -16,8 +16,22 @@ func (r *Runner) ListFiles(ctx context.Context, args ListFilesArgs) CallResult {
 // listFiles returns file listings using ripgrep.
 func (r *Runner) listFiles(ctx context.Context, args ListFilesArgs) (string, error) {
 	rgArgs := []string{"--files"}
-	if glob := strings.TrimSpace(args.Glob); glob != "" {
+	if glob := normalizeListFilesGlob(args.Glob); glob != "" {
 		rgArgs = append(rgArgs, "-g", glob)
 	}
 	return r.rgRunner.Run(ctx, r.Root, rgArgs...)
+}
+
+// normalizeListFilesGlob trims and filters globs so "match-all" patterns keep ripgrep defaults.
+func normalizeListFilesGlob(glob string) string {
+	trimmed := strings.TrimSpace(glob)
+	if trimmed == "" {
+		return ""
+	}
+	switch trimmed {
+	case "*", "**", "**/*", "./*", "./**", "./**/*":
+		return ""
+	default:
+		return trimmed
+	}
 }
