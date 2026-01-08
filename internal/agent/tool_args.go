@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -25,6 +26,9 @@ func (args ToolCallArgs) RequiredString(key string) (string, error) {
 func (args ToolCallArgs) OptionalString(key string) (string, bool, error) {
 	raw, ok := args[key]
 	if !ok {
+		return "", false, nil
+	}
+	if bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
 		return "", false, nil
 	}
 	var value string
