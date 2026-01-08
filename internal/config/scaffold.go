@@ -1,47 +1,12 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
-
-// defaultConfigTemplate is the starter config created by Scaffold.
-const defaultConfigTemplate = `version: 1
-repo:
-  output_dir: "{{OUTPUT_DIR}}"
-  setup_commands:
-    - "go mod download"
-
-agents:
-  - id: default
-    type: builtin
-    provider: "openrouter"
-    model: "gpt-4.1-mini"
-    max_steps: 25
-    temperature: 0.0
-
-default_agent: "default"
-
-tasks:
-  - id: auth_flow_summary
-    type: qa
-    agent: "default"
-    prompt: >
-      Explain how authorization is enforced for API requests.
-      Return JSON with keys:
-      {"entrypoints":[...],"middleware":[...],"checks":[...],"citations":[{"path":...,"lines":[start,end]}]}
-    eval:
-      json_schema: "schemas/auth_flow_summary.schema.json"
-      must_contain_strings:
-        - "middleware"
-        - "citations"
-      validate_citations: true
-    budget:
-      max_tokens: 12000
-      max_seconds: 120
-`
 
 // defaultSchema is the starter schema created by Scaffold.
 const defaultSchema = `{
@@ -77,14 +42,10 @@ func Scaffold(specPath, outputDir string) error {
 	if specPath == "" {
 		return fmt.Errorf("spec path is required")
 	}
-	dir := strings.TrimSpace(outputDir)
-	if dir == "" {
-		dir = DefaultOutputDir
+	dir, err := sanitizeOutputDir(outputDir)
+	if err != nil {
+		return err
 	}
-	if strings.Contains(dir, "\n") {
-		return fmt.Errorf("output dir must be a single line")
-	}
-	dir = strings.ReplaceAll(dir, "\"", "\\\"")
 	if info, err := os.Stat(specPath); err == nil {
 		if info.IsDir() {
 			return fmt.Errorf("spec path %q is a directory", specPath)
@@ -110,7 +71,10 @@ func Scaffold(specPath, outputDir string) error {
 		return fmt.Errorf("stat schema file: %w", err)
 	}
 
-	configBody := strings.ReplaceAll(defaultConfigTemplate, "{{OUTPUT_DIR}}", dir)
+	configBody, err := renderScaffoldConfig(context.Background(), dir)
+	if err != nil {
+		return fmt.Errorf("render scaffold config: %w", err)
+	}
 	if err := os.WriteFile(specPath, []byte(configBody), 0o644); err != nil {
 		return fmt.Errorf("write spec file: %w", err)
 	}
@@ -118,4 +82,16 @@ func Scaffold(specPath, outputDir string) error {
 		return fmt.Errorf("write schema file: %w", err)
 	}
 	return nil
+}
+
+// sanitizeOutputDir prepares the output directory value for YAML output.
+func sanitizeOutputDir(outputDir string) (string, error) {
+	dir := strings.TrimSpace(outputDir)
+	if dir == "" {
+		dir = DefaultOutputDir
+	}
+	if strings.Contains(dir, "\n") {
+		return "", fmt.Errorf("output dir must be a single line")
+	}
+	return strings.ReplaceAll(dir, "\"", "\\\""), nil
 }
