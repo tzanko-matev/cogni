@@ -26,11 +26,11 @@ Introduce a task type that evaluates feature examples.
 - `type: cucumber_eval`
 - `features`: list of feature files or globs to evaluate
 - `adapter`: reference to a configured adapter
-- `prompt_template`: prompt used per feature file (batch examples)
+- prompt: built-in per feature file (batch examples), not configurable in the config
 
-### Prompt template placeholders
-The prompt template must include the feature context and the expected example
-IDs for the feature file being evaluated.
+### Built-in prompt inputs
+The built-in prompt includes the feature context and the expected example IDs
+for the feature file being evaluated.
 
 - `{feature_path}`: normalized path to the feature file.
 - `{feature_text}`: full contents of the feature file.
@@ -83,6 +83,23 @@ Uses a curated expectations file instead of running tests.
 
 Expectation files map Example IDs to expected outcomes.
 
+### Built-in prompt (current)
+```
+You are evaluating the following Cucumber feature file.
+Feature path:
+<feature_path>
+
+Feature text:
+<feature_text>
+
+Expected Example IDs (one per line):
+<example_ids>
+
+For each example ID, decide if the behavior is fully implemented in the repo.
+Return ONLY JSON:
+{"results":[{"example_id":"...","implemented":true,"evidence":[{"path":"...","lines":[1,2]}],"notes":"..."}]}
+```
+
 ## Config example
 
 ```yaml
@@ -119,19 +136,7 @@ tasks:
     adapter: godog_default
     features:
       - "spec/features/cli.feature"
-    prompt_template: |
-      You are evaluating the following Cucumber feature file:
-      Path: {feature_path}
-
-      Feature text:
-      {feature_text}
-
-      Expected Example IDs (one per line):
-      {example_ids}
-
-      For each example ID, decide if the behavior is fully implemented.
-      Return ONLY JSON:
-      {"results":[{"example_id":"...","implemented":true,"evidence":[{"path":"...","lines":[1,2]}],"notes":"..."}]}
+    # prompt is built-in; no prompt_template required
 ```
 
 ## Outputs

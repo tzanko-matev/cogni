@@ -25,9 +25,9 @@ Linked plan: [spec/plans/20260108-cucumber-prompt-templ.plan.md](/plans/20260108
 - Updated report rendering and output writer to use the compiled templates.
 - Added a `templ` scaffold config template and render helper.
 - Updated scaffold generation to use the compiled template.
+- Updated cucumber evaluation and configuration docs to describe the built-in prompt.
 
 ## Next steps
-- Update specs/docs to describe the built-in cucumber prompt.
 - Clean up remaining placeholder-based templating references.
 
 ## Latest test run

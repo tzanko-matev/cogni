@@ -72,16 +72,5 @@ tasks:
     adapter: godog_default
     features:
       - "spec/features/cli.feature"
-    prompt_template: |
-      You are evaluating the following Cucumber feature file:
-      Path: {feature_path}
-
-      Feature text:
-      {feature_text}
-
-      Expected Example IDs (one per line):
-      {example_ids}
-
-      Return ONLY JSON:
-      {"results":[{"example_id":"...","implemented":true,"evidence":[{"path":"...","lines":[1,2]}],"notes":"..."}]}
+    # prompt is built-in; no prompt_template required
 ```
