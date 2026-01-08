@@ -7,7 +7,7 @@
 - `internal/spec`: `.cogni.yml` parsing
 - `internal/runner`: task execution pipeline
 - `internal/agent`: built-in agent implementation
-- `internal/tools`: list/search/read tooling
+- `internal/tools`: list_files/list_dir/search/read_file tooling
 - `internal/eval`: QA evaluation logic
 - `internal/metrics`: metrics collection
 - `internal/report`: HTML report generation

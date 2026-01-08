@@ -14,7 +14,7 @@
 
 ## Security
 
-- Read-only tooling only (list/search/read).
+- Read-only tooling only (list_files/list_dir/search/read_file).
 - No code modifications to the repo in MVP.
 - Results stored locally; no uploads to hosted services.
 - Treat `.cogni.yml` as trusted within the repo boundary.

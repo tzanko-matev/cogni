@@ -331,7 +331,7 @@ Runs are local and read-only. The agent must not modify the repo. Sandboxed runn
 
 ### Must-haves
 
-* Only read-only tools are enabled (list/search/read).
+* Only read-only tools are enabled (list_files/list_dir/search/read_file).
 * Capture:
 
   * commit SHA
@@ -624,7 +624,7 @@ This product reads source code and uses LLMs. Treat it like CI.
 
 ### 16.1 Read-only execution
 
-* Only read-only tools are enabled (list/search/read).
+* Only read-only tools are enabled (list_files/list_dir/search/read_file).
 * Prefer running in a temp checkout or require a clean worktree.
 
 ### 16.2 Sensitive data handling
