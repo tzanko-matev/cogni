@@ -9,17 +9,17 @@ Created: 2026-01-08
 Linked plan: [spec/plans/20260108-list-dir-tool.plan.md](/plans/20260108-list-dir-tool.plan/)
 
 ## Current status
-- Phase 1 complete: tool registration, args wiring, and initial runner stub added.
+- Phase 2 complete: runner traversal, filesystem helpers, and output formatting implemented.
 
 ## What was done so far
 - Added `list_dir` tool schema to the tool registry.
 - Added `ListDirArgs` type and executor wiring for `list_dir`.
-- Added a placeholder `ListDir` runner method to keep builds green.
+- Implemented BFS traversal, suffix handling, and pagination for list_dir output.
+- Extended filesystem abstraction with directory reads and symlink-aware stats.
 
 ## Next steps
-- Implement list_dir traversal with BFS ordering, sorting, suffixes, and pagination.
-- Extend filesystem abstraction to support directory reads and symlink detection.
 - Add unit tests for traversal, pagination, and error cases.
+- Review output/error message consistency and update docs if needed.
 
 ## Latest test run
 - 2026-01-08: `nix shell nixpkgs#go -c go test ./internal/tools ./internal/agent`
@@ -29,6 +29,7 @@ Linked plan: [spec/plans/20260108-list-dir-tool.plan.md](/plans/20260108-list-di
 - internal/agent/tool_executor.go
 - internal/tools/runner_types.go
 - internal/tools/runner_list_dir.go
+- internal/tools/runner_list_dir_helpers.go
 - internal/tools/runner_paths.go
 - internal/tools/runner_fs.go
 - internal/tools/runner_list.go
