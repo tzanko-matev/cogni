@@ -1,0 +1,26 @@
+version: 1
+questions:
+  - id: q1
+    question: "Which directory contains the Gherkin feature files?"
+    answers: ["spec/features", "spec/questions", "spec/requirements"]
+    correct_answers: ["spec/features"]
+  - id: q2
+    question: "Which feature file covers HTML report output?"
+    answers: ["output-report-html.feature", "output-results-json.feature", "output-junit-xml.feature"]
+    correct_answers: ["output-report-html.feature"]
+  - id: q3
+    question: "Which feature file covers configuration via YAML?"
+    answers: ["config-yaml.feature", "config-json.feature", "config-env.feature"]
+    correct_answers: ["config-yaml.feature"]
+  - id: q4
+    question: "Which feature file validates the JSON schema input?"
+    answers: ["input-json-schema.feature", "output-verbose-log.feature", "cli.feature"]
+    correct_answers: ["input-json-schema.feature"]
+  - id: q5
+    question: "Which feature file covers CLI usage?"
+    answers: ["cli.feature", "output-console-summary.feature", "config-env.feature"]
+    correct_answers: ["cli.feature"]
+  - id: q6
+    question: "Which feature file covers console summary output?"
+    answers: ["output-console-summary.feature", "output-results-json.feature", "output-report-html.feature"]
+    correct_answers: ["output-console-summary.feature"]
