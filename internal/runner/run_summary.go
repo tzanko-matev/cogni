@@ -23,20 +23,12 @@ func summarize(tasks []TaskResult) RunSummary {
 			summary.QuestionsCorrect += task.QuestionEval.Summary.QuestionsCorrect
 			summary.QuestionsIncorrect += task.QuestionEval.Summary.QuestionsIncorrect
 		}
-		if task.Cucumber != nil {
-			summary.CucumberExamplesTotal += task.Cucumber.Summary.ExamplesTotal
-			summary.CucumberExamplesCorrect += task.Cucumber.Summary.ExamplesCorrect
-			summary.CucumberExamplesIncorrect += task.Cucumber.Summary.ExamplesIncorrect
-		}
 	}
 	if summary.TasksTotal > 0 {
 		summary.PassRate = float64(summary.TasksPassed) / float64(summary.TasksTotal)
 	}
 	if summary.QuestionsTotal > 0 {
 		summary.QuestionAccuracy = float64(summary.QuestionsCorrect) / float64(summary.QuestionsTotal)
-	}
-	if summary.CucumberExamplesTotal > 0 {
-		summary.CucumberAccuracy = float64(summary.CucumberExamplesCorrect) / float64(summary.CucumberExamplesTotal)
 	}
 	return summary
 }

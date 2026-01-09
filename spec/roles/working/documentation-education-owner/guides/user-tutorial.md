@@ -7,7 +7,7 @@ This is how cogni looks in day-to-day use for a repo owner.
    - Choose a results folder when prompted (default `.cogni/results`); this is written to `repo.output_dir`.
    - If a git repo is detected, decide whether to add the results folder to `.gitignore`.
    - Define `qa` tasks with prompts tied to key product features and stakeholder concerns.
-   - If you maintain Cucumber specs, add `cucumber_eval` tasks with a Godog adapter or manual expectations.
+   - If you maintain a Question Spec, add `question_eval` tasks that reference the spec file.
    - Require citations so answers are traceable to code.
    - Define one or more agents and assign each question to an agent (or rely on the default agent).
    - Set the output folder once in `.cogni/config.yml` so CLI commands stay short.

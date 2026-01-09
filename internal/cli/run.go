@@ -101,16 +101,6 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 					summary.Accuracy*100,
 				)
 			}
-			if task.Cucumber == nil {
-				continue
-			}
-			summary := task.Cucumber.Summary
-			fmt.Fprintf(stdout, "Cucumber task %s accuracy: %d/%d (%.1f%%)\n",
-				task.TaskID,
-				summary.ExamplesCorrect,
-				summary.ExamplesTotal,
-				summary.Accuracy*100,
-			)
 		}
 		fmt.Fprintf(stdout, "Results: %s\n", paths.ResultsPath())
 		fmt.Fprintf(stdout, "Report: %s\n", paths.ReportPath())

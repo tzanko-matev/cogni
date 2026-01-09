@@ -10,7 +10,7 @@ import (
 	"cogni/internal/eval"
 )
 
-// runTask executes a single non-cucumber task and records attempts.
+// runTask executes a single QA task and records attempts.
 func runTask(
 	ctx context.Context,
 	repoRoot string,

@@ -24,7 +24,3 @@ test:
 # Run live-key integration tests.
 test-live:
     go test -tags=live -timeout 10m ./internal/cli
-
-# Run cucumber feature tests.
-test-cucumber:
-    go test -tags=cucumber -timeout 2m ./tests/cucumber

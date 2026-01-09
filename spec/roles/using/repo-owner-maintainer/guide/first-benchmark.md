@@ -15,7 +15,7 @@ Set up a repeatable benchmark for your repo with clear outputs you can share.
 - If a git repo is detected, `cogni init` offers to add the results folder to the repo root `.gitignore`.
 - `cogni init` creates `.cogni/config.yml` and `.cogni/schemas/`.
 - Add `qa` tasks with prompts tied to product features.
-- For Cucumber specs, add `cucumber_eval` tasks and select a Godog or manual adapter.
+- For Question Specs, add `question_eval` tasks that reference the spec file.
 - Require citations so answers are traceable to code.
 - Set `output_dir` once so run commands stay short.
 

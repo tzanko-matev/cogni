@@ -105,19 +105,19 @@ EOF
 Prompts are written in plain language with objective, verifiable answers
 (titles, file names, short quotes, enumerations).
 
-### Cucumber fixture recipe (per test)
+### Question spec fixture recipe (per test)
 
-Create a small feature file set and optional expectations when testing the
-Cucumber adapters.
+Create a small Question Spec file for question evaluation tasks.
 
 ```bash
-mkdir -p spec/features
-cat > spec/features/sample.feature <<'EOF'
-@id:sample_feature
-Feature: Sample
-  Scenario: Show title
-    When I read the README
-    Then I see the project title
+mkdir -p spec/questions
+cat > spec/questions/sample.yml <<'EOF'
+version: 1
+questions:
+  - id: q1
+    question: "What is the project title?"
+    answers: ["Sample Service", "Other"]
+    correct_answers: ["Sample Service"]
 EOF
 ```
 
@@ -214,16 +214,16 @@ EOF
 - Steps: run `cogni run`.
 - Expected: CLI fails with a clear authentication/availability message.
 
-### T13: Cucumber evaluation via Godog
+### T13: Question evaluation via task
 
-- Goal: evaluate feature examples with the Godog adapter.
-- Setup: Simple repo recipe, Cucumber fixture recipe, and a `cucumber_eval` task.
-- Steps: run `cogni run cucumber_cli_features`.
-- Expected: run succeeds, per-example verdicts exist, and accuracy is computed.
+- Goal: evaluate a Question Spec using `question_eval`.
+- Setup: Simple repo recipe, Question Spec fixture, and a `question_eval` task.
+- Steps: run `cogni run question_eval_core`.
+- Expected: run succeeds, per-question verdicts exist, and accuracy is computed.
 
-### T14: Cucumber evaluation via manual expectations
+### T14: Question evaluation via eval command
 
-- Goal: evaluate feature examples without a test suite.
-- Setup: Simple repo recipe, Cucumber fixture recipe, and expectations file.
-- Steps: run `cogni run cucumber_cli_manual`.
-- Expected: run succeeds, ground truth comes from expectations, accuracy computed.
+- Goal: evaluate a Question Spec with the direct CLI.
+- Setup: Simple repo recipe and Question Spec fixture.
+- Steps: run `cogni eval spec/questions/sample.yml --agent default`.
+- Expected: run succeeds, per-question verdicts exist, and accuracy is computed.

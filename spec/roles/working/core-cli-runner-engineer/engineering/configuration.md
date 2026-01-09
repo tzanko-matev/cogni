@@ -20,10 +20,10 @@
 - `LLM_API_KEY`
 - `LLM_MODEL`
 
-## Adapters and Cucumber evaluation
+## Question evaluation
 
-Use adapters to connect `cucumber_eval` tasks to either a test runner (Godog)
-or manual expectations when no test suite exists.
+Question evaluation tasks (`question_eval`) load a Question Spec (JSON or YAML).
+Each task references `questions_file` and runs each question through the selected agent.
 
 ## Example config
 
@@ -57,28 +57,12 @@ tasks:
       max_seconds: 120
 ```
 
-## Example Cucumber config
+## Example question evaluation config
 
 ```yaml
-adapters:
-  - id: godog_default
-    type: cucumber
-    runner: godog
-    formatter: json
-    feature_roots:
-      - "spec/features"
-
-  - id: manual_expectations
-    type: cucumber_manual
-    feature_roots:
-      - "spec/features"
-    expectations_dir: "spec/expectations"
-
 tasks:
-  - id: cucumber_cli_features
-    type: cucumber_eval
+  - id: question_eval_core
+    type: question_eval
     agent: "default"
-    adapter: godog_default
-    features:
-      - "spec/features/cli.feature"
+    questions_file: "spec/questions/core.yml"
 ```

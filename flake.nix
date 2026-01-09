@@ -58,9 +58,6 @@
               export GOBIN="$cache_root/go/bin"
               mkdir -p "$GOPATH" "$GOMODCACHE" "$GOCACHE" "$GOBIN"
               export PATH="$GOBIN:$PATH"
-              if ! command -v godog >/dev/null 2>&1; then
-                go install github.com/cucumber/godog/cmd/godog@v0.15.1
-              fi
               if [ -z "$LLM_PROVIDER" ]; then
                 export LLM_PROVIDER=openrouter
               fi

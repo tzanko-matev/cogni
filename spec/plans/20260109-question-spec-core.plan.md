@@ -1,6 +1,7 @@
 # Plan: Question Spec Core Evaluation
 
 Date: 2026-01-09
+Status: DONE
 
 ## Goal
 Replace the current cucumber-focused evaluation with a single, minimal core: evaluate a Question Spec (JSON/YAML) by asking an agent each question and comparing the final XML `<answer>` against known correct answers. Provide a direct CLI workflow (`cogni eval <questions_file> --agent <id>`) while keeping config-defined tasks runnable via `cogni run`.

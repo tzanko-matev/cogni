@@ -2,12 +2,11 @@ package spec
 
 // Config is the top-level Cogni configuration schema.
 type Config struct {
-	Version      int             `yaml:"version"`
-	Repo         RepoConfig      `yaml:"repo"`
-	Agents       []AgentConfig   `yaml:"agents"`
-	DefaultAgent string          `yaml:"default_agent"`
-	Adapters     []AdapterConfig `yaml:"adapters"`
-	Tasks        []TaskConfig    `yaml:"tasks"`
+	Version      int           `yaml:"version"`
+	Repo         RepoConfig    `yaml:"repo"`
+	Agents       []AgentConfig `yaml:"agents"`
+	DefaultAgent string        `yaml:"default_agent"`
+	Tasks        []TaskConfig  `yaml:"tasks"`
 }
 
 // RepoConfig describes repository-level settings.
@@ -34,8 +33,6 @@ type TaskConfig struct {
 	Model         string         `yaml:"model"`
 	Prompt        string         `yaml:"prompt"`
 	QuestionsFile string         `yaml:"questions_file"`
-	Adapter       string         `yaml:"adapter"`
-	Features      []string       `yaml:"features"`
 	Eval          TaskEval       `yaml:"eval"`
 	Budget        TaskBudget     `yaml:"budget"`
 	Compaction    TaskCompaction `yaml:"compaction"`
@@ -62,22 +59,4 @@ type TaskCompaction struct {
 	SummaryPromptFile     string `yaml:"summary_prompt_file"`
 	RecentUserTokenBudget int    `yaml:"recent_user_token_budget"`
 	RecentToolOutputLimit int    `yaml:"recent_tool_output_limit"`
-}
-
-// AdapterConfig configures cucumber ground-truth adapters.
-type AdapterConfig struct {
-	ID              string             `yaml:"id"`
-	Type            string             `yaml:"type"`
-	Runner          string             `yaml:"runner"`
-	Formatter       string             `yaml:"formatter"`
-	FeatureRoots    []string           `yaml:"feature_roots"`
-	Tags            []string           `yaml:"tags"`
-	ExpectationsDir string             `yaml:"expectations_dir"`
-	Match           AdapterMatchConfig `yaml:"match"`
-}
-
-// AdapterMatchConfig controls adapter-level matching behavior.
-type AdapterMatchConfig struct {
-	RequireEvidence     bool `yaml:"require_evidence"`
-	NormalizeWhitespace bool `yaml:"normalize_whitespace"`
 }

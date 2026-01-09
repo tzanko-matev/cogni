@@ -18,9 +18,8 @@ tests:
 ## Test types
 
 - Unit tests: config parsing, citation validation, metrics aggregation.
-- Unit tests: Cucumber example ID generation and expectations parsing.
+- Unit tests: question spec parsing and answer validation.
 - Integration tests: live LLM runs against fixture repos.
-- Integration tests: Godog adapter runs against feature fixtures.
 - E2E tests: CLI workflows (`init`, `validate`, `run`, `compare`, `report`).
   See [spec/roles/working/qa-test-engineer/testing/integration-e2e-tests.md](/working/qa-test-engineer/testing/integration-e2e-tests/) for the suite definition.
 

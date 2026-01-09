@@ -41,7 +41,6 @@ type TaskResult struct {
 	FailureReason *string         `json:"failure_reason"`
 	Attempts      []AttemptResult `json:"attempts"`
 	QuestionEval  *QuestionEval   `json:"question_eval,omitempty"`
-	Cucumber      *CucumberEval   `json:"cucumber,omitempty"`
 }
 
 // AttemptResult records effort and validation for one attempt.
@@ -71,77 +70,15 @@ type EvalResult struct {
 	MustContainMissing []string `json:"must_contain_missing,omitempty"`
 }
 
-// CucumberEval contains per-example Cucumber evaluation results.
-type CucumberEval struct {
-	AdapterID   string               `json:"adapter_id"`
-	AdapterType string               `json:"adapter_type"`
-	FeatureRuns []CucumberFeatureRun `json:"feature_runs,omitempty"`
-	Examples    []CucumberExample    `json:"examples"`
-	Summary     CucumberSummary      `json:"summary"`
-}
-
-// CucumberFeatureRun captures per-feature execution metrics.
-type CucumberFeatureRun struct {
-	FeaturePath       string         `json:"feature_path"`
-	ExamplesTotal     int            `json:"examples_total"`
-	TokensTotal       int            `json:"tokens_total,omitempty"`
-	WallTimeSeconds   float64        `json:"wall_time_seconds,omitempty"`
-	AgentSteps        int            `json:"agent_steps,omitempty"`
-	ToolCalls         map[string]int `json:"tool_calls,omitempty"`
-	Compactions       int            `json:"compactions,omitempty"`
-	LastSummaryTokens int            `json:"last_summary_tokens,omitempty"`
-}
-
-// CucumberExample records evaluation results for a single example.
-type CucumberExample struct {
-	ExampleID    string               `json:"example_id"`
-	FeaturePath  string               `json:"feature_path"`
-	ScenarioName string               `json:"scenario_name"`
-	ScenarioLine int                  `json:"scenario_line,omitempty"`
-	ExampleLine  int                  `json:"example_line,omitempty"`
-	GroundTruth  string               `json:"ground_truth"`
-	Agent        *CucumberAgentResult `json:"agent,omitempty"`
-	Correct      bool                 `json:"correct"`
-}
-
-// CucumberAgentResult captures agent output for an example.
-type CucumberAgentResult struct {
-	ExampleID   string             `json:"example_id"`
-	Implemented bool               `json:"implemented"`
-	Evidence    []CucumberEvidence `json:"evidence,omitempty"`
-	Notes       string             `json:"notes,omitempty"`
-	ParseError  string             `json:"parse_error,omitempty"`
-}
-
-// CucumberEvidence describes a file/line reference from the agent.
-type CucumberEvidence struct {
-	Path  string `json:"path"`
-	Lines []int  `json:"lines,omitempty"`
-}
-
-// CucumberSummary aggregates evaluation accuracy metrics.
-type CucumberSummary struct {
-	ExamplesTotal     int     `json:"examples_total"`
-	ExamplesCorrect   int     `json:"examples_correct"`
-	ExamplesIncorrect int     `json:"examples_incorrect"`
-	Accuracy          float64 `json:"accuracy"`
-	ImplementedTotal  int     `json:"implemented_total"`
-	NotImplemented    int     `json:"not_implemented_total"`
-}
-
 // RunSummary aggregates run-level metrics.
 type RunSummary struct {
-	TasksTotal                int     `json:"tasks_total"`
-	TasksPassed               int     `json:"tasks_passed"`
-	TasksFailed               int     `json:"tasks_failed"`
-	PassRate                  float64 `json:"pass_rate"`
-	TokensTotal               int     `json:"tokens_total"`
-	QuestionsTotal            int     `json:"questions_total,omitempty"`
-	QuestionsCorrect          int     `json:"questions_correct,omitempty"`
-	QuestionsIncorrect        int     `json:"questions_incorrect,omitempty"`
-	QuestionAccuracy          float64 `json:"question_accuracy,omitempty"`
-	CucumberExamplesTotal     int     `json:"cucumber_examples_total,omitempty"`
-	CucumberExamplesCorrect   int     `json:"cucumber_examples_correct,omitempty"`
-	CucumberExamplesIncorrect int     `json:"cucumber_examples_incorrect,omitempty"`
-	CucumberAccuracy          float64 `json:"cucumber_accuracy,omitempty"`
+	TasksTotal         int     `json:"tasks_total"`
+	TasksPassed        int     `json:"tasks_passed"`
+	TasksFailed        int     `json:"tasks_failed"`
+	PassRate           float64 `json:"pass_rate"`
+	TokensTotal        int     `json:"tokens_total"`
+	QuestionsTotal     int     `json:"questions_total,omitempty"`
+	QuestionsCorrect   int     `json:"questions_correct,omitempty"`
+	QuestionsIncorrect int     `json:"questions_incorrect,omitempty"`
+	QuestionAccuracy   float64 `json:"question_accuracy,omitempty"`
 }

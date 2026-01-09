@@ -5,7 +5,7 @@
 - Initialize `.cogni/` (confirm location, choose results folder, optional `.gitignore` update), add questions in `.cogni/config.yml`, and run `cogni run`.
 - Compare a commit against main using `cogni compare --base main`.
 - Generate a trend report for a range using `cogni report --range main..HEAD`.
-- Evaluate Cucumber feature examples with `cogni run` and a `cucumber_eval` task (Godog or manual expectations).
+- Evaluate a Question Spec with `cogni eval` or `question_eval` tasks via `cogni run`.
 
 ## Wireframes or mockups
 

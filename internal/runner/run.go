@@ -49,10 +49,6 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 	if err != nil {
 		return Results{}, err
 	}
-	adapterByID := make(map[string]spec.AdapterConfig, len(cfg.Adapters))
-	for _, adapter := range cfg.Adapters {
-		adapterByID[adapter.ID] = adapter
-	}
 
 	providerFactory := params.Deps.ProviderFactory
 	if providerFactory == nil {
@@ -89,8 +85,6 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 	for _, taskRun := range taskRuns {
 		usedAgents[taskRun.Agent.ID] = taskRun.Agent
 		switch taskRun.Task.Type {
-		case "cucumber_eval":
-			taskResults = append(taskResults, runCucumberTask(ctx, repoRoot, taskRun, adapterByID, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
 		case "question_eval":
 			taskResults = append(taskResults, runQuestionTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
 		default:

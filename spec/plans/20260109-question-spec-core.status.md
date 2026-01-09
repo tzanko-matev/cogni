@@ -23,12 +23,12 @@ Date: 2026-01-09
 - `internal/report/*`
 
 ## Status
-- State: IN PROGRESS
+- State: DONE
 - Progress:
   - Plan and status files created.
   - Added question spec package with JSON/YAML parsing, normalization, and answer XML parsing tests.
   - Implemented question_eval runner/results/summary, CLI eval command, and report updates with tests.
+  - Removed cucumber pipeline/adapters/tests, cleaned dependencies, and updated docs with Question Spec evaluation.
 
 ## Next Actions
-- Remove cucumber packages/tests/docs and adapters.
-- Update docs for question evaluation + configuration.
+- None. Completed on 2026-01-09.

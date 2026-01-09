@@ -27,8 +27,7 @@ func Validate(cfg *spec.Config, baseDir string) error {
 
 	agentIDs := validateAgents(cfg, collector.add)
 	validateDefaultAgent(cfg, agentIDs, collector.add)
-	adapterIDs := validateAdapters(cfg, baseDir, collector.add)
-	validateTasks(cfg, baseDir, agentIDs, adapterIDs, collector.add)
+	validateTasks(cfg, baseDir, agentIDs, collector.add)
 
 	return collector.result()
 }

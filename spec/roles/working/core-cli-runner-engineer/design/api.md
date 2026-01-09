@@ -2,10 +2,9 @@
 
 ## Surface area
 
-- CLI commands: `cogni init`, `cogni validate`, `cogni run`, `cogni compare`, `cogni report`
+- CLI commands: `cogni init`, `cogni validate`, `cogni run`, `cogni eval`, `cogni compare`, `cogni report`
 - Configuration: `.cogni/config.yml` and `.cogni/schemas/` under `.cogni/`
-- Task types: `qa`, `cucumber_eval`
-- Adapters: `cucumber` (Godog) and `cucumber_manual` (manual expectations)
+- Task types: `qa`, `question_eval`
 
 ## Init behavior
 
@@ -18,6 +17,7 @@
 ## Endpoints or interfaces
 
 - `cogni run [task-id|task-id@agent-id]...`
+- `cogni eval <questions_file> --agent <id>`
 - `cogni compare --base <commit|run-id|ref> [--head <commit|run-id|ref>]`
 - `cogni compare --range <start>..<end>`
 - `cogni report --range <start>..<end>`
@@ -34,6 +34,7 @@ cogni run
 cogni run --verbose
 cogni run --verbose --no-color
 cogni run auth_flow_summary@default
+cogni eval questions.yml --agent default
 cogni compare --base main
 cogni report --range main..HEAD --open
 ```
@@ -43,10 +44,10 @@ Outputs:
 - `results.json` per run
 - `report.html` per run or range
 - CLI summary output for compare/report
-- Per-example verdicts for `cucumber_eval` tasks
+- Per-question verdicts for `question_eval` tasks
 
 ## Error handling
 
 - Non-zero exit codes on invalid config, missing API keys, or invalid task selectors.
 - Clear messages for missing runs or invalid ranges.
-- Actionable errors for missing feature files, expectations, or Godog failures.
+- Actionable errors for missing question specs or invalid answer formats.

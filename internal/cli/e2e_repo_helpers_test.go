@@ -89,35 +89,6 @@ func historyRepo(t *testing.T) (string, string, string) {
 	return root, first, second
 }
 
-// cucumberRepo prepares a repo with cucumber fixtures across commits.
-func cucumberRepo(t *testing.T) (string, string, string) {
-	t.Helper()
-	requireGit(t)
-	root := t.TempDir()
-	runGit(t, root, "-c", "init.defaultBranch=main", "init")
-
-	writeFile(t, root, "README.md", "Cucumber repo\n")
-	writeFile(t, root, "spec/features/sample.feature", `Feature: Sample
-
-  @id:smoke
-  Scenario: Smoke
-    Given something
-`)
-	writeFile(t, root, "spec/expectations/expectations.yml", `examples:
-  smoke:1: true
-`)
-	runGit(t, root, "add", "README.md", "spec/features/sample.feature", "spec/expectations/expectations.yml")
-	runGit(t, root, "commit", "-m", "init cucumber fixtures")
-	first := runGit(t, root, "rev-parse", "HEAD")
-
-	writeFile(t, root, "README.md", "Cucumber repo updated\n")
-	runGit(t, root, "add", "README.md")
-	runGit(t, root, "commit", "-m", "update readme")
-	second := runGit(t, root, "rev-parse", "HEAD")
-
-	return root, first, second
-}
-
 // baseConfig returns a baseline Cogni config for tests.
 func baseConfig(output string, agents []spec.AgentConfig, defaultAgent string, tasks []spec.TaskConfig) spec.Config {
 	return spec.Config{

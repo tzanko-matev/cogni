@@ -11,7 +11,7 @@
 - `cogni validate` rejects invalid YAML or schemas.
 - `cogni run` produces `results.json` and `report.html` under the configured output directory.
 - `cogni run task-id@agent-id` uses the specified agent.
-- `cogni run` supports `cucumber_eval` tasks with Godog or manual expectations.
+- `cogni run` supports `question_eval` tasks backed by a Question Spec file.
 - `cogni compare --base main` resolves refs and prints deltas.
 - `cogni report --range main..HEAD` renders trend charts from the commit window.
 
@@ -20,4 +20,4 @@
 - QA tasks fail on invalid JSON, schema mismatch, or invalid citations.
 - Results include VCS type, agent ID, model, and metrics per attempt.
 - Range queries warn when runs are missing but still render remaining data.
-- `results.json` includes per-example verdicts and accuracy for `cucumber_eval` tasks.
+- `results.json` includes per-question verdicts and accuracy for `question_eval` tasks.
