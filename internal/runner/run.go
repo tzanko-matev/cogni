@@ -88,9 +88,12 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 
 	for _, taskRun := range taskRuns {
 		usedAgents[taskRun.Agent.ID] = taskRun.Agent
-		if taskRun.Task.Type == "cucumber_eval" {
+		switch taskRun.Task.Type {
+		case "cucumber_eval":
 			taskResults = append(taskResults, runCucumberTask(ctx, repoRoot, taskRun, adapterByID, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
-		} else {
+		case "question_eval":
+			taskResults = append(taskResults, runQuestionTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
+		default:
 			repeat := params.Repeat
 			if repeat <= 0 {
 				repeat = 1

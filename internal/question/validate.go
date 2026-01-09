@@ -32,10 +32,12 @@ type issueCollector struct {
 	issues []Issue
 }
 
+// add records a validation issue.
 func (collector *issueCollector) add(field, message string) {
 	collector.issues = append(collector.issues, Issue{Field: field, Message: message})
 }
 
+// result returns a validation error when issues are present.
 func (collector *issueCollector) result() error {
 	if len(collector.issues) == 0 {
 		return nil
@@ -113,6 +115,7 @@ func NormalizeSpec(spec Spec) (Spec, error) {
 	return spec, nil
 }
 
+// normalizeStringSlice trims whitespace from each entry.
 func normalizeStringSlice(values []string) []string {
 	normalized := make([]string, 0, len(values))
 	for _, value := range values {

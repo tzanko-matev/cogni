@@ -11,13 +11,14 @@ import (
 
 	"cogni/internal/config"
 	"cogni/internal/runner"
+	"cogni/internal/spec"
 )
 
-// runAndWrite is a test seam for runner execution.
-var runAndWrite = runner.RunAndWrite
+// runEvalAndWrite is a test seam for question evaluation execution.
+var runEvalAndWrite = runner.RunAndWrite
 
-// runRun builds the handler for the run command.
-func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
+// runEval builds the handler for the eval command.
+func runEval(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	return func(args []string, stdout, stderr io.Writer) int {
 		if wantsHelp(args) {
 			printCommandUsage(cmd, stdout)
@@ -26,13 +27,18 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		fs := flag.NewFlagSet(cmd.Name, flag.ContinueOnError)
 		fs.SetOutput(stderr)
 		specPath := fs.String("spec", "", "Path to config file (default: search for .cogni/config.yml)")
-		agentOverride := fs.String("agent", "", "Agent id override")
+		agentID := fs.String("agent", "", "Agent id for evaluation (defaults to config default_agent)")
 		outputDir := fs.String("output-dir", "", "Override output directory")
-		repeat := fs.Int("repeat", 1, "Repeat count")
 		verbose := fs.Bool("verbose", false, "Verbose logging")
 		logPath := fs.String("log", "", "Write verbose logs to a file")
 		noColor := fs.Bool("no-color", false, "Disable ANSI colors in verbose logs")
 		if err := fs.Parse(args); err != nil {
+			return ExitUsage
+		}
+
+		questionArgs := fs.Args()
+		if len(questionArgs) != 1 {
+			fmt.Fprintln(stderr, "Usage: cogni eval <questions_file> --agent <id>")
 			return ExitUsage
 		}
 
@@ -48,13 +54,39 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			return ExitError
 		}
 
-		selectors, err := runner.ParseSelectors(fs.Args())
-		if err != nil {
-			fmt.Fprintf(stderr, "Invalid selectors: %v\n", err)
+		selectedAgent := strings.TrimSpace(*agentID)
+		if selectedAgent == "" {
+			selectedAgent = strings.TrimSpace(cfg.DefaultAgent)
+		}
+		if selectedAgent == "" {
+			fmt.Fprintln(stderr, "Missing --agent (no default_agent configured)")
 			return ExitUsage
 		}
 
+		questionsPath, err := filepath.Abs(questionArgs[0])
+		if err != nil {
+			fmt.Fprintf(stderr, "Failed to resolve questions file: %v\n", err)
+			return ExitError
+		}
+
+		evalConfig := spec.Config{
+			Version:      cfg.Version,
+			Repo:         cfg.Repo,
+			Agents:       cfg.Agents,
+			DefaultAgent: cfg.DefaultAgent,
+			Tasks: []spec.TaskConfig{{
+				ID:            "question-eval",
+				Type:          "question_eval",
+				Agent:         selectedAgent,
+				QuestionsFile: questionsPath,
+			}},
+		}
+		config.Normalize(&evalConfig)
 		repoRoot := config.RepoRootFromConfigPath(resolvedSpec)
+		if err := config.Validate(&evalConfig, repoRoot); err != nil {
+			fmt.Fprintf(stderr, "Invalid eval config: %v\n", err)
+			return ExitError
+		}
 
 		var logFile io.WriteCloser
 		if strings.TrimSpace(*logPath) != "" {
@@ -74,41 +106,29 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			defer func() { _ = logFile.Close() }()
 		}
 
-		results, paths, err := runAndWrite(context.Background(), cfg, runner.RunParams{
+		results, paths, err := runEvalAndWrite(context.Background(), evalConfig, runner.RunParams{
 			RepoRoot:         repoRoot,
 			OutputDir:        *outputDir,
-			AgentOverride:    *agentOverride,
-			Selectors:        selectors,
-			Repeat:           *repeat,
 			Verbose:          *verbose,
 			VerboseWriter:    stdout,
 			VerboseLogWriter: logFile,
 			NoColor:          *noColor,
 		})
 		if err != nil {
-			fmt.Fprintf(stderr, "Run failed: %v\n", err)
+			fmt.Fprintf(stderr, "Eval failed: %v\n", err)
 			return ExitError
 		}
 
 		fmt.Fprintf(stdout, "Run %s completed\n", results.RunID)
 		for _, task := range results.Tasks {
-			if task.QuestionEval != nil {
-				summary := task.QuestionEval.Summary
-				fmt.Fprintf(stdout, "Question task %s accuracy: %d/%d (%.1f%%)\n",
-					task.TaskID,
-					summary.QuestionsCorrect,
-					summary.QuestionsTotal,
-					summary.Accuracy*100,
-				)
-			}
-			if task.Cucumber == nil {
+			if task.QuestionEval == nil {
 				continue
 			}
-			summary := task.Cucumber.Summary
-			fmt.Fprintf(stdout, "Cucumber task %s accuracy: %d/%d (%.1f%%)\n",
+			summary := task.QuestionEval.Summary
+			fmt.Fprintf(stdout, "Question task %s accuracy: %d/%d (%.1f%%)\n",
 				task.TaskID,
-				summary.ExamplesCorrect,
-				summary.ExamplesTotal,
+				summary.QuestionsCorrect,
+				summary.QuestionsTotal,
 				summary.Accuracy*100,
 			)
 		}

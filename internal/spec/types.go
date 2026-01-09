@@ -28,16 +28,17 @@ type AgentConfig struct {
 
 // TaskConfig configures a single evaluation task.
 type TaskConfig struct {
-	ID         string         `yaml:"id"`
-	Type       string         `yaml:"type"`
-	Agent      string         `yaml:"agent"`
-	Model      string         `yaml:"model"`
-	Prompt     string         `yaml:"prompt"`
-	Adapter    string         `yaml:"adapter"`
-	Features   []string       `yaml:"features"`
-	Eval       TaskEval       `yaml:"eval"`
-	Budget     TaskBudget     `yaml:"budget"`
-	Compaction TaskCompaction `yaml:"compaction"`
+	ID            string         `yaml:"id"`
+	Type          string         `yaml:"type"`
+	Agent         string         `yaml:"agent"`
+	Model         string         `yaml:"model"`
+	Prompt        string         `yaml:"prompt"`
+	QuestionsFile string         `yaml:"questions_file"`
+	Adapter       string         `yaml:"adapter"`
+	Features      []string       `yaml:"features"`
+	Eval          TaskEval       `yaml:"eval"`
+	Budget        TaskBudget     `yaml:"budget"`
+	Compaction    TaskCompaction `yaml:"compaction"`
 }
 
 // TaskEval configures QA evaluation rules for a task.

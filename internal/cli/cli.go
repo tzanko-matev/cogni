@@ -136,6 +136,11 @@ var commands = []*Command{
 		"cogni run --verbose [task-id|task-id@agent-id]...",
 		"cogni run --verbose --no-color [task-id|task-id@agent-id]...",
 	}, runRun),
+	command("eval", "Evaluate a question spec", []string{
+		"cogni eval <questions_file> --agent <id>",
+		"cogni eval <questions_file> --agent <id> --verbose",
+		"cogni eval <questions_file> --agent <id> --no-color",
+	}, runEval),
 	command("compare", "Compare runs between commits", []string{
 		"cogni compare --base <commit|run-id|ref> [--head <commit|run-id|ref>]",
 		"cogni compare --range <start>..<end>",

@@ -40,6 +40,7 @@ type TaskResult struct {
 	Status        string          `json:"status"`
 	FailureReason *string         `json:"failure_reason"`
 	Attempts      []AttemptResult `json:"attempts"`
+	QuestionEval  *QuestionEval   `json:"question_eval,omitempty"`
 	Cucumber      *CucumberEval   `json:"cucumber,omitempty"`
 }
 
@@ -135,6 +136,10 @@ type RunSummary struct {
 	TasksFailed               int     `json:"tasks_failed"`
 	PassRate                  float64 `json:"pass_rate"`
 	TokensTotal               int     `json:"tokens_total"`
+	QuestionsTotal            int     `json:"questions_total,omitempty"`
+	QuestionsCorrect          int     `json:"questions_correct,omitempty"`
+	QuestionsIncorrect        int     `json:"questions_incorrect,omitempty"`
+	QuestionAccuracy          float64 `json:"question_accuracy,omitempty"`
 	CucumberExamplesTotal     int     `json:"cucumber_examples_total,omitempty"`
 	CucumberExamplesCorrect   int     `json:"cucumber_examples_correct,omitempty"`
 	CucumberExamplesIncorrect int     `json:"cucumber_examples_incorrect,omitempty"`

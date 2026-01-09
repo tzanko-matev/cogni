@@ -29,6 +29,7 @@ func LoadSpec(path string) (Spec, error) {
 	return normalized, nil
 }
 
+// parseSpec chooses the JSON or YAML decoder based on the file extension.
 func parseSpec(data []byte, path string) (Spec, error) {
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext == ".json" {
@@ -37,6 +38,7 @@ func parseSpec(data []byte, path string) (Spec, error) {
 	return parseYAMLSpec(data)
 }
 
+// parseJSONSpec decodes a JSON question spec with strict field checking.
 func parseJSONSpec(data []byte) (Spec, error) {
 	var spec Spec
 	decoder := json.NewDecoder(bytes.NewReader(data))
@@ -53,6 +55,7 @@ func parseJSONSpec(data []byte) (Spec, error) {
 	return spec, nil
 }
 
+// parseYAMLSpec decodes a YAML question spec with strict field checking.
 func parseYAMLSpec(data []byte) (Spec, error) {
 	var spec Spec
 	decoder := yaml.NewDecoder(bytes.NewReader(data))

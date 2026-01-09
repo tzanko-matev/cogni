@@ -1,5 +1,7 @@
 package runner
 
+import "fmt"
+
 // RunReportStub renders the default HTML report for a single run.
 templ RunReportStub(results Results) {
 <!doctype html>
@@ -11,6 +13,32 @@ templ RunReportStub(results Results) {
   <body>
     <h1>Cogni Report</h1>
     <p>Run {results.RunID} on commit {results.Repo.Commit}</p>
+    for _, task := range results.Tasks {
+      if task.QuestionEval != nil {
+        <h2>Question Eval: {task.TaskID}</h2>
+        <p>Accuracy {fmt.Sprintf("%.1f", task.QuestionEval.Summary.Accuracy*100)}% ({task.QuestionEval.Summary.QuestionsCorrect}/{task.QuestionEval.Summary.QuestionsTotal})</p>
+        <table border="1" cellspacing="0" cellpadding="6">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Question</th>
+              <th>Answer</th>
+              <th>Correct</th>
+            </tr>
+          </thead>
+          <tbody>
+            for _, item := range task.QuestionEval.Questions {
+              <tr>
+                <td>{item.ID}</td>
+                <td>{item.Question}</td>
+                <td>{item.AgentAnswer}</td>
+                <td>{item.Correct}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    }
   </body>
 </html>
 }

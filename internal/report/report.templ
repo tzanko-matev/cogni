@@ -18,6 +18,7 @@ templ ReportPage(runs []runner.Results) {
           <th>Commit</th>
           <th>Run ID</th>
           <th>Pass Rate</th>
+          <th>Question Accuracy</th>
           <th>Tokens Total</th>
         </tr>
       </thead>
@@ -27,6 +28,13 @@ templ ReportPage(runs []runner.Results) {
             <td>{run.Repo.Commit}</td>
             <td>{run.RunID}</td>
             <td>{formatPassRate(run.Summary.PassRate)}%</td>
+            <td>
+              if run.Summary.QuestionsTotal > 0 {
+                {formatPassRate(run.Summary.QuestionAccuracy)}%
+              } else {
+                -
+              }
+            </td>
             <td>{run.Summary.TokensTotal}</td>
           </tr>
         }

@@ -27,8 +27,8 @@ Date: 2026-01-09
 - Progress:
   - Plan and status files created.
   - Added question spec package with JSON/YAML parsing, normalization, and answer XML parsing tests.
+  - Implemented question_eval runner/results/summary, CLI eval command, and report updates with tests.
 
 ## Next Actions
-- Wire question spec evaluation into runner/results/summary.
-- Add `cogni eval` command and question_eval config validation.
 - Remove cucumber packages/tests/docs and adapters.
+- Update docs for question evaluation + configuration.

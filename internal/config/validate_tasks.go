@@ -25,7 +25,7 @@ func validateTasks(cfg *spec.Config, baseDir string, agentIDs, adapterIDs map[st
 		taskType := strings.TrimSpace(task.Type)
 		if taskType == "" {
 			add(fieldPrefix+".type", "is required")
-		} else if taskType != "qa" && taskType != "cucumber_eval" {
+		} else if taskType != "qa" && taskType != "cucumber_eval" && taskType != "question_eval" {
 			add(fieldPrefix+".type", fmt.Sprintf("unsupported type %q", task.Type))
 		}
 		if strings.TrimSpace(task.Agent) == "" {
@@ -71,6 +71,8 @@ func validateTasks(cfg *spec.Config, baseDir string, agentIDs, adapterIDs map[st
 			validateQATask(task, fieldPrefix, baseDir, add)
 		case "cucumber_eval":
 			validateCucumberTask(task, fieldPrefix, baseDir, adapterIDs, add)
+		case "question_eval":
+			validateQuestionTask(task, fieldPrefix, baseDir, add)
 		}
 	}
 }
@@ -132,5 +134,26 @@ func validateCucumberTask(task spec.TaskConfig, fieldPrefix, baseDir string, ada
 		} else if info.IsDir() {
 			add(fmt.Sprintf("%s.features[%d]", fieldPrefix, featureIndex), fmt.Sprintf("path %q is a directory", feature))
 		}
+	}
+}
+
+// validateQuestionTask enforces question evaluation task requirements.
+func validateQuestionTask(task spec.TaskConfig, fieldPrefix, baseDir string, add issueAdder) {
+	questionsFile := strings.TrimSpace(task.QuestionsFile)
+	if questionsFile == "" {
+		add(fieldPrefix+".questions_file", "is required")
+		return
+	}
+	questionsPath := questionsFile
+	if !filepath.IsAbs(questionsPath) {
+		questionsPath = filepath.Join(baseDir, questionsPath)
+	}
+	info, err := os.Stat(questionsPath)
+	if err != nil {
+		add(fieldPrefix+".questions_file", fmt.Sprintf("file not found at %q", questionsFile))
+		return
+	}
+	if info.IsDir() {
+		add(fieldPrefix+".questions_file", fmt.Sprintf("path %q is a directory", questionsFile))
 	}
 }
