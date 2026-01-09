@@ -23,12 +23,12 @@ Date: 2026-01-09
 - `internal/report/*`
 
 ## Status
-- State: NOT STARTED
+- State: IN PROGRESS
 - Progress:
   - Plan and status files created.
+  - Added question spec package with JSON/YAML parsing, normalization, and answer XML parsing tests.
 
 ## Next Actions
-- Update config schema/validation to remove adapters and add question_eval.
-- Implement question spec loader and XML answer parsing.
-- Add `cogni eval` command and update results/report.
-- Remove cucumber packages/tests/docs.
+- Wire question spec evaluation into runner/results/summary.
+- Add `cogni eval` command and question_eval config validation.
+- Remove cucumber packages/tests/docs and adapters.
