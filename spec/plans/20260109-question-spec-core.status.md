@@ -31,6 +31,7 @@ Date: 2026-01-09
   - Removed cucumber pipeline/adapters/tests, cleaned dependencies, and updated docs with Question Spec evaluation.
   - Added an example Question Spec file inspired by `spec/features`.
   - Updated `.cogni/config.yml` to use `question_eval` with the example question spec.
+  - Fixed `cogni eval` to accept flags after the questions file and added CLI coverage.
 
 ## Next Actions
 - None. Completed on 2026-01-09.

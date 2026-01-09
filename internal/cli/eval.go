@@ -17,12 +17,30 @@ import (
 // runEvalAndWrite is a test seam for question evaluation execution.
 var runEvalAndWrite = runner.RunAndWrite
 
+var evalFlagsRequiringValue = map[string]bool{
+	"spec":       true,
+	"agent":      true,
+	"output-dir": true,
+	"log":        true,
+}
+
+var evalFlagsWithoutValue = map[string]bool{
+	"verbose":  true,
+	"no-color": true,
+}
+
 // runEval builds the handler for the eval command.
 func runEval(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 	return func(args []string, stdout, stderr io.Writer) int {
 		if wantsHelp(args) {
 			printCommandUsage(cmd, stdout)
 			return ExitOK
+		}
+		normalizedArgs, err := normalizeEvalArgs(args)
+		if err != nil {
+			fmt.Fprintf(stderr, "Invalid eval arguments: %v\n", err)
+			fmt.Fprintln(stderr, "Usage: cogni eval <questions_file> --agent <id>")
+			return ExitUsage
 		}
 		fs := flag.NewFlagSet(cmd.Name, flag.ContinueOnError)
 		fs.SetOutput(stderr)
@@ -32,7 +50,7 @@ func runEval(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		verbose := fs.Bool("verbose", false, "Verbose logging")
 		logPath := fs.String("log", "", "Write verbose logs to a file")
 		noColor := fs.Bool("no-color", false, "Disable ANSI colors in verbose logs")
-		if err := fs.Parse(args); err != nil {
+		if err := fs.Parse(normalizedArgs); err != nil {
 			return ExitUsage
 		}
 
@@ -136,4 +154,54 @@ func runEval(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stdout, "Report: %s\n", paths.ReportPath())
 		return ExitOK
 	}
+}
+
+func normalizeEvalArgs(args []string) ([]string, error) {
+	var flags []string
+	var positionals []string
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--" {
+			if i+1 < len(args) {
+				positionals = append(positionals, args[i+1:]...)
+			}
+			break
+		}
+		if strings.HasPrefix(arg, "-") && arg != "-" {
+			flags = append(flags, arg)
+			name, hasInlineValue := splitEvalFlag(arg)
+			if name == "" {
+				continue
+			}
+			if evalFlagsRequiringValue[name] && !hasInlineValue {
+				if i+1 >= len(args) {
+					return nil, fmt.Errorf("flag %s requires a value", arg)
+				}
+				flags = append(flags, args[i+1])
+				i++
+				continue
+			}
+			if !evalFlagsRequiringValue[name] && !evalFlagsWithoutValue[name] && !hasInlineValue {
+				if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+					flags = append(flags, args[i+1])
+					i++
+				}
+			}
+			continue
+		}
+		positionals = append(positionals, arg)
+	}
+	return append(flags, positionals...), nil
+}
+
+func splitEvalFlag(flagToken string) (string, bool) {
+	trimmed := strings.TrimLeft(flagToken, "-")
+	if trimmed == "" {
+		return "", false
+	}
+	parts := strings.SplitN(trimmed, "=", 2)
+	if len(parts) == 2 {
+		return parts[0], true
+	}
+	return parts[0], false
 }
