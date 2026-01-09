@@ -14,17 +14,7 @@ agents:
 default_agent: "default"
 
 tasks:
-  - id: cucumber_features
-    type: cucumber_eval
+  - id: question_eval_core
+    type: question_eval
     agent: "default"
-    adapter: godog_default
-    features:
-      - "spec/features/*.feature"
-
-adapters:
-  - id: godog_default
-    type: cucumber
-    runner: godog
-    formatter: json
-    feature_roots:
-      - "spec/features"
+    questions_file: "spec/questions/example.yml"

@@ -30,6 +30,7 @@ Date: 2026-01-09
   - Implemented question_eval runner/results/summary, CLI eval command, and report updates with tests.
   - Removed cucumber pipeline/adapters/tests, cleaned dependencies, and updated docs with Question Spec evaluation.
   - Added an example Question Spec file inspired by `spec/features`.
+  - Updated `.cogni/config.yml` to use `question_eval` with the example question spec.
 
 ## Next Actions
 - None. Completed on 2026-01-09.
