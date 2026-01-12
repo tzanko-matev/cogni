@@ -17,7 +17,7 @@ All endpoints are HTTP+JSON. v1 has no authn/authz; deploy on trusted networks o
 - `invalid_request`
 - `unknown_limit_key:<key>`
 - `backend_error`
-- `capacity_decrease_unsupported` (admin only)
+- `limit_decreasing:<key>`
 
 ## Reserve (single)
 
@@ -73,6 +73,17 @@ Response (unknown key):
   "retry_after_ms": 0,
   "reserved_at_unix_ms": 0,
   "error": "unknown_limit_key: tenant:foo:llm:daily_tokens"
+}
+```
+
+Response (decreasing limit):
+
+```json
+{
+  "allowed": false,
+  "retry_after_ms": 10000,
+  "reserved_at_unix_ms": 0,
+  "error": "limit_decreasing: global:llm:openai:gpt-4o:tpm"
 }
 ```
 
@@ -183,7 +194,7 @@ Request:
 Response:
 
 ```json
-{ "ok": true }
+{ "ok": true, "status": "active | decreasing" }
 ```
 
 Rules:
@@ -193,16 +204,14 @@ Rules:
 - `window_seconds > 0` for rolling only.
 - `timeout_seconds > 0` for concurrency only.
 - `overage` is `deny` or `debt` (default `debt`).
-- If a decrease is attempted (new capacity < current capacity), respond with:
-  - HTTP 409
-  - `{ "ok": false, "error": "capacity_decrease_unsupported" }`
+- If a decrease is attempted (new capacity < current capacity), the limit enters `decreasing` state and new reservations for that key are denied until the decrease is applied.
 
 ### `GET /v1/admin/limits`
 
 Response:
 
 ```json
-{ "limits": [ /* array of LimitDefinition */ ] }
+{ "limits": [ /* array of LimitInfo */ ] }
 ```
 
 ### `GET /v1/admin/limits/{key}`
@@ -210,10 +219,25 @@ Response:
 Response (found):
 
 ```json
-{ "limit": { /* LimitDefinition */ } }
+{ "limit": { /* LimitInfo */ } }
 ```
 
 Response (not found): HTTP 404
+
+### LimitInfo
+
+```json
+{
+  "definition": { /* LimitDefinition */ },
+  "status": "active | decreasing",
+  "pending_decrease_to": 0
+}
+```
+
+Notes:
+
+- `pending_decrease_to` is set only when `status=decreasing`.
+- While decreasing, Reserve requests that include the limit key return `allowed=false` with a large `retry_after_ms`.
 
 ## Idempotency rules (client)
 

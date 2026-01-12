@@ -15,15 +15,18 @@ Tests:
 ## Step 1: Limit registry + admin API
 
 - Implement registry (load/save JSON with atomic write).
+- Persist LimitState (status + pending decrease) alongside definitions.
 - Add admin endpoints:
   - `PUT /v1/admin/limits`
   - `GET /v1/admin/limits`
   - `GET /v1/admin/limits/{key}`
+  - support capacity decrease state transitions
 
 Tests:
 
 - Unit tests for registry load/save (timeout <= 1s).
 - HTTP handler tests for validation and unknown keys (timeout <= 2s).
+- HTTP handler tests for capacity decrease state (timeout <= 2s).
 
 ## Step 2: In-memory backend
 
@@ -59,12 +62,14 @@ Tests:
 - Implement Reserve/Complete with linked pending transfers.
 - Implement microbatch submitter.
 - Implement retry-after heuristics.
+- Implement capacity decrease blocking and apply loop.
 
 Tests:
 
 - Integration test: linked transfers are atomic (timeout <= 10s).
 - Integration test: `id_already_failed` behavior (timeout <= 10s).
 - Integration test: overage debt tracking path (timeout <= 10s).
+- Integration test: capacity decrease blocks new reservations until applied (timeout <= 10s).
 
 ## Step 6: BDD features
 
@@ -75,4 +80,3 @@ Tests:
 
 - Add README snippet for ratelimiterd usage.
 - Add example config and limits file.
-

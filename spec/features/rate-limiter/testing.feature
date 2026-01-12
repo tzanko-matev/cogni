@@ -33,3 +33,11 @@ Feature: Rate limiter core behavior
     When I send a batch reserve with leases "B1" and "B2" for amount 1 each
     Then result 1 is allowed and result 2 is denied
     And the batch response is returned within 300 milliseconds
+
+  Scenario: Capacity decrease blocks new reservations until applied
+    Given a rolling limit "global:llm:test:model:tpm" with capacity 100 and window 60 seconds
+    And I reserve amount 80 for lease "DC1"
+    When the admin decreases capacity for "global:llm:test:model:tpm" to 60
+    Then new reservations for "global:llm:test:model:tpm" are denied with error "limit_decreasing"
+    And when the available balance is at least 40 the decrease is applied
+    And reservations are accepted again

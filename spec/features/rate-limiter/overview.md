@@ -26,7 +26,6 @@ Audience: junior Go developer. This spec is self-contained. Follow the files in 
 - Authentication or authorization.
 - Persistent reservation metadata across server restarts.
 - Provider-specific tokenization (use a simple estimator).
-- Capacity decreases for existing limits (deferred; see below).
 
 ## Decisions (source of truth)
 
@@ -45,6 +44,7 @@ See ADRs:
 - `spec/architecture/decisions/0011-no-auth-v1.md`
 - `spec/architecture/decisions/0012-error-model-idempotency.md`
 - `spec/architecture/decisions/0013-refactor-llm-call-pipeline.md`
+- `spec/architecture/decisions/0014-capacity-decrease-blocking.md`
 
 ## Glossary
 
@@ -126,6 +126,13 @@ Single-binary mode:
 4) If actual > reserved, server attempts to reserve the diff; on failure it records debt.
 5) If reservation metadata is missing (server restart), reconciliation is skipped and reservations expire naturally.
 
+### Capacity decrease (admin)
+
+1) Admin sends a new `capacity` lower than current for a limit key.
+2) Server marks the limit as `decreasing` and **stops accepting new reservations** that include that key.
+3) Server waits until the available balance is **>= decrease amount**.
+4) Server applies the decrease, clears the `decreasing` state, and resumes accepting reservations.
+
 ## Pessimistic accounting (important)
 
 When in doubt, overestimate usage to avoid letting requests exceed limits. This is why:
@@ -141,7 +148,38 @@ When in doubt, overestimate usage to avoid letting requests exceed limits. This 
 ## Deferred items (explicitly out of scope for v1)
 
 - Actual token usage extraction from streaming providers (if not available, omit actuals).
-- Capacity decreases when the new cap is below current usage.
 - Authn/authz and tenant scoping enforcement.
+
+## Accounting examples
+
+### Example 1: Rolling limit (TPM)
+
+- Capacity = 100 tokens / 60s.
+- Reserve 80 tokens => allowed, 20 tokens remaining.
+- Complete with actual 60 tokens:
+  - Void original 80, re-reserve 60 for remaining window.
+  - 40 tokens are freed early.
+
+### Example 2: Concurrency limit
+
+- Capacity = 2 inflight.
+- Reserve 1 => allowed.
+- Reserve another 1 => allowed.
+- Reserve a third => denied.
+- Complete one request => capacity frees immediately; next Reserve can succeed.
+
+### Example 3: Overage with debt
+
+- Capacity = 100 tokens / 60s, overage = debt.
+- Reserve 100 => allowed.
+- Complete with actual 140:
+  - Try to reserve extra 40 for remaining window.
+  - If that fails, record 40 in debt.
+
+### Example 4: Capacity decrease
+
+- Current capacity = 100, new capacity = 60 (decrease by 40).
+- Mark limit as `decreasing` and deny new reservations for that key.
+- When available balance >= 40, apply the decrease and resume accepts.
 
 Next: `api.md`

@@ -32,6 +32,8 @@ retry_policy:
     factor: 1.5
     jitter_ms: 50
     window_fraction: 0.1
+  decreasing:
+    fixed_ms: 10000
 ```
 
 ### Deny counters (server-side)
@@ -71,6 +73,7 @@ func RetryAfterMs(def LimitDefinition, streak int, cfg RetryPolicy) int {
 
 - On a denied reservation, use the max `retry_after_ms` across all failed requirements in that request.
 - `streak` is maintained per `LimitKey` in a best-effort tracker; it is not durable and resets on restart.
+- If a limit is in `decreasing` state, return `retry_after_ms = decreasing.fixed_ms`.
 
 ## Consequences
 

@@ -26,13 +26,77 @@ type concLimit struct {
   heap  concHeap
 }
 
+type LimitState struct {
+  Definition        LimitDefinition
+  Status            string // "active" | "decreasing"
+  PendingDecreaseTo uint64
+}
+
 type MemoryBackend struct {
   defs   map[LimitKey]LimitDefinition
+  states map[LimitKey]LimitState
   roll   map[LimitKey]*rollingLimit
   conc   map[LimitKey]*concLimit
   debt   map[LimitKey]uint64
   leases map[string]LeaseState
   mu     sync.Mutex
+}
+```
+
+## ApplyDefinition (admin)
+
+```go
+func (m *MemoryBackend) ApplyDefinition(def LimitDefinition) error {
+  m.mu.Lock()
+  defer m.mu.Unlock()
+
+  prev, ok := m.defs[def.Key]
+  if !ok {
+    m.defs[def.Key] = def
+    m.states[def.Key] = LimitState{Definition: def, Status: "active"}
+    ensureLimitStores(def)
+    return nil
+  }
+
+  if def.Capacity >= prev.Capacity {
+    // increase or same
+    m.defs[def.Key] = def
+    m.states[def.Key] = LimitState{Definition: def, Status: "active"}
+    updateCapacity(def)
+    return nil
+  }
+
+  // decrease: mark as decreasing, block new reservations for this key
+  m.states[def.Key] = LimitState{Definition: prev, Status: "decreasing", PendingDecreaseTo: def.Capacity}
+  return nil
+}
+```
+
+Decrease reconciliation (called periodically):
+
+```go
+func (m *MemoryBackend) TryApplyDecrease(key LimitKey) {
+  state := m.states[key]
+  if state.Status != "decreasing" {
+    return
+  }
+
+  current := state.Definition.Capacity
+  target := state.PendingDecreaseTo
+  delta := current - target
+
+  available := availableCapacity(key) // rolling: cap-used; concurrency: cap-len(holds)
+  if available < delta {
+    return
+  }
+
+  // apply decrease
+  state.Definition.Capacity = target
+  state.Status = "active"
+  state.PendingDecreaseTo = 0
+  m.states[key] = state
+  m.defs[key] = state.Definition
+  updateCapacity(state.Definition)
 }
 ```
 
@@ -42,6 +106,13 @@ type MemoryBackend struct {
 func (m *MemoryBackend) Reserve(req ReserveRequest, now time.Time) ReserveResponse {
   m.mu.Lock()
   defer m.mu.Unlock()
+
+  // deny if any limit is in decreasing state
+  for _, r := range req.Requirements {
+    if state := m.states[r.Key]; state.Status == "decreasing" {
+      return ReserveResponse{Allowed: false, RetryAfterMs: decreaseRetryMs, Error: "limit_decreasing:" + string(r.Key)}
+    }
+  }
 
   // 1) validate definitions
   for _, r := range req.Requirements {
@@ -134,6 +205,8 @@ func (m *MemoryBackend) Complete(req CompleteRequest, now time.Time) CompleteRes
 
 ## Notes
 
+- Capacity decrease: when a new capacity is lower than current, mark state as `decreasing` and deny new reservations that include the key until usage drops enough. Then apply the decrease and clear the state.
+- `decreaseRetryMs` is a configured constant (see ADR 0010).
 - Memory backend uses a single global mutex for correctness (v1).
 - Cleanup of expired reservations is best-effort and performed on Reserve.
 - Missing lease metadata skips reconciliation and leaves reservations to expire.

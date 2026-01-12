@@ -142,6 +142,7 @@ Behavior:
 
 - Reserve timeout/transport error => retry with same LeaseID.
 - Reserve denied => retry later with new LeaseID.
+- Reserve denied with `limit_decreasing:<key>` => retry after `retry_after_ms` (large).
 - Complete errors are best-effort; do not attempt to free capacity on failure.
 
 ## Usage examples

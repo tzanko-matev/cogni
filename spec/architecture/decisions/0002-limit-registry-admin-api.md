@@ -12,7 +12,7 @@
 
 ## Decision
 
-- Maintain a server-side registry of `LimitDefinition` entries keyed by `LimitKey`.
+- Maintain a server-side registry of `LimitState` entries keyed by `LimitKey` (definition + status).
 - Persist the registry to a JSON file with atomic rewrite (`limits.json.tmp` -> `limits.json`).
 - Provide admin endpoints to create/update and read definitions:
   - `PUT /v1/admin/limits`
@@ -39,26 +39,37 @@ type LimitDefinition struct {
   Description    string
   Overage        OveragePolicy
 }
+
+// LimitState captures runtime state for a limit.
+type LimitState struct {
+  Definition        LimitDefinition
+  Status            string // "active" | "decreasing"
+  PendingDecreaseTo uint64 // only when decreasing
+}
 ```
 
 ### Registry data layout
 
 - File path: `data/limits.json`
-- JSON schema: array of `LimitDefinition` objects
+- JSON schema: array of `LimitState` objects
 
 Example:
 
 ```json
 [
   {
-    "key": "global:llm:openai:gpt-4o:rpm",
-    "kind": "rolling",
-    "capacity": 3000,
-    "window_seconds": 60,
-    "timeout_seconds": 0,
-    "unit": "requests",
-    "description": "OpenAI gpt-4o requests per minute",
-    "overage": "deny"
+    "definition": {
+      "key": "global:llm:openai:gpt-4o:rpm",
+      "kind": "rolling",
+      "capacity": 3000,
+      "window_seconds": 60,
+      "timeout_seconds": 0,
+      "unit": "requests",
+      "description": "OpenAI gpt-4o requests per minute",
+      "overage": "debt"
+    },
+    "status": "active",
+    "pending_decrease_to": 0
   }
 ]
 ```
@@ -66,9 +77,9 @@ Example:
 ### Persistence algorithm (pseudo-code)
 
 ```go
-func SaveRegistry(path string, defs []LimitDefinition) error {
+func SaveRegistry(path string, states []LimitState) error {
   tmp := path + ".tmp"
-  data := json.Marshal(defs)
+  data := json.Marshal(states)
   writeFile(tmp, data, 0644)
   fsync(tmp)
   rename(tmp, path)
@@ -91,14 +102,14 @@ Request:
   "timeout_seconds": 0,
   "unit": "requests",
   "description": "OpenAI gpt-4o requests per minute",
-  "overage": "deny"
+  "overage": "debt"
 }
 ```
 
 Response:
 
 ```json
-{ "ok": true }
+{ "ok": true, "status": "active" }
 ```
 
 Validation:
@@ -109,6 +120,7 @@ Validation:
 - `window_seconds > 0` only for rolling
 - `timeout_seconds > 0` only for concurrency
 - `overage` in `{deny, debt}` (defaults to `debt`)
+- If `capacity` is lower than the current capacity, the limit enters `decreasing` state until the decrease is applied.
 
 Side effects:
 
@@ -121,7 +133,7 @@ Side effects:
 Response:
 
 ```json
-{ "limits": [ /* array of LimitDefinition */ ] }
+{ "limits": [ /* array of LimitState */ ] }
 ```
 
 #### `GET /v1/admin/limits/{key}`
@@ -129,7 +141,7 @@ Response:
 Response (found):
 
 ```json
-{ "limit": { /* LimitDefinition */ } }
+{ "limit": { /* LimitState */ } }
 ```
 
 Response (not found): HTTP 404

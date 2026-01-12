@@ -24,6 +24,18 @@ Accounts:
 - Resource account per limit: `acct:limit:<LimitKey>` with `debits_must_not_exceed_credits`
 - Debt account per limit (when `overage=debt`): `acct:debt:<LimitKey>` without `debits_must_not_exceed_credits`
 
+## Limit state (admin)
+
+```go
+type LimitState struct {
+  Definition        LimitDefinition
+  Status            string // "active" | "decreasing"
+  PendingDecreaseTo uint64 // only when decreasing
+}
+```
+
+LimitState is persisted in the registry file and loaded at startup.
+
 ## ID scheme
 
 Use deterministic u128 IDs derived from SHA-256(label) first 16 bytes (little-endian). If ID is 0 or max, flip one bit.
@@ -45,14 +57,29 @@ Transfer IDs:
 
 ### Capacity changes
 
-- **Increase only** in v1.
-- If new capacity < current capacity, return HTTP 409 with `capacity_decrease_unsupported`.
+Both increases and decreases are supported.
 
 Increase algorithm:
 
 1) Read account balance for `acct:limit:<key>`.
 2) If `balance < capacity`, post transfer from operator -> resource for `(capacity - balance)`.
 3) If `balance >= capacity`, do nothing.
+
+Decrease algorithm (blocking):
+
+1) If `new_capacity < current_capacity`, set `LimitState.Status = "decreasing"` and `PendingDecreaseTo = new_capacity`.
+2) While `status=decreasing`, **deny new reservations** that include this key.
+3) Periodically check the resource account:
+   - `balance = credits_posted - debits_posted`
+   - `available = balance - debits_pending`
+   - `delta = current_capacity - PendingDecreaseTo`
+4) When `available >= delta`, post transfer `resource -> operator` for `delta`.
+5) Update `current_capacity = PendingDecreaseTo`, clear `Status` and `PendingDecreaseTo`, and resume reservations.
+
+Retry hints while decreasing:
+
+- Reserve returns `allowed=false`, `error=limit_decreasing:<key>`.
+- `retry_after_ms` uses a large configured value (e.g., 10000ms).
 
 ## Reserve flow
 
@@ -67,6 +94,9 @@ Pseudo-code:
 
 ```go
 func Reserve(req ReserveRequest, defs map[LimitKey]LimitDefinition, now time.Time) ReserveResponse {
+  if anyRequirementIsDecreasing(req.Requirements) {
+    return ReserveResponse{Allowed: false, RetryAfterMs: decreaseRetryMs, Error: "limit_decreasing:" + key}
+  }
   transfers := buildPendingLinkedTransfers(req, defs)
   res := tb.CreateTransfers(transfers)
   if res.HasFailure("exceeds_credits") {
