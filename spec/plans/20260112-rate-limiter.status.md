@@ -9,7 +9,7 @@ Created: 2026-01-12
 Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-limiter.plan/)
 
 ## Current status
-- Phase 0.5 complete: dev shell updated with TigerBeetle and `TB_BIN` export.
+- Phase 1 complete: registry persistence and admin API endpoints with tests.
 
 ## What was done so far
 - Created plan and status files for the rate limiter implementation.
@@ -19,17 +19,26 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - Added RunCall hook unit tests with explicit timeouts.
 - Added TigerBeetle to `flake.nix` dev shell and auto-exported `TB_BIN`.
 - Documented the non-Nix `TB_BIN` fallback in `README.md`.
+- Added `pkg/ratelimiter` types and `internal/backend` interface.
+- Implemented `internal/registry` with atomic save/load and state transitions.
+- Implemented admin API handlers for PUT/GET limits and added validation/decrease tests.
 
 ## Next steps
-- Phase 1: implement limit registry and admin API with tests.
+- Phase 2: implement memory backend with deterministic clock and tests.
 
 ## Latest test run
 - 2026-01-12: `go test ./internal/agent/...` (failed: Go 1.25 toolchain not available in environment).
 - 2026-01-12: `GOTOOLCHAIN=local go test ./internal/agent/...` (failed: repo requires go >= 1.25, local is 1.21.6).
+- 2026-01-12: `go test ./internal/registry ./internal/api` (failed: Go 1.25 toolchain not available in environment).
+- 2026-01-12: `GOTOOLCHAIN=local go test ./internal/registry ./internal/api` (failed: repo requires go >= 1.25, local is 1.21.6).
 
 ## Relevant source files (current or planned)
 - internal/agent/runner.go
 - internal/agent/call/*
+- internal/registry/*
+- internal/api/*
+- internal/backend/*
+- pkg/ratelimiter/*
 - internal/registry/*
 - internal/backend/memory/*
 - internal/backend/tb/*
