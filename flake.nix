@@ -44,6 +44,7 @@
               jq
               bashInteractive
               hugo
+              tigerbeetle
               pythonEnv
             ];
             shellHook = ''
@@ -69,6 +70,11 @@
               fi
               if [ -z "$LLM_API_KEY" ]; then
                 echo "cogni dev shell: set LLM_API_KEY to run benchmarks."
+              fi
+              if [ -z "$TB_BIN" ]; then
+                if command -v tigerbeetle >/dev/null 2>&1; then
+                  export TB_BIN="$(command -v tigerbeetle)"
+                fi
               fi
               export PATH="$project_root:$PATH"
             '';
