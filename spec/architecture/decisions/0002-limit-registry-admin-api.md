@@ -108,7 +108,7 @@ Validation:
 - `capacity > 0`
 - `window_seconds > 0` only for rolling
 - `timeout_seconds > 0` only for concurrency
-- `overage` in `{deny, debt}` (defaults to `deny`)
+- `overage` in `{deny, debt}` (defaults to `debt`)
 
 Side effects:
 
