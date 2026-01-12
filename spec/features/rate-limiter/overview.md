@@ -9,8 +9,9 @@ Audience: junior Go developer. This spec is self-contained. Follow the files in 
 3) `backend-tb.md`
 4) `backend-memory.md`
 5) `client-lib.md`
-6) `implementation-plan.md`
-7) `testing.feature`
+6) `test-suite.md`
+7) `implementation-plan.md`
+8) `testing.feature`
 
 ## Goals
 
@@ -144,6 +145,13 @@ When in doubt, overestimate usage to avoid letting requests exceed limits. This 
 ## Security (v1)
 
 - No authn/authz; ratelimiterd must be on a trusted network only.
+
+## Development environment
+
+Integration tests require the `tigerbeetle` binary via `TB_BIN`.
+
+- In Nix: update `flake.nix` to include TigerBeetle in the dev shell and export `TB_BIN` in the shell hook.
+- Non-Nix fallback: set `TB_BIN` manually to a local TigerBeetle binary.
 
 ## Deferred items (explicitly out of scope for v1)
 

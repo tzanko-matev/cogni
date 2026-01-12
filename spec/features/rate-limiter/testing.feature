@@ -38,6 +38,6 @@ Feature: Rate limiter core behavior
     Given a rolling limit "global:llm:test:model:tpm" with capacity 100 and window 60 seconds
     And I reserve amount 80 for lease "DC1"
     When the admin decreases capacity for "global:llm:test:model:tpm" to 60
-    Then new reservations for "global:llm:test:model:tpm" are denied with error "limit_decreasing"
+    Then new reservations for "global:llm:test:model:tpm" are denied with error "limit_decreasing:global:llm:test:model:tpm"
     And when the available balance is at least 40 the decrease is applied
     And reservations are accepted again

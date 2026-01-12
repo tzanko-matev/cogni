@@ -12,6 +12,12 @@ Tests:
 - Existing `go test ./internal/agent/...` with timeouts.
 - Add unit tests for `RunCall` around hooks (timeout <= 2s per test).
 
+## Step 0.5: Development environment update
+
+- Add TigerBeetle to the Nix dev shell (`flake.nix`).
+- Export `TB_BIN` in the dev shell hook so integration tests can find the binary.
+- Document the non-Nix fallback: set `TB_BIN` manually.
+
 ## Step 1: Limit registry + admin API
 
 - Implement registry (load/save JSON with atomic write).
@@ -71,12 +77,17 @@ Tests:
 - Integration test: overage debt tracking path (timeout <= 10s).
 - Integration test: capacity decrease blocks new reservations until applied (timeout <= 10s).
 
-## Step 6: BDD features
+## Step 6: Test suite alignment
+
+- Follow `spec/features/rate-limiter/test-suite.md` for coverage and test names.
+- Implement unit/integration/stress/chaos tests with timeouts.
+
+## Step 7: BDD features
 
 - Implement `spec/features/rate-limiter/testing.feature` scenarios.
 - Ensure all scenarios specify timing expectations.
 
-## Step 7: Docs and examples
+## Step 8: Docs and examples
 
 - Add README snippet for ratelimiterd usage.
 - Add example config and limits file.
