@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"cogni/internal/agent/call"
 	"cogni/internal/testutil"
 )
 
@@ -44,14 +45,14 @@ func TestRunTurnCompactionInsertsSummary(t *testing.T) {
 	}
 	executor := &fakeExecutor{}
 
-	_, err := RunTurn(ctx, session, provider, executor, "new question", RunOptions{
+	_, err := call.RunCall(ctx, session, provider, executor, "new question", call.RunOptions{
 		TokenCounter: ApproxTokenCount,
 		Compaction: CompactionConfig{
 			SoftLimit:             1,
 			HardLimit:             100,
 			RecentUserTokenBudget: 1,
 		},
-	})
+	}, nil)
 	if err != nil {
 		t.Fatalf("run turn: %v", err)
 	}

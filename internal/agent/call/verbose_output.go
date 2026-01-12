@@ -1,9 +1,11 @@
-package agent
+package call
 
 import (
 	"fmt"
 	"io"
 	"strings"
+
+	"cogni/internal/agent"
 )
 
 type verboseSink struct {
@@ -73,7 +75,7 @@ func logVerboseToolOutput(opts RunOptions, header, body string) {
 }
 
 // logVerbosePrompt renders the prompt for verbose logging.
-func logVerbosePrompt(opts RunOptions, prompt Prompt, step int) {
+func logVerbosePrompt(opts RunOptions, prompt agent.Prompt, step int) {
 	header := fmt.Sprintf("LLM prompt (step %d)", step)
 	for _, sink := range collectVerboseSinks(opts) {
 		palette := paletteFor(sink.writer, sink.noColor)

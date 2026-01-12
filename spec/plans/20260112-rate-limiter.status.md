@@ -1,0 +1,50 @@
+# Rate Limiter Implementation Status
+
+Status: In progress
+
+ID: 20260112-rate-limiter.status
+
+Created: 2026-01-12
+
+Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-limiter.plan/)
+
+## Current status
+- Phase 0 complete: call pipeline refactor into `internal/agent/call` with hook tests added.
+
+## What was done so far
+- Created plan and status files for the rate limiter implementation.
+- Added `internal/agent/call` package with `RunCall`, `CallHook`, and supporting helpers.
+- Moved verbose formatting/logging helpers into `internal/agent/call`.
+- Updated runner paths to use `call.RunCall` and adjusted agent tests accordingly.
+- Added RunCall hook unit tests with explicit timeouts.
+
+## Next steps
+- Phase 0.5: update `flake.nix` to include TigerBeetle and export `TB_BIN`.
+
+## Latest test run
+- 2026-01-12: `go test ./internal/agent/...` (failed: Go 1.25 toolchain not available in environment).
+- 2026-01-12: `GOTOOLCHAIN=local go test ./internal/agent/...` (failed: repo requires go >= 1.25, local is 1.21.6).
+
+## Relevant source files (current or planned)
+- internal/agent/runner.go
+- internal/agent/call/*
+- internal/registry/*
+- internal/backend/memory/*
+- internal/backend/tb/*
+- internal/api/*
+- internal/tbutil/*
+- internal/testutil/*
+- cmd/ratelimiterd/*
+- pkg/ratelimiter/*
+- flake.nix
+- README.md
+
+## Relevant spec documents
+- spec/features/rate-limiter/overview.md
+- spec/features/rate-limiter/api.md
+- spec/features/rate-limiter/backend-memory.md
+- spec/features/rate-limiter/backend-tb.md
+- spec/features/rate-limiter/client-lib.md
+- spec/features/rate-limiter/test-suite.md
+- spec/features/rate-limiter/testing.feature
+- spec/features/rate-limiter/implementation-plan.md

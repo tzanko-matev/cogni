@@ -1,9 +1,11 @@
-package agent
+package call
 
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"cogni/internal/agent"
 )
 
 type verboseFormatLimits struct {
@@ -13,7 +15,7 @@ type verboseFormatLimits struct {
 }
 
 // formatPrompt formats prompt contents for verbose logging.
-func formatPrompt(prompt Prompt) string {
+func formatPrompt(prompt agent.Prompt) string {
 	return formatPromptWithLimits(prompt, verboseFormatLimits{
 		maxBytes:            verboseMaxBytes,
 		toolOutputMaxLines:  verboseToolOutputMaxLines,
@@ -21,7 +23,7 @@ func formatPrompt(prompt Prompt) string {
 	})
 }
 
-func formatPromptWithLimits(prompt Prompt, limits verboseFormatLimits) string {
+func formatPromptWithLimits(prompt agent.Prompt, limits verboseFormatLimits) string {
 	var builder strings.Builder
 	if strings.TrimSpace(prompt.Instructions) != "" {
 		builder.WriteString("instructions:\n")
@@ -55,7 +57,7 @@ func formatPromptWithLimits(prompt Prompt, limits verboseFormatLimits) string {
 }
 
 // formatHistoryItem renders a single history item for verbose output.
-func formatHistoryItem(item HistoryItem) string {
+func formatHistoryItem(item agent.HistoryItem) string {
 	return formatHistoryItemWithLimits(item, verboseFormatLimits{
 		maxBytes:            verboseMaxBytes,
 		toolOutputMaxLines:  verboseToolOutputMaxLines,
@@ -63,13 +65,13 @@ func formatHistoryItem(item HistoryItem) string {
 	})
 }
 
-func formatHistoryItemWithLimits(item HistoryItem, limits verboseFormatLimits) string {
+func formatHistoryItemWithLimits(item agent.HistoryItem, limits verboseFormatLimits) string {
 	switch content := item.Content.(type) {
-	case HistoryText:
+	case agent.HistoryText:
 		return fmt.Sprintf("- %s: %s\n", item.Role, content.Text)
-	case ToolCall:
+	case agent.ToolCall:
 		return fmt.Sprintf("- %s: tool_call id=%s name=%s args=%s\n", item.Role, content.ID, content.Name, formatArgs(content.Args))
-	case ToolOutput:
+	case agent.ToolOutput:
 		output := content.Result.Output
 		if limits.trimTrailingNewline {
 			output = strings.TrimRight(output, "\n")
@@ -86,7 +88,7 @@ func formatHistoryItemWithLimits(item HistoryItem, limits verboseFormatLimits) s
 }
 
 // formatArgs renders tool call arguments for verbose logging.
-func formatArgs(args ToolCallArgs) string {
+func formatArgs(args agent.ToolCallArgs) string {
 	if len(args) == 0 {
 		return "{}"
 	}

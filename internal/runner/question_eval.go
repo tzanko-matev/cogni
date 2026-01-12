@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"cogni/internal/agent"
+	"cogni/internal/agent/call"
 	"cogni/internal/question"
 )
 
@@ -68,10 +69,10 @@ func runQuestionTask(
 		}
 		session := newSession(task, repoRoot, toolDefs, verbose)
 		promptText := buildQuestionPrompt(questionItem)
-		runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, promptText, agent.RunOptions{
+		callResult, runErr := call.RunCall(ctx, session, provider, executor, promptText, call.RunOptions{
 			TokenCounter: tokenCounter,
 			Compaction:   compactionConfig,
-			Limits: agent.RunLimits{
+			Limits: call.RunLimits{
 				MaxSteps:   limitOrDefault(task.Task.Budget.MaxSteps, task.Agent.MaxSteps),
 				MaxSeconds: time.Duration(task.Task.Budget.MaxSeconds) * time.Second,
 				MaxTokens:  task.Task.Budget.MaxTokens,
@@ -80,16 +81,14 @@ func runQuestionTask(
 			VerboseWriter:    verboseWriter,
 			VerboseLogWriter: verboseLogWriter,
 			NoColor:          noColor,
-		})
+		}, nil)
+		runMetrics := callResult.Metrics
 		if runErr != nil {
 			logVerbose(verbose, verboseWriter, verboseLogWriter, noColor, styleError, fmt.Sprintf("Task %s question %d error=%v", task.Task.ID, index+1, runErr))
 		}
 		logVerbose(verbose, verboseWriter, verboseLogWriter, noColor, styleMetrics, fmt.Sprintf("Metrics task=%s question=%d steps=%d tokens=%d wall_time=%s tool_calls=%s", task.Task.ID, index+1, runMetrics.Steps, runMetrics.Tokens, runMetrics.WallTime, formatToolCounts(runMetrics.ToolCalls)))
 
-		output, ok := latestAssistantMessage(session.History)
-		if !ok {
-			output = ""
-		}
+		output := callResult.Output
 
 		questionResult := QuestionResult{
 			ID:                questionItem.ID,
@@ -107,7 +106,7 @@ func runQuestionTask(
 
 		if runErr != nil {
 			questionResult.RunError = runErr.Error()
-			if errors.Is(runErr, agent.ErrBudgetExceeded) {
+			if errors.Is(runErr, call.ErrBudgetExceeded) {
 				budgetExceeded = true
 			} else {
 				runtimeError = true

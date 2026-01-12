@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"cogni/internal/agent/call"
 	"cogni/internal/testutil"
 )
 
@@ -24,10 +25,11 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 	executor := &fakeExecutor{}
 
 	ctx := testutil.Context(t, 0)
-	metrics, err := RunTurn(ctx, session, provider, executor, "run", RunOptions{})
+	result, err := call.RunCall(ctx, session, provider, executor, "run", call.RunOptions{}, nil)
 	if err != nil {
 		t.Fatalf("run turn: %v", err)
 	}
+	metrics := result.Metrics
 	if provider.calls != 2 {
 		t.Fatalf("expected 2 provider calls, got %d", provider.calls)
 	}
@@ -83,10 +85,10 @@ func TestRunTurnBudgetExceeded(t *testing.T) {
 	executor := &fakeExecutor{}
 
 	ctx := testutil.Context(t, 0)
-	_, err := RunTurn(ctx, session, provider, executor, "run", RunOptions{
-		Limits: RunLimits{MaxSteps: 1},
-	})
-	if err != ErrBudgetExceeded {
+	_, err := call.RunCall(ctx, session, provider, executor, "run", call.RunOptions{
+		Limits: call.RunLimits{MaxSteps: 1},
+	}, nil)
+	if err != call.ErrBudgetExceeded {
 		t.Fatalf("expected budget exceeded, got %v", err)
 	}
 }
@@ -108,10 +110,10 @@ func TestRunTurnVerboseLogs(t *testing.T) {
 	var logs bytes.Buffer
 
 	ctx := testutil.Context(t, 0)
-	_, err := RunTurn(ctx, session, provider, executor, "run", RunOptions{
+	_, err := call.RunCall(ctx, session, provider, executor, "run", call.RunOptions{
 		Verbose:       true,
 		VerboseWriter: &logs,
-	})
+	}, nil)
 	if err != nil {
 		t.Fatalf("run turn: %v", err)
 	}
@@ -168,10 +170,10 @@ func TestRunTurnVerboseLogWriterCapturesFullOutput(t *testing.T) {
 	var logBuffer bytes.Buffer
 
 	ctx := testutil.Context(t, 0)
-	_, err := RunTurn(ctx, session, provider, executor, "run", RunOptions{
+	_, err := call.RunCall(ctx, session, provider, executor, "run", call.RunOptions{
 		Verbose:          false,
 		VerboseLogWriter: &logBuffer,
-	})
+	}, nil)
 	if err != nil {
 		t.Fatalf("run turn: %v", err)
 	}

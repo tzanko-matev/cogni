@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"cogni/internal/agent"
+	"cogni/internal/agent/call"
 	"cogni/internal/eval"
 )
 
@@ -46,10 +47,10 @@ func runTask(
 			return result
 		}
 		session := newSession(task, repoRoot, toolsDefs, verbose)
-		runMetrics, runErr := agent.RunTurn(ctx, session, provider, executor, task.Task.Prompt, agent.RunOptions{
+		callResult, runErr := call.RunCall(ctx, session, provider, executor, task.Task.Prompt, call.RunOptions{
 			TokenCounter: tokenCounter,
 			Compaction:   compactionConfig,
-			Limits: agent.RunLimits{
+			Limits: call.RunLimits{
 				MaxSteps:   limitOrDefault(task.Task.Budget.MaxSteps, task.Agent.MaxSteps),
 				MaxSeconds: time.Duration(task.Task.Budget.MaxSeconds) * time.Second,
 				MaxTokens:  task.Task.Budget.MaxTokens,
@@ -58,16 +59,14 @@ func runTask(
 			VerboseWriter:    verboseWriter,
 			VerboseLogWriter: verboseLogWriter,
 			NoColor:          noColor,
-		})
+		}, nil)
+		runMetrics := callResult.Metrics
 		if runErr != nil {
 			logVerbose(verbose, verboseWriter, verboseLogWriter, noColor, styleError, fmt.Sprintf("Task %s attempt %d error=%v", task.Task.ID, attemptIndex, runErr))
 		}
 		logVerbose(verbose, verboseWriter, verboseLogWriter, noColor, styleMetrics, fmt.Sprintf("Metrics task=%s attempt=%d steps=%d tokens=%d wall_time=%s tool_calls=%s", task.Task.ID, attemptIndex, runMetrics.Steps, runMetrics.Tokens, runMetrics.WallTime, formatToolCounts(runMetrics.ToolCalls)))
 
-		output, ok := latestAssistantMessage(session.History)
-		if !ok {
-			output = ""
-		}
+		output := callResult.Output
 
 		evalResult := eval.QAResult{
 			Status:        "error",
@@ -110,7 +109,7 @@ func runTask(
 
 		if runErr != nil {
 			reason := "runtime_error"
-			if runErr == agent.ErrBudgetExceeded {
+			if runErr == call.ErrBudgetExceeded {
 				reason = "budget_exceeded"
 			}
 			failureReason = &reason
@@ -154,19 +153,4 @@ func newSession(task taskRun, repoRoot string, toolsDefs []agent.ToolDefinition,
 		Ctx:     ctx,
 		History: agent.BuildInitialContext(ctx),
 	}
-}
-
-// latestAssistantMessage returns the most recent assistant text message.
-func latestAssistantMessage(history []agent.HistoryItem) (string, bool) {
-	for i := len(history) - 1; i >= 0; i-- {
-		item := history[i]
-		if item.Role != "assistant" {
-			continue
-		}
-		text, ok := item.Content.(agent.HistoryText)
-		if ok {
-			return text.Text, true
-		}
-	}
-	return "", false
 }
