@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cogni/internal/agent"
+	"cogni/internal/ratelimit"
 	"cogni/internal/spec"
 	"cogni/internal/tools"
 )
@@ -68,6 +69,15 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 		tokenCounter = agent.ApproxTokenCount
 	}
 
+	limiterFactory := params.Deps.LimiterFactory
+	if limiterFactory == nil {
+		limiterFactory = ratelimit.BuildLimiter
+	}
+	limiter, err := limiterFactory(cfg, repoRoot)
+	if err != nil {
+		return Results{}, err
+	}
+
 	toolRunner, err := toolRunnerFactory(repoRoot)
 	if err != nil {
 		return Results{}, err
@@ -87,7 +97,7 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 		usedAgents[taskRun.Agent.ID] = taskRun.Agent
 		switch taskRun.Task.Type {
 		case "question_eval":
-			taskResults = append(taskResults, runQuestionTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
+			taskResults = append(taskResults, runQuestionTask(ctx, repoRoot, cfg, taskRun, limiter, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
 		default:
 			return Results{}, fmt.Errorf("unsupported task type %q", taskRun.Task.Type)
 		}

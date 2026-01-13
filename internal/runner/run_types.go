@@ -9,10 +9,14 @@ import (
 	"cogni/internal/spec"
 	"cogni/internal/tools"
 	"cogni/internal/vcs"
+	"cogni/pkg/ratelimiter"
 )
 
 // ProviderFactory builds an agent provider for a given config and model.
 type ProviderFactory func(agentConfig spec.AgentConfig, model string) (agent.Provider, error)
+
+// LimiterFactory builds a rate limiter client for a run.
+type LimiterFactory func(cfg spec.Config, repoRoot string) (ratelimiter.Limiter, error)
 
 // ToolRunnerFactory constructs the tool runner for a repo root.
 type ToolRunnerFactory func(root string) (*tools.Runner, error)
@@ -31,6 +35,7 @@ type SetupCommandRunner interface {
 // RunDependencies allows injecting factories and clocks for a run.
 type RunDependencies struct {
 	ProviderFactory    ProviderFactory
+	LimiterFactory     LimiterFactory
 	ToolRunnerFactory  ToolRunnerFactory
 	RepoRootResolver   RepoRootResolver
 	RepoMetadataLoader RepoMetadataLoader
