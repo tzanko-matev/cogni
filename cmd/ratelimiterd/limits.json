@@ -1,0 +1,44 @@
+[
+  {
+    "definition": {
+      "key": "global:llm:openai:gpt-4o-mini:rpm",
+      "kind": "rolling",
+      "capacity": 60,
+      "window_seconds": 60,
+      "timeout_seconds": 0,
+      "unit": "requests",
+      "description": "OpenAI RPM limit",
+      "overage": "debt"
+    },
+    "status": "active",
+    "pending_decrease_to": 0
+  },
+  {
+    "definition": {
+      "key": "global:llm:openai:gpt-4o-mini:tpm",
+      "kind": "rolling",
+      "capacity": 60000,
+      "window_seconds": 60,
+      "timeout_seconds": 0,
+      "unit": "tokens",
+      "description": "OpenAI TPM limit",
+      "overage": "debt"
+    },
+    "status": "active",
+    "pending_decrease_to": 0
+  },
+  {
+    "definition": {
+      "key": "global:llm:openai:gpt-4o-mini:concurrency",
+      "kind": "concurrency",
+      "capacity": 10,
+      "window_seconds": 0,
+      "timeout_seconds": 300,
+      "unit": "requests",
+      "description": "OpenAI concurrency limit",
+      "overage": "debt"
+    },
+    "status": "active",
+    "pending_decrease_to": 0
+  }
+]

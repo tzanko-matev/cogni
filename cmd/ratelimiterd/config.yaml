@@ -1,0 +1,12 @@
+server:
+  listen_addr: ":8080"
+  backend: "memory"
+registry:
+  path: "./limits.json"
+tigerbeetle:
+  cluster_id: "0"
+  addresses:
+    - "127.0.0.1:3000"
+  sessions: 1
+  max_batch_events: 8190
+  flush_interval_micros: 200
