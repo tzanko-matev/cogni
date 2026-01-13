@@ -25,7 +25,7 @@ type ServerInstance struct {
 }
 
 // StartServer launches an in-memory HTTP server for the rate limiter API.
-func StartServer(t *testing.T, cfg ServerConfig) *ServerInstance {
+func StartServer(t testing.TB, cfg ServerConfig) *ServerInstance {
 	t.Helper()
 	if cfg.Registry == nil {
 		cfg.Registry = registry.New()

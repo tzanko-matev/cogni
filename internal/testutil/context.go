@@ -10,7 +10,7 @@ import (
 const DefaultTimeout = 5 * time.Second
 
 // Context returns a context with timeout tied to the test lifecycle.
-func Context(t *testing.T, timeout time.Duration) context.Context {
+func Context(t testing.TB, timeout time.Duration) context.Context {
 	t.Helper()
 	if timeout <= 0 {
 		timeout = DefaultTimeout

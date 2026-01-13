@@ -25,7 +25,7 @@ type limitsResponse struct {
 }
 
 // HTTPPutLimit sends a PUT /v1/admin/limits request.
-func HTTPPutLimit(t *testing.T, baseURL string, def ratelimiter.LimitDefinition) string {
+func HTTPPutLimit(t testing.TB, baseURL string, def ratelimiter.LimitDefinition) string {
 	t.Helper()
 	var resp adminPutResponse
 	data, err := json.Marshal(def)
@@ -43,7 +43,7 @@ func HTTPPutLimit(t *testing.T, baseURL string, def ratelimiter.LimitDefinition)
 }
 
 // HTTPGetLimit sends a GET /v1/admin/limits/{key} request.
-func HTTPGetLimit(t *testing.T, baseURL string, key string) ratelimiter.LimitState {
+func HTTPGetLimit(t testing.TB, baseURL string, key string) ratelimiter.LimitState {
 	t.Helper()
 	var resp limitResponse
 	body := doRequest(t, http.MethodGet, baseURL+"/v1/admin/limits/"+key, nil)
@@ -54,7 +54,7 @@ func HTTPGetLimit(t *testing.T, baseURL string, key string) ratelimiter.LimitSta
 }
 
 // HTTPListLimits sends a GET /v1/admin/limits request.
-func HTTPListLimits(t *testing.T, baseURL string) []ratelimiter.LimitState {
+func HTTPListLimits(t testing.TB, baseURL string) []ratelimiter.LimitState {
 	t.Helper()
 	var resp limitsResponse
 	body := doRequest(t, http.MethodGet, baseURL+"/v1/admin/limits", nil)
@@ -65,7 +65,7 @@ func HTTPListLimits(t *testing.T, baseURL string) []ratelimiter.LimitState {
 }
 
 // HTTPReserve sends a POST /v1/reserve request.
-func HTTPReserve(t *testing.T, baseURL string, req ratelimiter.ReserveRequest) ratelimiter.ReserveResponse {
+func HTTPReserve(t testing.TB, baseURL string, req ratelimiter.ReserveRequest) ratelimiter.ReserveResponse {
 	t.Helper()
 	var resp ratelimiter.ReserveResponse
 	data, err := json.Marshal(req)
@@ -80,7 +80,7 @@ func HTTPReserve(t *testing.T, baseURL string, req ratelimiter.ReserveRequest) r
 }
 
 // HTTPComplete sends a POST /v1/complete request.
-func HTTPComplete(t *testing.T, baseURL string, req ratelimiter.CompleteRequest) ratelimiter.CompleteResponse {
+func HTTPComplete(t testing.TB, baseURL string, req ratelimiter.CompleteRequest) ratelimiter.CompleteResponse {
 	t.Helper()
 	var resp ratelimiter.CompleteResponse
 	data, err := json.Marshal(req)
@@ -95,7 +95,7 @@ func HTTPComplete(t *testing.T, baseURL string, req ratelimiter.CompleteRequest)
 }
 
 // HTTPBatchReserve sends a POST /v1/reserve/batch request.
-func HTTPBatchReserve(t *testing.T, baseURL string, req ratelimiter.BatchReserveRequest) ratelimiter.BatchReserveResponse {
+func HTTPBatchReserve(t testing.TB, baseURL string, req ratelimiter.BatchReserveRequest) ratelimiter.BatchReserveResponse {
 	t.Helper()
 	var resp ratelimiter.BatchReserveResponse
 	data, err := json.Marshal(req)
@@ -110,7 +110,7 @@ func HTTPBatchReserve(t *testing.T, baseURL string, req ratelimiter.BatchReserve
 }
 
 // HTTPBatchComplete sends a POST /v1/complete/batch request.
-func HTTPBatchComplete(t *testing.T, baseURL string, req ratelimiter.BatchCompleteRequest) ratelimiter.BatchCompleteResponse {
+func HTTPBatchComplete(t testing.TB, baseURL string, req ratelimiter.BatchCompleteRequest) ratelimiter.BatchCompleteResponse {
 	t.Helper()
 	var resp ratelimiter.BatchCompleteResponse
 	data, err := json.Marshal(req)
@@ -125,7 +125,7 @@ func HTTPBatchComplete(t *testing.T, baseURL string, req ratelimiter.BatchComple
 }
 
 // doRequest executes an HTTP request with a JSON payload and returns the body.
-func doRequest(t *testing.T, method, url string, payload []byte) []byte {
+func doRequest(t testing.TB, method, url string, payload []byte) []byte {
 	t.Helper()
 	ctx := Context(t, 2*time.Second)
 	reader := bytes.NewReader(payload)
