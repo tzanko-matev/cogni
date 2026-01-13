@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	tbtypes "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
+	tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
 // WorkItem represents a single TB transfer request.
@@ -112,7 +112,7 @@ func (s *Submitter) submit(ctx context.Context, transfers []tbtypes.Transfer) ([
 		return nil, err
 	}
 	defer s.Pool.Release(client)
-	return client.CreateTransfers(transfers)
+	return CreateTransfers(ctx, client, transfers)
 }
 
 // respond sends a work result without blocking the submitter.

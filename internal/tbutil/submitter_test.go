@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"cogni/internal/testutil"
-	tb "github.com/tigerbeetledb/tigerbeetle-go"
-	tbtypes "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
+	tb "github.com/tigerbeetle/tigerbeetle-go"
+	tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
 // fakeClient captures submitter batch sizes without hitting a real TigerBeetle server.
@@ -59,12 +59,15 @@ func (f *fakeClient) QueryTransfers(_ tbtypes.QueryFilter) ([]tbtypes.Transfer, 
 	return nil, nil
 }
 
+func (f *fakeClient) GetChangeEvents(_ tbtypes.ChangeEventsFilter) ([]tbtypes.ChangeEvent, error) {
+	return nil, nil
+}
+
 func (f *fakeClient) Nop() error {
 	return nil
 }
 
-func (f *fakeClient) Close() error {
-	return nil
+func (f *fakeClient) Close() {
 }
 
 // newSubmitterForTest builds a Submitter with an in-memory client pool.

@@ -46,6 +46,7 @@
               hugo
               tigerbeetle
               pythonEnv
+              scc
             ];
             shellHook = ''
               # Ensure Nix Python + packages are found even if PATH is reordered by shell init.

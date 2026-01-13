@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	tb "github.com/tigerbeetledb/tigerbeetle-go"
+	tb "github.com/tigerbeetle/tigerbeetle-go"
+	tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
 // ClientPool manages a fixed set of TigerBeetle clients.
@@ -20,11 +21,12 @@ func NewClientPool(clusterID uint32, addresses []string, sessions int) (*ClientP
 	}
 	clients := make([]tb.Client, 0, sessions)
 	available := make(chan tb.Client, sessions)
+	cluster := tbtypes.ToUint128(uint64(clusterID))
 	for i := 0; i < sessions; i++ {
-		client, err := tb.NewClient(clusterID, addresses, 1)
+		client, err := tb.NewClient(cluster, addresses)
 		if err != nil {
 			for _, c := range clients {
-				_ = c.Close()
+				c.Close()
 			}
 			return nil, fmt.Errorf("create TB client: %w", err)
 		}
@@ -54,11 +56,8 @@ func (p *ClientPool) Release(client tb.Client) {
 
 // Close shuts down all clients in the pool.
 func (p *ClientPool) Close() error {
-	var err error
 	for _, client := range p.clients {
-		if clientErr := client.Close(); clientErr != nil && err == nil {
-			err = clientErr
-		}
+		client.Close()
 	}
-	return err
+	return nil
 }
