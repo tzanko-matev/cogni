@@ -3,6 +3,7 @@
 package tb
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,8 +12,7 @@ import (
 )
 
 func TestTB_ApplyDefinition_CanReserveImmediately(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, rollingDef("rpm", 10, 2))
 		applyDefinition(t, backend, rollingDef("tpm", 100, 2))
 		applyDefinition(t, backend, concDef("conc", 2, 5))
@@ -26,8 +26,7 @@ func TestTB_ApplyDefinition_CanReserveImmediately(t *testing.T) {
 }
 
 func TestTB_MultiKeyAtomicity_LinkedAllOrNothing(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, rollingDef("k1", 1, 3))
 		applyDefinition(t, backend, rollingDef("k2", 0, 3))
 
@@ -43,8 +42,7 @@ func TestTB_MultiKeyAtomicity_LinkedAllOrNothing(t *testing.T) {
 }
 
 func TestTB_DeniedAttemptMustUseNewLeaseID(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, rollingDef("k1", 1, 2))
 
 		if !reserve(t, backend, "lease-a", req("k1", 1)).Allowed {
@@ -60,15 +58,14 @@ func TestTB_DeniedAttemptMustUseNewLeaseID(t *testing.T) {
 		}
 
 		testutil.Eventually(t, 3*time.Second, 50*time.Millisecond, func() bool {
-			leaseID := testutil.NewULID()
+			leaseID := ratelimiter.NewULID()
 			return reserve(t, backend, leaseID, req("k1", 1)).Allowed
 		}, "expected allow with new lease")
 	})
 }
 
 func TestTB_ReserveIdempotent_AllowedDoesNotDoubleCount(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, rollingDef("k1", 1, 3))
 
 		if !reserve(t, backend, "lease-a", req("k1", 1)).Allowed {
@@ -84,8 +81,7 @@ func TestTB_ReserveIdempotent_AllowedDoesNotDoubleCount(t *testing.T) {
 }
 
 func TestTB_Concurrency_ReleasedOnComplete(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, concDef("k1", 1, 10))
 
 		if !reserve(t, backend, "lease-a", req("k1", 1)).Allowed {
@@ -102,8 +98,7 @@ func TestTB_Concurrency_ReleasedOnComplete(t *testing.T) {
 }
 
 func TestTB_Concurrency_TimeoutReleases(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, concDef("k1", 1, 2))
 
 		if !reserve(t, backend, "lease-a", req("k1", 1)).Allowed {
@@ -117,8 +112,7 @@ func TestTB_Concurrency_TimeoutReleases(t *testing.T) {
 }
 
 func TestTB_ReconcileFreesSlack(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, rollingDef("k1", 100, 3))
 
 		if !reserve(t, backend, "lease-a", req("k1", 100)).Allowed {
@@ -127,15 +121,14 @@ func TestTB_ReconcileFreesSlack(t *testing.T) {
 		complete(t, backend, "lease-a", []ratelimiter.Actual{{Key: "k1", ActualAmount: 10}})
 
 		testutil.Eventually(t, 2*time.Second, 50*time.Millisecond, func() bool {
-			leaseID := testutil.NewULID()
+			leaseID := ratelimiter.NewULID()
 			return reserve(t, backend, leaseID, req("k1", 90)).Allowed
 		}, "expected allow after reconcile")
 	})
 }
 
 func TestTB_OverageRecordsDebt(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		def := rollingDef("k1", 100, 3)
 		def.Overage = ratelimiter.OverageDebt
 		applyDefinition(t, backend, def)
@@ -157,8 +150,7 @@ func TestTB_OverageRecordsDebt(t *testing.T) {
 }
 
 func TestTB_DynamicLimitCreation_NoRestartRequired(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, rollingDef("k1", 5, 2))
 
 		if !reserve(t, backend, "lease-a", req("k1", 1)).Allowed {
@@ -168,8 +160,7 @@ func TestTB_DynamicLimitCreation_NoRestartRequired(t *testing.T) {
 }
 
 func TestTB_CapacityIncrease_TakesEffectImmediately(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, rollingDef("k1", 1, 2))
 
 		if !reserve(t, backend, "lease-a", req("k1", 1)).Allowed {
@@ -186,8 +177,7 @@ func TestTB_CapacityIncrease_TakesEffectImmediately(t *testing.T) {
 }
 
 func TestTB_CapacityDecrease_BlocksUntilApplied(t *testing.T) {
-	runWithTimeout(t, 15*time.Second, func() {
-		backend := newTBBackendForTest(t)
+	runWithBackend(t, 10*time.Second, func(backend *Backend) {
 		applyDefinition(t, backend, rollingDef("k1", 2, 2))
 
 		if !reserve(t, backend, "lease-a", req("k1", 1)).Allowed {
@@ -202,9 +192,11 @@ func TestTB_CapacityDecrease_BlocksUntilApplied(t *testing.T) {
 			t.Fatalf("expected limit_decreasing, got %+v", res)
 		}
 
-		testutil.Eventually(t, 4*time.Second, 100*time.Millisecond, func() bool {
-			leaseID := testutil.NewULID()
-			return reserve(t, backend, leaseID, req("k1", 1)).Allowed
-		}, "expected allow after decrease applied")
+		var last ratelimiter.ReserveResponse
+		testutil.Eventually(t, 6*time.Second, 100*time.Millisecond, func() bool {
+			leaseID := ratelimiter.NewULID()
+			last = reserve(t, backend, leaseID, req("k1", 1))
+			return last.Allowed
+		}, fmt.Sprintf("expected allow after decrease applied, last=%+v", last))
 	})
 }

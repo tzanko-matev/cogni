@@ -7,7 +7,7 @@ import (
 
 	"cogni/internal/tbutil"
 	"cogni/pkg/ratelimiter"
-	tbtypes "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
+	tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
 // Complete reconciles pending transfers based on actual usage.
@@ -61,7 +61,7 @@ func (b *Backend) releaseConcurrency(ctx context.Context, state LeaseState, defs
 		if amount == 0 {
 			continue
 		}
-		transfers = append(transfers, voidTransfer(state.LeaseID, req.Key, amount))
+		transfers = append(transfers, voidTransfer(state.LeaseID, req.Key, amount, false))
 	}
 	if len(transfers) == 0 {
 		return nil
@@ -104,7 +104,7 @@ func (b *Backend) reconcileRolling(ctx context.Context, state LeaseState, defs m
 // reconcileUnderuse voids and re-reserves when actual usage is lower than reserved.
 func (b *Backend) reconcileUnderuse(ctx context.Context, state LeaseState, def ratelimiter.LimitDefinition, actual uint64, now time.Time) error {
 	remaining := remainingWindowSeconds(state.ReservedAtUnix, now, def.WindowSeconds)
-	void := voidTransfer(state.LeaseID, def.Key, state.ReservedAmounts[def.Key])
+	void := voidTransfer(state.LeaseID, def.Key, state.ReservedAmounts[def.Key], actual != 0)
 	if actual == 0 {
 		result, err := b.submitTransfers(ctx, []tbtypes.Transfer{void})
 		if err != nil {
@@ -115,7 +115,6 @@ func (b *Backend) reconcileUnderuse(ctx context.Context, state LeaseState, def r
 		}
 		return nil
 	}
-	void.Flags.Linked = true
 	rereserve := pendingTransfer(state.LeaseID, def.Key, actual, remaining)
 	result, err := b.submitTransfers(ctx, []tbtypes.Transfer{void, rereserve})
 	if err != nil {
@@ -162,15 +161,16 @@ func (b *Backend) reconcileOveruse(ctx context.Context, state LeaseState, def ra
 }
 
 // voidTransfer builds a transfer to void a pending reservation.
-func voidTransfer(leaseID string, key ratelimiter.LimitKey, amount uint64) tbtypes.Transfer {
+func voidTransfer(leaseID string, key ratelimiter.LimitKey, amount uint64, linked bool) tbtypes.Transfer {
+	flags := tbtypes.TransferFlags{VoidPendingTransfer: true, Linked: linked}
 	return tbtypes.Transfer{
 		ID:              tbutil.VoidTransferID(leaseID, key),
 		DebitAccountID:  tbutil.LimitAccountID(key),
 		CreditAccountID: tbutil.OperatorAccountID(),
-		Amount:          amount,
+		Amount:          tbutil.Uint128FromUint64(amount),
 		Ledger:          ledgerLimits,
 		Code:            codeLimit,
-		Flags:           tbtypes.TransferFlags{VoidPendingTransfer: true},
+		Flags:           flags.ToUint16(),
 		PendingID:       tbutil.ReserveTransferID(leaseID, key),
 	}
 }
@@ -181,10 +181,10 @@ func pendingTransfer(leaseID string, key ratelimiter.LimitKey, amount uint64, ti
 		ID:              tbutil.RereserveTransferID(leaseID, key),
 		DebitAccountID:  tbutil.LimitAccountID(key),
 		CreditAccountID: tbutil.OperatorAccountID(),
-		Amount:          amount,
+		Amount:          tbutil.Uint128FromUint64(amount),
 		Ledger:          ledgerLimits,
 		Code:            codeLimit,
-		Flags:           tbtypes.TransferFlags{Pending: true},
+		Flags:           tbtypes.TransferFlags{Pending: true}.ToUint16(),
 		Timeout:         uint32(timeout),
 	}
 }
@@ -195,7 +195,7 @@ func debtTransfer(leaseID string, key ratelimiter.LimitKey, amount uint64) tbtyp
 		ID:              tbutil.DebtTransferID(leaseID, key),
 		DebitAccountID:  tbutil.DebtAccountID(key),
 		CreditAccountID: tbutil.OperatorAccountID(),
-		Amount:          amount,
+		Amount:          tbutil.Uint128FromUint64(amount),
 		Ledger:          ledgerLimits,
 		Code:            codeLimit,
 	}

@@ -1,6 +1,6 @@
 package tb
 
-import tbtypes "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
+import tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 
 // hasNonIgnorableErrors reports whether errors contain unexpected results.
 func hasNonIgnorableErrors(errors map[int]tbtypes.CreateTransferResult) bool {
@@ -28,7 +28,7 @@ func hasNonIgnorableErrors(errors map[int]tbtypes.CreateTransferResult) bool {
 func isOverageDenied(errors map[int]tbtypes.CreateTransferResult) bool {
 	for _, result := range errors {
 		switch result {
-		case tbtypes.TransferExceedsCredits, tbtypes.TransferExceedsDebits, tbtypes.TransferIDAlreadyFailed:
+		case tbtypes.TransferExceedsCredits, tbtypes.TransferExceedsDebits:
 			return true
 		}
 	}
@@ -39,7 +39,6 @@ func isOverageDenied(errors map[int]tbtypes.CreateTransferResult) bool {
 func isIgnorableResult(result tbtypes.CreateTransferResult) bool {
 	switch result {
 	case tbtypes.TransferExists,
-		tbtypes.TransferIDAlreadyFailed,
 		tbtypes.TransferPendingTransferExpired,
 		tbtypes.TransferPendingTransferAlreadyVoided,
 		tbtypes.TransferPendingTransferAlreadyPosted,

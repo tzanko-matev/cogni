@@ -44,6 +44,7 @@ type Backend struct {
 	mu     sync.Mutex
 	states map[ratelimiter.LimitKey]ratelimiter.LimitState
 	leases map[string]LeaseState
+	failed map[string]int
 }
 
 // New creates a TB backend and starts background workers.
@@ -90,6 +91,7 @@ func New(cfg Config) (*Backend, error) {
 		nowFn:        cfg.Now,
 		states:       map[ratelimiter.LimitKey]ratelimiter.LimitState{},
 		leases:       map[string]LeaseState{},
+		failed:       map[string]int{},
 	}
 	go submitter.Run(ctx)
 	go backend.decreaseLoop(ctx)

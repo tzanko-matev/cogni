@@ -7,7 +7,7 @@ import (
 
 	"cogni/internal/tbutil"
 	"cogni/pkg/ratelimiter"
-	tbtypes "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
+	tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
 const invalidRequestError = "invalid_request"
@@ -28,6 +28,10 @@ func (b *Backend) Reserve(ctx context.Context, req ratelimiter.ReserveRequest, n
 			return ratelimiter.ReserveResponse{Allowed: true, ReservedAtUnixMs: state.ReservedAtUnix}, nil
 		}
 		return ratelimiter.ReserveResponse{Allowed: false, Error: invalidRequestError}, nil
+	}
+	if retryAfter, ok := b.failed[req.LeaseID]; ok {
+		b.mu.Unlock()
+		return ratelimiter.ReserveResponse{Allowed: false, RetryAfterMs: retryAfter}, nil
 	}
 	defs := make([]ratelimiter.LimitDefinition, len(req.Requirements))
 	for i, r := range req.Requirements {
@@ -60,10 +64,10 @@ func (b *Backend) Reserve(ctx context.Context, req ratelimiter.ReserveRequest, n
 			ID:              tbutil.ReserveTransferID(req.LeaseID, r.Key),
 			DebitAccountID:  tbutil.LimitAccountID(r.Key),
 			CreditAccountID: tbutil.OperatorAccountID(),
-			Amount:          r.Amount,
+			Amount:          tbutil.Uint128FromUint64(r.Amount),
 			Ledger:          ledgerLimits,
 			Code:            codeLimit,
-			Flags:           flags,
+			Flags:           flags.ToUint16(),
 			Timeout:         uint32(timeout),
 		}
 	}
@@ -77,6 +81,9 @@ func (b *Backend) Reserve(ctx context.Context, req ratelimiter.ReserveRequest, n
 		return ratelimiter.ReserveResponse{}, err
 	}
 	if !decision {
+		b.mu.Lock()
+		b.failed[req.LeaseID] = retryAfter
+		b.mu.Unlock()
 		return ratelimiter.ReserveResponse{Allowed: false, RetryAfterMs: retryAfter}, nil
 	}
 
@@ -107,7 +114,7 @@ func (b *Backend) evaluateReserveErrors(req ratelimiter.ReserveRequest, defs []r
 	onlyExists := true
 	for index, result := range errors {
 		switch result {
-		case tbtypes.TransferExceedsCredits, tbtypes.TransferExceedsDebits, tbtypes.TransferIDAlreadyFailed:
+		case tbtypes.TransferExceedsCredits, tbtypes.TransferExceedsDebits:
 			hasDenied = true
 			onlyExists = false
 			if index >= 0 && index < len(req.Requirements) {

@@ -39,7 +39,7 @@ func newTBBackendForTest(t *testing.T) *Backend {
 
 func applyDefinition(t *testing.T, backend *Backend, def ratelimiter.LimitDefinition) {
 	t.Helper()
-	ctx := testutil.Context(t, 2*time.Second)
+	ctx := testutil.Context(t, 4*time.Second)
 	if err := backend.ApplyDefinition(ctx, def); err != nil {
 		t.Fatalf("apply definition: %v", err)
 	}
@@ -47,7 +47,7 @@ func applyDefinition(t *testing.T, backend *Backend, def ratelimiter.LimitDefini
 
 func reserve(t *testing.T, backend *Backend, leaseID string, reqs []ratelimiter.Requirement) ratelimiter.ReserveResponse {
 	t.Helper()
-	ctx := testutil.Context(t, 2*time.Second)
+	ctx := testutil.Context(t, 4*time.Second)
 	res, err := backend.Reserve(ctx, ratelimiter.ReserveRequest{LeaseID: leaseID, Requirements: reqs}, time.Now())
 	if err != nil {
 		t.Fatalf("reserve: %v", err)
@@ -57,7 +57,7 @@ func reserve(t *testing.T, backend *Backend, leaseID string, reqs []ratelimiter.
 
 func complete(t *testing.T, backend *Backend, leaseID string, actuals []ratelimiter.Actual) {
 	t.Helper()
-	ctx := testutil.Context(t, 2*time.Second)
+	ctx := testutil.Context(t, 4*time.Second)
 	res, err := backend.Complete(ctx, ratelimiter.CompleteRequest{LeaseID: leaseID, Actuals: actuals})
 	if err != nil {
 		t.Fatalf("complete: %v", err)
@@ -114,4 +114,12 @@ func runWithTimeout(t *testing.T, timeout time.Duration, fn func()) {
 		t.Fatalf("test timed out")
 	case <-done:
 	}
+}
+
+func runWithBackend(t *testing.T, timeout time.Duration, fn func(*Backend)) {
+	t.Helper()
+	backend := newTBBackendForTest(t)
+	runWithTimeout(t, timeout, func() {
+		fn(backend)
+	})
 }

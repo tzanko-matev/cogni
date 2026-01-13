@@ -7,7 +7,7 @@ import (
 
 	"cogni/internal/tbutil"
 	"cogni/pkg/ratelimiter"
-	tbtypes "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
+	tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
 // submitTransfers sends transfers through the submitter and waits for results.
@@ -37,19 +37,22 @@ func (b *Backend) submitTransfers(ctx context.Context, transfers []tbtypes.Trans
 
 // accountBalance returns the posted balance for an account.
 func accountBalance(account tbtypes.Account) uint64 {
-	if account.CreditsPosted < account.DebitsPosted {
+	credits := tbutil.Uint128ToUint64(account.CreditsPosted)
+	debits := tbutil.Uint128ToUint64(account.DebitsPosted)
+	if credits < debits {
 		return 0
 	}
-	return account.CreditsPosted - account.DebitsPosted
+	return credits - debits
 }
 
 // accountAvailable returns the available balance after pending debits.
 func accountAvailable(account tbtypes.Account) uint64 {
 	balance := accountBalance(account)
-	if balance < account.DebitsPending {
+	pending := tbutil.Uint128ToUint64(account.DebitsPending)
+	if balance < pending {
 		return 0
 	}
-	return balance - account.DebitsPending
+	return balance - pending
 }
 
 // capacityTransferID builds a deterministic transfer ID for capacity updates.

@@ -6,7 +6,7 @@ import (
 
 	"cogni/internal/tbutil"
 	"cogni/pkg/ratelimiter"
-	tbtypes "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
+	tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
 // ApplyDefinition provisions accounts and updates capacity.
@@ -69,7 +69,7 @@ func (b *Backend) ensureAccounts(ctx context.Context, def ratelimiter.LimitDefin
 			ID:     tbutil.LimitAccountID(def.Key),
 			Ledger: ledgerLimits,
 			Code:   codeLimit,
-			Flags:  tbtypes.AccountFlags{DebitsMustNotExceedCredits: true},
+			Flags:  tbtypes.AccountFlags{DebitsMustNotExceedCredits: true}.ToUint16(),
 		},
 	}
 	if def.Overage == ratelimiter.OverageDebt {
@@ -109,7 +109,7 @@ func (b *Backend) ensureCapacity(ctx context.Context, def ratelimiter.LimitDefin
 		CreditAccountID: tbutil.LimitAccountID(def.Key),
 		Ledger:          ledgerLimits,
 		Code:            codeLimit,
-		Amount:          delta,
+		Amount:          tbutil.Uint128FromUint64(delta),
 	}
 	result, err := b.submitTransfers(ctx, []tbtypes.Transfer{transfer})
 	if err != nil {
@@ -128,7 +128,7 @@ func (b *Backend) createAccounts(ctx context.Context, accounts []tbtypes.Account
 		return nil, err
 	}
 	defer b.pool.Release(client)
-	return client.CreateAccounts(accounts)
+	return tbutil.CreateAccounts(ctx, client, accounts)
 }
 
 // lookupAccount fetches a single account by ID.
@@ -138,7 +138,7 @@ func (b *Backend) lookupAccount(ctx context.Context, id tbtypes.Uint128) (tbtype
 		return tbtypes.Account{}, err
 	}
 	defer b.pool.Release(client)
-	accounts, err := client.LookupAccounts([]tbtypes.Uint128{id})
+	accounts, err := tbutil.LookupAccounts(ctx, client, []tbtypes.Uint128{id})
 	if err != nil {
 		return tbtypes.Account{}, err
 	}

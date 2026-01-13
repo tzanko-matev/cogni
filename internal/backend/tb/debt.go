@@ -13,5 +13,5 @@ func (b *Backend) DebtForKey(ctx context.Context, key ratelimiter.LimitKey) (uin
 	if err != nil {
 		return 0, err
 	}
-	return account.DebitsPosted, nil
+	return tbutil.Uint128ToUint64(account.DebitsPosted), nil
 }

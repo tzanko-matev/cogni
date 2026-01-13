@@ -7,7 +7,7 @@ import (
 
 	"cogni/internal/tbutil"
 	"cogni/pkg/ratelimiter"
-	tbtypes "github.com/tigerbeetledb/tigerbeetle-go/pkg/types"
+	tbtypes "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
 const decreaseCheckInterval = 200 * time.Millisecond
@@ -67,7 +67,7 @@ func (b *Backend) tryApplyDecrease(ctx context.Context, state ratelimiter.LimitS
 		CreditAccountID: tbutil.OperatorAccountID(),
 		Ledger:          ledgerLimits,
 		Code:            codeLimit,
-		Amount:          delta,
+		Amount:          tbutil.Uint128FromUint64(delta),
 	}
 	result, err := b.submitTransfers(ctx, []tbtypes.Transfer{transfer})
 	if err != nil {
