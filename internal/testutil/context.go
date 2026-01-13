@@ -15,10 +15,15 @@ func Context(t testing.TB, timeout time.Duration) context.Context {
 	if timeout <= 0 {
 		timeout = DefaultTimeout
 	}
-	if deadline, ok := t.Deadline(); ok {
-		remaining := time.Until(deadline) - time.Second
-		if remaining > 0 && remaining < timeout {
-			timeout = remaining
+	type deadlineProvider interface {
+		Deadline() (time.Time, bool)
+	}
+	if provider, ok := any(t).(deadlineProvider); ok {
+		if deadline, ok := provider.Deadline(); ok {
+			remaining := time.Until(deadline) - time.Second
+			if remaining > 0 && remaining < timeout {
+				timeout = remaining
+			}
 		}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

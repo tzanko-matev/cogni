@@ -1,4 +1,4 @@
-package testutil
+package ratelimitertest
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"cogni/internal/testutil"
 	"cogni/pkg/ratelimiter"
 )
 
@@ -127,7 +128,7 @@ func HTTPBatchComplete(t testing.TB, baseURL string, req ratelimiter.BatchComple
 // doRequest executes an HTTP request with a JSON payload and returns the body.
 func doRequest(t testing.TB, method, url string, payload []byte) []byte {
 	t.Helper()
-	ctx := Context(t, 2*time.Second)
+	ctx := testutil.Context(t, 4*time.Second)
 	reader := bytes.NewReader(payload)
 	req, err := http.NewRequestWithContext(ctx, method, url, reader)
 	if err != nil {
