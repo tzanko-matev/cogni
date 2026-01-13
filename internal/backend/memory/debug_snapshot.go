@@ -1,4 +1,4 @@
-//go:build test || stress
+//go:build test || stress || cucumber
 
 package memory
 

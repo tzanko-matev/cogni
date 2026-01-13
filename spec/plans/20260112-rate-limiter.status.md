@@ -9,7 +9,7 @@ Created: 2026-01-12
 Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-limiter.plan/)
 
 ## Current status
-- Phase 6 in progress: benchmarks added; BDD, loadtest, docs pending.
+- Phase 7 in progress: godog BDD suite added; loadtest + docs pending.
 
 ## What was done so far
 - Created plan and status files for the rate limiter implementation.
@@ -40,9 +40,11 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - Added TB end-to-end integration suite with scheduler and batch coverage.
 - Added memory backend and HTTP benchmark suites.
 - Generalized testutil helpers to support benchmarks (testing.TB).
+- Implemented godog BDD suite for rate limiter feature scenarios.
+- Added cucumber build tag support for memory debug snapshots.
 
 ## Next steps
-- Finish Phase 6: e2e TB tests, benchmarks, load-test tool, and BDD godog suite.
+- Finish Phase 8: load-test tool and documentation/examples updates.
 
 ## Latest test run
 - 2026-01-12: `go test ./internal/agent/...` (failed: Go 1.25 toolchain not available in environment).
@@ -62,6 +64,7 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - 2026-01-13: `go test -tags=chaos,integration ./internal/chaos` (failed: Go 1.25 toolchain not available in environment).
 - 2026-01-13: `go test -tags=integration ./internal/e2e` (failed: Go 1.25 toolchain not available in environment).
 - 2026-01-13: `go test ./internal/backend/memory ./internal/bench ./internal/testutil` (failed: Go 1.25 toolchain not available in environment).
+- 2026-01-13: `go test -tags=cucumber ./tests/ratelimiter` (failed: Go 1.25 toolchain not available in environment).
 
 ## Relevant source files (current or planned)
 - internal/agent/runner.go
@@ -88,6 +91,9 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - internal/e2e/e2e_tb_integration_test.go
 - internal/backend/memory/memory_backend_bench_test.go
 - internal/bench/bench_http_test.go
+- tests/ratelimiter/ratelimiter_cucumber_test.go
+- go.mod
+- go.sum
 
 ## Relevant spec documents
 - spec/features/rate-limiter/overview.md
