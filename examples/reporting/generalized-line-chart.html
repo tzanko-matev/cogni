@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cogni Report: Generalized Line Chart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="generalized-line-chart.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <div class="title">Cogni generalized line chart</div>
+          <p class="subtitle">
+            Each dot is a measured commit. Lines connect only when there is no other measured commit between the
+            ancestor and descendant.
+          </p>
+        </div>
+        <div class="pill">Sample report</div>
+      </header>
+
+      <section class="chart-card reveal">
+        <div class="chart-head">
+          <div class="metric">Metric: Agent effort score</div>
+          <div class="meta">Repo: cg-report | branch: mainline | 12 measured commits</div>
+        </div>
+        <div class="chart" id="chart"></div>
+        <div class="legend">
+          <span><span class="legend-dot"></span>Measured commit</span>
+          <span><span class="legend-line"></span>Direct ancestor relationship</span>
+        </div>
+      </section>
+
+      <div class="footer">
+        The X axis shows commit time. The Y axis shows the metric value. Hover a dot to see details.
+        Prototype uses inline data in <code>examples/reporting/generalized-line-chart.js</code>.
+      </div>
+    </div>
+    <script src="generalized-line-chart.js"></script>
+  </body>
+</html>
