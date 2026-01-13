@@ -50,23 +50,30 @@ func (m *MemoryBackend) ApplyState(state ratelimiter.LimitState) error {
 
 // TryApplyDecrease applies a pending capacity decrease when usage allows.
 func (m *MemoryBackend) TryApplyDecrease(key ratelimiter.LimitKey) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	var (
+		registryPath string
+		appliedState ratelimiter.LimitState
+		applied      bool
+	)
 
+	m.mu.Lock()
 	state, ok := m.states[key]
 	if !ok || state.Status != ratelimiter.LimitStatusDecreasing {
+		m.mu.Unlock()
 		return
 	}
 
 	current := state.Definition.Capacity
 	target := state.PendingDecreaseTo
 	if target == 0 || target >= current {
+		m.mu.Unlock()
 		return
 	}
 
 	m.cleanupLocked(key)
 	available := m.availableCapacityLocked(key, state.Definition)
 	if available < current-target {
+		m.mu.Unlock()
 		return
 	}
 
@@ -76,6 +83,19 @@ func (m *MemoryBackend) TryApplyDecrease(key ratelimiter.LimitKey) {
 	m.states[key] = state
 	m.defs[key] = state.Definition
 	m.updateCapacityLocked(state.Definition)
+	appliedState = state
+	registryPath = m.registryPath
+	applied = m.registry != nil
+	reg := m.registry
+	m.mu.Unlock()
+
+	if applied {
+		reg.Put(appliedState)
+		if registryPath != "" {
+			_ = reg.Save(registryPath)
+		}
+		return
+	}
 }
 
 func (m *MemoryBackend) ensureLimitStoresLocked(def ratelimiter.LimitDefinition) {

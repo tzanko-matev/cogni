@@ -101,6 +101,7 @@ func (s *rateLimiterState) reset() error {
 	s.clock = testutil.NewFakeClock(time.Unix(0, 0))
 	s.backend = memory.New(s.clock)
 	s.registry = registry.New()
+	s.backend.AttachRegistry(s.registry, "")
 	handler := api.NewHandler(api.Config{
 		Registry: s.registry,
 		Backend:  s.backend,

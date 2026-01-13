@@ -1,10 +1,11 @@
 # Rate Limiter Implementation Plan
 
-Status: In progress
+Status: DONE
 
 ID: 20260112-rate-limiter
 
 Created: 2026-01-12
+Completed: 2026-01-13
 
 Linked status: [spec/plans/20260112-rate-limiter.status.md](/plans/20260112-rate-limiter.status/)
 

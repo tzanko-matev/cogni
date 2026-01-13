@@ -1,6 +1,6 @@
 # Rate Limiter Implementation Status
 
-Status: In progress
+Status: DONE
 
 ID: 20260112-rate-limiter.status
 
@@ -9,7 +9,7 @@ Created: 2026-01-12
 Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-limiter.plan/)
 
 ## Current status
-- Phase 7 in progress: godog BDD suite added; loadtest + docs pending.
+- Implementation complete; verification done across default, integration, stress+integration, chaos+integration, and cucumber suites with `TB_INTEGRATION=1`.
 
 ## What was done so far
 - Created plan and status files for the rate limiter implementation.
@@ -42,29 +42,26 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - Generalized testutil helpers to support benchmarks (testing.TB).
 - Implemented godog BDD suite for rate limiter feature scenarios.
 - Added cucumber build tag support for memory debug snapshots.
+- Implemented ratelimiter load-test CLI tool.
+- Added example ratelimiterd config + limits file and documented usage.
+- Added validation for load-test configuration flags.
+- Tightened stress test timeouts and bounded randomized workload iterations.
+- Upgraded TigerBeetle Go SDK to v0.16.67 and migrated imports/API usage (Uint128 conversions, context wrappers).
+- Added TB backend debug helper for pending debits to support stress assertions.
+- Reworked stress stop signaling to broadcast cancellation and added TB pending debit polling for concurrency invariants.
+- Added memory-backend registry attachment so applied decreases update registry state.
+- Wired memory backend registry attachment in ratelimiterd, ratelimitertest servers, and cucumber harness.
+- Fixed chaos TB test server helper signature to use ratelimitertest server type.
 
 ## Next steps
-- Finish Phase 8: load-test tool and documentation/examples updates.
+- None (implementation complete).
 
 ## Latest test run
-- 2026-01-12: `go test ./internal/agent/...` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-12: `GOTOOLCHAIN=local go test ./internal/agent/...` (failed: repo requires go >= 1.25, local is 1.21.6).
-- 2026-01-12: `go test ./internal/registry ./internal/api` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-12: `GOTOOLCHAIN=local go test ./internal/registry ./internal/api` (failed: repo requires go >= 1.25, local is 1.21.6).
-- 2026-01-12: `go test ./internal/backend/memory` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-12: `GOTOOLCHAIN=local go test ./internal/backend/memory` (failed: repo requires go >= 1.25, local is 1.21.6).
-- 2026-01-12: `go test ./internal/api` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-12: `GOTOOLCHAIN=local go test ./internal/api` (failed: repo requires go >= 1.25, local is 1.21.6).
-- 2026-01-13: `go test ./pkg/ratelimiter/...` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test ./internal/backend/tb ./internal/tbutil` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test ./internal/testutil ./cmd/ratelimiterd` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test -tags=integration ./internal/backend/tb` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test ./internal/tbutil` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test -tags=stress ./internal/stress` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test -tags=chaos,integration ./internal/chaos` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test -tags=integration ./internal/e2e` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test ./internal/backend/memory ./internal/bench ./internal/testutil` (failed: Go 1.25 toolchain not available in environment).
-- 2026-01-13: `go test -tags=cucumber ./tests/ratelimiter` (failed: Go 1.25 toolchain not available in environment).
+- 2026-01-13: `nix develop -c go test ./...` (pass).
+- 2026-01-13: `TB_INTEGRATION=1 nix develop -c go test -tags=integration ./...` (pass).
+- 2026-01-13: `TB_INTEGRATION=1 nix develop -c go test -tags=stress,integration ./...` (pass).
+- 2026-01-13: `TB_INTEGRATION=1 nix develop -c go test -tags=chaos,integration ./...` (pass).
+- 2026-01-13: `nix develop -c go test -tags=cucumber ./...` (pass).
 
 ## Relevant source files (current or planned)
 - internal/agent/runner.go
@@ -73,25 +70,19 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - internal/api/*
 - internal/backend/*
 - internal/backend/memory/*
-- internal/api/*
-- pkg/ratelimiter/*
-- internal/registry/*
-- internal/backend/memory/*
 - internal/backend/tb/*
-- internal/api/*
 - internal/tbutil/*
 - internal/testutil/*
 - cmd/ratelimiterd/*
+- cmd/ratelimiter-loadtest/main.go
 - pkg/ratelimiter/*
-- flake.nix
-- README.md
 - internal/stress/*
 - internal/chaos/*
-- internal/backend/memory/debug_snapshot.go
 - internal/e2e/e2e_tb_integration_test.go
-- internal/backend/memory/memory_backend_bench_test.go
 - internal/bench/bench_http_test.go
 - tests/ratelimiter/ratelimiter_cucumber_test.go
+- flake.nix
+- README.md
 - go.mod
 - go.sum
 

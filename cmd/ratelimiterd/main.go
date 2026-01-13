@@ -68,6 +68,7 @@ func run() int {
 		}
 	default:
 		memBackend := memory.New(nil)
+		memBackend.AttachRegistry(reg, cfg.Registry.Path)
 		if err := applyStates(memBackend, reg.List()); err != nil {
 			fmt.Fprintf(os.Stderr, "memory backend load error: %v\n", err)
 			return 1

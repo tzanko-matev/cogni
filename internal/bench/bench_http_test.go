@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"cogni/internal/backend/memory"
+	"cogni/internal/ratelimitertest"
 	"cogni/internal/registry"
-	"cogni/internal/testutil"
 	"cogni/pkg/ratelimiter"
 	"cogni/pkg/ratelimiter/httpclient"
 )
@@ -104,17 +104,17 @@ func BenchmarkHTTPReserve_4Keys(b *testing.B) {
 }
 
 // startHTTPBenchServer starts an in-memory ratelimiterd server for benchmarks.
-func startHTTPBenchServer(b *testing.B, defs []ratelimiter.LimitDefinition) *testutil.ServerInstance {
+func startHTTPBenchServer(b *testing.B, defs []ratelimiter.LimitDefinition) *ratelimitertest.ServerInstance {
 	b.Helper()
 	reg := registry.New()
 	backend := memory.New(nil)
-	server := testutil.StartServer(b, testutil.ServerConfig{
+	server := ratelimitertest.StartServer(b, ratelimitertest.ServerConfig{
 		Registry: reg,
 		Backend:  backend,
 	})
 	b.Cleanup(server.Close)
 	for _, def := range defs {
-		testutil.HTTPPutLimit(b, server.BaseURL, def)
+		ratelimitertest.HTTPPutLimit(b, server.BaseURL, def)
 	}
 	return server
 }
