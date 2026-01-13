@@ -15,19 +15,19 @@ import (
 func TestE2EProviderConnectivity(t *testing.T) {
 	model := requireLiveLLM(t)
 	repoRoot := simpleRepo(t)
-	prompt := "Read README.md and report the project name. The answer must include the exact phrase \"Sample Service\". Cite README.md.\n\n" + jsonRules
+	questionsPath := filepath.Join("spec", "questions", "core.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "What is the project name in README.md?"
+    answers: ["Sample Service", "Other"]
+    correct_answers: ["Sample Service"]
+`)
 	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t1",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
-		Eval: spec.TaskEval{
-			ValidateCitations: true,
-			MustContainStrings: []string{
-				"Sample Service",
-				"README.md",
-			},
-		},
+		ID:            "t1",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 
@@ -51,56 +51,23 @@ func TestE2EProviderConnectivity(t *testing.T) {
 	}
 }
 
-// TestE2EBasicQACitations checks citation validation for a simple prompt.
-func TestE2EBasicQACitations(t *testing.T) {
+// TestE2EBasicQuestionEval checks question evaluation results for a single question.
+func TestE2EBasicQuestionEval(t *testing.T) {
 	model := requireLiveLLM(t)
 	repoRoot := simpleRepo(t)
-	prompt := "Read app.md and report the service owner. The answer must include the exact phrase \"Platform Team\". Cite app.md.\n\n" + jsonRules
+	questionsPath := filepath.Join("spec", "questions", "owner.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "Who owns the service in app.md?"
+    answers: ["Platform Team", "Other"]
+    correct_answers: ["Platform Team"]
+`)
 	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t2",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
-		Eval: spec.TaskEval{
-			ValidateCitations: true,
-			MustContainStrings: []string{
-				"Platform Team",
-				"app.md",
-			},
-		},
-	}})
-	specPath := writeConfig(t, repoRoot, cfg)
-
-	_, stderr, exitCode := runCLI(t, []string{"run", "--spec", specPath})
-	if exitCode != ExitOK {
-		t.Fatalf("expected exit %d, got %d (%s)", ExitOK, exitCode, stderr)
-	}
-
-	results, _ := resolveResults(t, repoRoot, outputDir(repoRoot, cfg.Repo.OutputDir), "HEAD")
-	if results.Tasks[0].Status != "pass" || !results.Tasks[0].Attempts[0].Eval.CitationValid {
-		t.Fatalf("expected citation pass, got %+v", results.Tasks[0])
-	}
-}
-
-// TestE2EMultiFileEvidence validates multi-file citations and answers.
-func TestE2EMultiFileEvidence(t *testing.T) {
-	model := requireLiveLLM(t)
-	repoRoot := simpleRepo(t)
-	prompt := "Using README.md and app.md, report the project name and service owner in one sentence. The answer must include \"Sample Service\" and \"Platform Team\". Include citations entries for README.md and app.md.\n\n" + jsonRules
-	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t3",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
-		Eval: spec.TaskEval{
-			ValidateCitations: true,
-			MustContainStrings: []string{
-				"Sample Service",
-				"Platform Team",
-				"README.md",
-				"app.md",
-			},
-		},
+		ID:            "t2",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 
@@ -112,5 +79,43 @@ func TestE2EMultiFileEvidence(t *testing.T) {
 	results, _ := resolveResults(t, repoRoot, outputDir(repoRoot, cfg.Repo.OutputDir), "HEAD")
 	if results.Tasks[0].Status != "pass" {
 		t.Fatalf("expected pass, got %+v", results.Tasks[0])
+	}
+}
+
+// TestE2EMultiQuestionEval validates multi-question evaluation results.
+func TestE2EMultiFileEvidence(t *testing.T) {
+	model := requireLiveLLM(t)
+	repoRoot := simpleRepo(t)
+	questionsPath := filepath.Join("spec", "questions", "multi.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "What is the project name in README.md?"
+    answers: ["Sample Service", "Other"]
+    correct_answers: ["Sample Service"]
+  - id: q2
+    question: "Who owns the service in app.md?"
+    answers: ["Platform Team", "Other"]
+    correct_answers: ["Platform Team"]
+`)
+	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
+		ID:            "t3",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
+	}})
+	specPath := writeConfig(t, repoRoot, cfg)
+
+	_, stderr, exitCode := runCLI(t, []string{"run", "--spec", specPath})
+	if exitCode != ExitOK {
+		t.Fatalf("expected exit %d, got %d (%s)", ExitOK, exitCode, stderr)
+	}
+
+	results, _ := resolveResults(t, repoRoot, outputDir(repoRoot, cfg.Repo.OutputDir), "HEAD")
+	if results.Tasks[0].Status != "pass" {
+		t.Fatalf("expected pass, got %+v", results.Tasks[0])
+	}
+	if results.Tasks[0].QuestionEval == nil || results.Tasks[0].QuestionEval.Summary.QuestionsTotal != 2 {
+		t.Fatalf("expected 2 questions, got %+v", results.Tasks[0].QuestionEval)
 	}
 }

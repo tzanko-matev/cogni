@@ -51,7 +51,7 @@ func writeFile(t *testing.T, root, rel, contents string) {
 	}
 }
 
-// simpleRepo builds a git repo with sample files for QA tests.
+// simpleRepo builds a git repo with sample files for question_eval tests.
 func simpleRepo(t *testing.T) string {
 	t.Helper()
 	requireGit(t)

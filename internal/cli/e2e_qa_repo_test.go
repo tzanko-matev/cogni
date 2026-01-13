@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"path/filepath"
 	"testing"
 
 	"cogni/internal/spec"
@@ -13,18 +14,19 @@ import (
 func TestE2ERepositoryNavigation(t *testing.T) {
 	model := requireLiveLLM(t)
 	repoRoot := simpleRepo(t)
-	prompt := "Read config/app-config.yml and report its path. The answer must include the exact string \"config/app-config.yml\". Cite config/app-config.yml.\n\n" + jsonRules
+	questionsPath := filepath.Join("spec", "questions", "repo.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "Which config path contains the mode value?"
+    answers: ["config/app-config.yml", "config.yml"]
+    correct_answers: ["config/app-config.yml"]
+`)
 	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t4",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
-		Eval: spec.TaskEval{
-			ValidateCitations: true,
-			MustContainStrings: []string{
-				"config/app-config.yml",
-			},
-		},
+		ID:            "t4",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 
@@ -43,27 +45,45 @@ func TestE2ERepositoryNavigation(t *testing.T) {
 func TestE2EMultipleTasksSummary(t *testing.T) {
 	model := requireLiveLLM(t)
 	repoRoot := simpleRepo(t)
-	promptA := "Read README.md and report the project name. The answer must include the exact phrase \"Sample Service\". Cite README.md.\n\n" + jsonRules
-	promptB := "Read app.md and report the service owner. The answer must include the exact phrase \"Platform Team\". Cite app.md.\n\n" + jsonRules
-	promptC := "Read config/app-config.yml and report the mode value. The answer must include the exact word \"sample\". Cite config/app-config.yml.\n\n" + jsonRules
+	questionsPathA := filepath.Join("spec", "questions", "summary-a.yml")
+	questionsPathB := filepath.Join("spec", "questions", "summary-b.yml")
+	questionsPathC := filepath.Join("spec", "questions", "summary-c.yml")
+	writeFile(t, repoRoot, questionsPathA, `version: 1
+questions:
+  - id: q1
+    question: "What is the project name in README.md?"
+    answers: ["Sample Service", "Other"]
+    correct_answers: ["Sample Service"]
+`)
+	writeFile(t, repoRoot, questionsPathB, `version: 1
+questions:
+  - id: q1
+    question: "Who owns the service in app.md?"
+    answers: ["Platform Team", "Other"]
+    correct_answers: ["Platform Team"]
+`)
+	writeFile(t, repoRoot, questionsPathC, `version: 1
+questions:
+  - id: q1
+    question: "What is the mode in config/app-config.yml?"
+    answers: ["sample", "other"]
+    correct_answers: ["sample"]
+`)
 	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t5a",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: promptA,
-		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Sample Service", "README.md"}},
+		ID:            "t5a",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPathA,
 	}, {
-		ID:     "t5b",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: promptB,
-		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Platform Team", "app.md"}},
+		ID:            "t5b",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPathB,
 	}, {
-		ID:     "t5c",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: promptC,
-		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"sample", "config/app-config.yml"}},
+		ID:            "t5c",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPathC,
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 

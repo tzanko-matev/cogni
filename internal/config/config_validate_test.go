@@ -11,7 +11,9 @@ func TestValidateDetectsDuplicateAgentIDs(t *testing.T) {
 	cfg := validConfig()
 	cfg.Agents = append(cfg.Agents, cfg.Agents[0])
 
-	err := Validate(&cfg, ".")
+	baseDir := t.TempDir()
+	writeQuestionSpec(t, baseDir)
+	err := Validate(&cfg, baseDir)
 	if err == nil {
 		t.Fatalf("expected validation error")
 	}
@@ -29,26 +31,14 @@ func TestValidateMissingOutputDir(t *testing.T) {
 	cfg := validConfig()
 	cfg.Repo.OutputDir = ""
 
-	err := Validate(&cfg, ".")
+	baseDir := t.TempDir()
+	writeQuestionSpec(t, baseDir)
+	err := Validate(&cfg, baseDir)
 	if err == nil {
 		t.Fatalf("expected validation error")
 	}
 	if !strings.Contains(err.Error(), "repo.output_dir") {
 		t.Fatalf("expected output_dir error, got %q", err.Error())
-	}
-}
-
-// TestValidateMissingSchemaFile verifies missing schema files are flagged.
-func TestValidateMissingSchemaFile(t *testing.T) {
-	cfg := validConfig()
-	cfg.Tasks[0].Eval.JSONSchema = "schemas/missing.json"
-
-	err := Validate(&cfg, t.TempDir())
-	if err == nil {
-		t.Fatalf("expected validation error")
-	}
-	if !strings.Contains(err.Error(), "json_schema") {
-		t.Fatalf("expected schema error, got %q", err.Error())
 	}
 }
 
@@ -59,7 +49,9 @@ func TestValidateRejectsNegativeBudgets(t *testing.T) {
 	cfg.Tasks[0].Budget.MaxSeconds = -5
 	cfg.Tasks[0].Budget.MaxSteps = -2
 
-	err := Validate(&cfg, ".")
+	baseDir := t.TempDir()
+	writeQuestionSpec(t, baseDir)
+	err := Validate(&cfg, baseDir)
 	if err == nil {
 		t.Fatalf("expected validation error")
 	}
@@ -75,7 +67,9 @@ func TestValidateRejectsInvalidCompaction(t *testing.T) {
 	cfg.Tasks[0].Compaction.RecentUserTokenBudget = -5
 	cfg.Tasks[0].Compaction.RecentToolOutputLimit = -2
 
-	err := Validate(&cfg, ".")
+	baseDir := t.TempDir()
+	writeQuestionSpec(t, baseDir)
+	err := Validate(&cfg, baseDir)
 	if err == nil {
 		t.Fatalf("expected validation error")
 	}
@@ -90,7 +84,9 @@ func TestValidateRejectsCompactionPromptConflict(t *testing.T) {
 	cfg.Tasks[0].Compaction.SummaryPrompt = "summary"
 	cfg.Tasks[0].Compaction.SummaryPromptFile = "summary.txt"
 
-	err := Validate(&cfg, ".")
+	baseDir := t.TempDir()
+	writeQuestionSpec(t, baseDir)
+	err := Validate(&cfg, baseDir)
 	if err == nil {
 		t.Fatalf("expected validation error")
 	}
@@ -104,7 +100,9 @@ func TestValidateRejectsMissingCompactionPromptFile(t *testing.T) {
 	cfg := validConfig()
 	cfg.Tasks[0].Compaction.SummaryPromptFile = "missing-summary.txt"
 
-	err := Validate(&cfg, t.TempDir())
+	baseDir := t.TempDir()
+	writeQuestionSpec(t, baseDir)
+	err := Validate(&cfg, baseDir)
 	if err == nil {
 		t.Fatalf("expected validation error")
 	}

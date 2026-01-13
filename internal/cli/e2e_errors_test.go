@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"path/filepath"
 	"testing"
 
 	"cogni/internal/spec"
@@ -13,12 +14,19 @@ import (
 func TestE2EProviderFailureHandling(t *testing.T) {
 	model := requireLiveLLM(t)
 	repoRoot := simpleRepo(t)
-	prompt := "Read README.md and report the project name. The answer must include the exact phrase \"Sample Service\". Cite README.md.\n\n" + jsonRules
+	questionsPath := filepath.Join("spec", "questions", "errors.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "What is the project name in README.md?"
+    answers: ["Sample Service", "Other"]
+    correct_answers: ["Sample Service"]
+`)
 	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t12",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
+		ID:            "t12",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 

@@ -30,13 +30,19 @@ func TestE2EInitToRunFlow(t *testing.T) {
 		t.Fatalf("init failed: %s", stderr)
 	}
 
-	prompt := "Read README.md and return the project name. The answer must include the exact word \"init\". Cite README.md.\n\n" + jsonRules
+	questionsPath := filepath.Join("spec", "questions", "init.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "What is the project name in README.md?"
+    answers: ["init", "other"]
+    correct_answers: ["init"]
+`)
 	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t11",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
-		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"init", "README.md"}},
+		ID:            "t11",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
 	}})
 	writeConfig(t, repoRoot, cfg)
 

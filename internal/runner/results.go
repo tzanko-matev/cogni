@@ -35,39 +35,11 @@ type AgentInfo struct {
 
 // TaskResult records outcomes for a task.
 type TaskResult struct {
-	TaskID        string          `json:"task_id"`
-	Type          string          `json:"type"`
-	Status        string          `json:"status"`
-	FailureReason *string         `json:"failure_reason"`
-	Attempts      []AttemptResult `json:"attempts"`
-	QuestionEval  *QuestionEval   `json:"question_eval,omitempty"`
-}
-
-// AttemptResult records effort and validation for one attempt.
-type AttemptResult struct {
-	Attempt           int            `json:"attempt"`
-	Status            string         `json:"status"`
-	AgentID           string         `json:"agent_id"`
-	Model             string         `json:"model"`
-	TokensIn          int            `json:"tokens_in"`
-	TokensOut         int            `json:"tokens_out"`
-	TokensTotal       int            `json:"tokens_total"`
-	WallTimeSeconds   float64        `json:"wall_time_seconds"`
-	AgentSteps        int            `json:"agent_steps"`
-	ToolCalls         map[string]int `json:"tool_calls"`
-	UniqueFilesRead   int            `json:"unique_files_read"`
-	Compactions       int            `json:"compactions"`
-	LastSummaryTokens int            `json:"last_summary_tokens"`
-	Eval              EvalResult     `json:"eval"`
-}
-
-// EvalResult summarizes schema/citation validation.
-type EvalResult struct {
-	SchemaValid        bool     `json:"schema_valid"`
-	CitationValid      bool     `json:"citation_valid"`
-	SchemaErrors       []string `json:"schema_errors,omitempty"`
-	CitationErrors     []string `json:"citation_errors,omitempty"`
-	MustContainMissing []string `json:"must_contain_missing,omitempty"`
+	TaskID        string        `json:"task_id"`
+	Type          string        `json:"type"`
+	Status        string        `json:"status"`
+	FailureReason *string       `json:"failure_reason"`
+	QuestionEval  *QuestionEval `json:"question_eval,omitempty"`
 }
 
 // RunSummary aggregates run-level metrics.

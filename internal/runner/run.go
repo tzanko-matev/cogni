@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -88,11 +89,7 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 		case "question_eval":
 			taskResults = append(taskResults, runQuestionTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
 		default:
-			repeat := params.Repeat
-			if repeat <= 0 {
-				repeat = 1
-			}
-			taskResults = append(taskResults, runTask(ctx, repoRoot, taskRun, toolDefs, executor, providerFactory, tokenCounter, repeat, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
+			return Results{}, fmt.Errorf("unsupported task type %q", taskRun.Task.Type)
 		}
 	}
 

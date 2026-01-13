@@ -23,15 +23,25 @@ agents:
 default_agent: default
 tasks:
   - id: task1
-    type: qa
+    type: question_eval
     agent: default
-    prompt: "hello"
+    questions_file: "questions.yml"
 `)
 	if err := os.MkdirAll(filepath.Dir(specPath), 0o755); err != nil {
 		t.Fatalf("create config dir: %v", err)
 	}
 	if err := os.WriteFile(specPath, config, 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
+	}
+	questionsPath := filepath.Join(dir, "questions.yml")
+	questionsBody := []byte(`version: 1
+questions:
+  - question: "What is 1+1?"
+    answers: ["2"]
+    correct_answers: ["2"]
+`)
+	if err := os.WriteFile(questionsPath, questionsBody, 0o644); err != nil {
+		t.Fatalf("write questions file: %v", err)
 	}
 
 	var out, err bytes.Buffer
@@ -90,15 +100,25 @@ agents:
 default_agent: default
 tasks:
   - id: task1
-    type: qa
+    type: question_eval
     agent: default
-    prompt: "hello"
+    questions_file: "questions.yml"
 `)
 	if err := os.MkdirAll(filepath.Dir(specPath), 0o755); err != nil {
 		t.Fatalf("create config dir: %v", err)
 	}
 	if err := os.WriteFile(specPath, config, 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
+	}
+	questionsPath := filepath.Join(dir, "questions.yml")
+	questionsBody := []byte(`version: 1
+questions:
+  - question: "What is 1+1?"
+    answers: ["2"]
+    correct_answers: ["2"]
+`)
+	if err := os.WriteFile(questionsPath, questionsBody, 0o644); err != nil {
+		t.Fatalf("write questions file: %v", err)
 	}
 	nested := filepath.Join(dir, "nested", "dir")
 	if err := os.MkdirAll(nested, 0o755); err != nil {

@@ -25,7 +25,7 @@ func validateTasks(cfg *spec.Config, baseDir string, agentIDs map[string]struct{
 		taskType := strings.TrimSpace(task.Type)
 		if taskType == "" {
 			add(fieldPrefix+".type", "is required")
-		} else if taskType != "qa" && taskType != "question_eval" {
+		} else if taskType != "question_eval" {
 			add(fieldPrefix+".type", fmt.Sprintf("unsupported type %q", task.Type))
 		}
 		if strings.TrimSpace(task.Agent) == "" {
@@ -67,29 +67,8 @@ func validateTasks(cfg *spec.Config, baseDir string, agentIDs map[string]struct{
 			}
 		}
 		switch taskType {
-		case "qa":
-			validateQATask(task, fieldPrefix, baseDir, add)
 		case "question_eval":
 			validateQuestionTask(task, fieldPrefix, baseDir, add)
-		}
-	}
-}
-
-// validateQATask enforces QA task requirements.
-func validateQATask(task spec.TaskConfig, fieldPrefix, baseDir string, add issueAdder) {
-	if strings.TrimSpace(task.Prompt) == "" {
-		add(fieldPrefix+".prompt", "is required")
-	}
-	if strings.TrimSpace(task.Eval.JSONSchema) != "" {
-		schemaPath := task.Eval.JSONSchema
-		if !filepath.IsAbs(schemaPath) {
-			schemaPath = filepath.Join(baseDir, schemaPath)
-		}
-		info, err := os.Stat(schemaPath)
-		if err != nil {
-			add(fieldPrefix+".eval.json_schema", fmt.Sprintf("schema not found at %q", task.Eval.JSONSchema))
-		} else if info.IsDir() {
-			add(fieldPrefix+".eval.json_schema", fmt.Sprintf("schema path %q is a directory", task.Eval.JSONSchema))
 		}
 	}
 }

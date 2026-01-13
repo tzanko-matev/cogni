@@ -12,9 +12,6 @@ func summarize(tasks []TaskResult) RunSummary {
 		case "fail":
 			summary.TasksFailed++
 		}
-		for _, attempt := range task.Attempts {
-			summary.TokensTotal += attempt.TokensTotal
-		}
 		if task.QuestionEval != nil {
 			for _, questionResult := range task.QuestionEval.Questions {
 				summary.TokensTotal += questionResult.TokensTotal

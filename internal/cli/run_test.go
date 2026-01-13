@@ -28,15 +28,25 @@ agents:
 default_agent: default
 tasks:
   - id: task-1
-    type: qa
+    type: question_eval
     agent: default
-    prompt: "hello"
+    questions_file: "questions.yml"
 `
 	if err := os.MkdirAll(filepath.Dir(specPath), 0o755); err != nil {
 		t.Fatalf("create config dir: %v", err)
 	}
 	if err := os.WriteFile(specPath, []byte(specBody), 0o644); err != nil {
 		t.Fatalf("write spec: %v", err)
+	}
+	questionsPath := filepath.Join(specDir, "questions.yml")
+	questionsBody := `version: 1
+questions:
+  - question: "What is 1+1?"
+    answers: ["2"]
+    correct_answers: ["2"]
+`
+	if err := os.WriteFile(questionsPath, []byte(questionsBody), 0o644); err != nil {
+		t.Fatalf("write questions file: %v", err)
 	}
 
 	var gotParams runner.RunParams

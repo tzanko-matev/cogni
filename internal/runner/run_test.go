@@ -41,9 +41,20 @@ func (p fakeProvider) Stream(_ context.Context, _ agent.Prompt) (agent.Stream, e
 	return &fakeStream{events: []agent.StreamEvent{{Type: agent.StreamEventMessage, Message: p.message}}}, nil
 }
 
-// TestRunExecutesTask verifies a QA task run completes successfully.
+// TestRunExecutesTask verifies a question_eval task run completes successfully.
 func TestRunExecutesTask(t *testing.T) {
 	repoRoot := t.TempDir()
+	specPath := filepath.Join(repoRoot, "questions.yml")
+	specBody := `version: 1
+questions:
+  - id: q1
+    question: "What is 2+2?"
+    answers: ["4", "5"]
+    correct_answers: ["4"]
+`
+	if err := os.WriteFile(specPath, []byte(specBody), 0o644); err != nil {
+		t.Fatalf("write spec: %v", err)
+	}
 	cfg := spec.Config{
 		Repo: spec.RepoConfig{OutputDir: "./out"},
 		Agents: []spec.AgentConfig{
@@ -51,7 +62,7 @@ func TestRunExecutesTask(t *testing.T) {
 		},
 		DefaultAgent: "agent-1",
 		Tasks: []spec.TaskConfig{
-			{ID: "task-1", Type: "qa", Agent: "agent-1", Prompt: "prompt"},
+			{ID: "task-1", Type: "question_eval", Agent: "agent-1", QuestionsFile: "questions.yml"},
 		},
 	}
 
@@ -61,7 +72,7 @@ func TestRunExecutesTask(t *testing.T) {
 		RepoRoot: repoRoot,
 		Deps: RunDependencies{
 			ProviderFactory: func(_ spec.AgentConfig, _ string) (agent.Provider, error) {
-				return fakeProvider{message: `{"ok":true}`}, nil
+				return fakeProvider{message: "Reasoning.\n<answer>4</answer>"}, nil
 			},
 			ToolRunnerFactory: func(root string) (*tools.Runner, error) {
 				return tools.NewRunner(root)
@@ -97,6 +108,17 @@ func TestRunExecutesTask(t *testing.T) {
 func TestRunAndWriteOutputs(t *testing.T) {
 	repoRoot := t.TempDir()
 	outputDir := t.TempDir()
+	specPath := filepath.Join(repoRoot, "questions.yml")
+	specBody := `version: 1
+questions:
+  - id: q1
+    question: "What is 2+2?"
+    answers: ["4", "5"]
+    correct_answers: ["4"]
+`
+	if err := os.WriteFile(specPath, []byte(specBody), 0o644); err != nil {
+		t.Fatalf("write spec: %v", err)
+	}
 	cfg := spec.Config{
 		Repo: spec.RepoConfig{OutputDir: outputDir},
 		Agents: []spec.AgentConfig{
@@ -104,7 +126,7 @@ func TestRunAndWriteOutputs(t *testing.T) {
 		},
 		DefaultAgent: "agent-1",
 		Tasks: []spec.TaskConfig{
-			{ID: "task-1", Type: "qa", Agent: "agent-1", Prompt: "prompt"},
+			{ID: "task-1", Type: "question_eval", Agent: "agent-1", QuestionsFile: "questions.yml"},
 		},
 	}
 	ctx := testutil.Context(t, 0)
@@ -112,7 +134,7 @@ func TestRunAndWriteOutputs(t *testing.T) {
 		RepoRoot: repoRoot,
 		Deps: RunDependencies{
 			ProviderFactory: func(_ spec.AgentConfig, _ string) (agent.Provider, error) {
-				return fakeProvider{message: `{"ok":true}`}, nil
+				return fakeProvider{message: "Reasoning.\n<answer>4</answer>"}, nil
 			},
 			ToolRunnerFactory: func(root string) (*tools.Runner, error) {
 				return tools.NewRunner(root)

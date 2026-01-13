@@ -31,18 +31,9 @@ type TaskConfig struct {
 	Type          string         `yaml:"type"`
 	Agent         string         `yaml:"agent"`
 	Model         string         `yaml:"model"`
-	Prompt        string         `yaml:"prompt"`
 	QuestionsFile string         `yaml:"questions_file"`
-	Eval          TaskEval       `yaml:"eval"`
 	Budget        TaskBudget     `yaml:"budget"`
 	Compaction    TaskCompaction `yaml:"compaction"`
-}
-
-// TaskEval configures QA evaluation rules for a task.
-type TaskEval struct {
-	JSONSchema         string   `yaml:"json_schema"`
-	MustContainStrings []string `yaml:"must_contain_strings"`
-	ValidateCitations  bool     `yaml:"validate_citations"`
 }
 
 // TaskBudget limits resource usage for a task.

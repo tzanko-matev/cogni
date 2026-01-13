@@ -28,7 +28,6 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		specPath := fs.String("spec", "", "Path to config file (default: search for .cogni/config.yml)")
 		agentOverride := fs.String("agent", "", "Agent id override")
 		outputDir := fs.String("output-dir", "", "Override output directory")
-		repeat := fs.Int("repeat", 1, "Repeat count")
 		verbose := fs.Bool("verbose", false, "Verbose logging")
 		logPath := fs.String("log", "", "Write verbose logs to a file")
 		noColor := fs.Bool("no-color", false, "Disable ANSI colors in verbose logs")
@@ -79,7 +78,6 @@ func runRun(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			OutputDir:        *outputDir,
 			AgentOverride:    *agentOverride,
 			Selectors:        selectors,
-			Repeat:           *repeat,
 			Verbose:          *verbose,
 			VerboseWriter:    stdout,
 			VerboseLogWriter: logFile,

@@ -55,19 +55,10 @@ agents:
 default_agent: "default"
 
 tasks:
-  - id: auth_flow_summary
-    type: qa
+  - id: question_eval_core
+    type: question_eval
     agent: "default"
-    prompt: >
-      Explain how authorization is enforced for API requests.
-      Return JSON with keys:
-      {"entrypoints":[...],"middleware":[...],"checks":[...],"citations":[{"path":...,"lines":[start,end]}]}
-    eval:
-      json_schema: "schemas/auth_flow_summary.schema.json"
-      must_contain_strings:
-        - "middleware"
-        - "citations"
-      validate_citations: true
+    questions_file: "spec/questions/core.yml"
     budget:
       max_tokens: 12000
       max_seconds: 120

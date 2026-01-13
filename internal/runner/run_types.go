@@ -46,7 +46,6 @@ type RunParams struct {
 	OutputDir        string
 	AgentOverride    string
 	Selectors        []TaskSelector
-	Repeat           int
 	Verbose          bool
 	VerboseWriter    io.Writer
 	VerboseLogWriter io.Writer

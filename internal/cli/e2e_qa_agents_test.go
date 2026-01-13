@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"path/filepath"
 	"testing"
 
 	"cogni/internal/spec"
@@ -14,24 +15,29 @@ func TestE2EMultipleAgentsModelOverride(t *testing.T) {
 	model := requireLiveLLM(t)
 	override := modelOverride(model)
 	repoRoot := simpleRepo(t)
+	questionsPath := filepath.Join("spec", "questions", "agents.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "What is the project name in README.md?"
+    answers: ["Sample Service", "Other"]
+    correct_answers: ["Sample Service"]
+`)
 	agents := []spec.AgentConfig{
 		defaultAgent("default", model),
 		defaultAgent("secondary", model),
 	}
-	prompt := "Read README.md and report the project name. The answer must include the exact phrase \"Sample Service\". Cite README.md.\n\n" + jsonRules
 	cfg := baseConfig("./cogni-results", agents, "default", []spec.TaskConfig{{
-		ID:     "t6a",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
-		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Sample Service", "README.md"}},
+		ID:            "t6a",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
 	}, {
-		ID:     "t6b",
-		Type:   "qa",
-		Agent:  "secondary",
-		Model:  override,
-		Prompt: prompt,
-		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Sample Service", "README.md"}},
+		ID:            "t6b",
+		Type:          "question_eval",
+		Agent:         "secondary",
+		Model:         override,
+		QuestionsFile: questionsPath,
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 
@@ -44,11 +50,24 @@ func TestE2EMultipleAgentsModelOverride(t *testing.T) {
 	if len(results.Tasks) != 2 {
 		t.Fatalf("expected 2 tasks, got %d", len(results.Tasks))
 	}
-	if results.Tasks[0].Attempts[0].AgentID != "default" {
-		t.Fatalf("unexpected task 1 agent: %+v", results.Tasks[0].Attempts[0])
+	if len(results.Agents) != 2 {
+		t.Fatalf("expected 2 agents, got %d", len(results.Agents))
 	}
-	if results.Tasks[1].Attempts[0].AgentID != "secondary" || results.Tasks[1].Attempts[0].Model != override {
-		t.Fatalf("unexpected task 2 agent/model: %+v", results.Tasks[1].Attempts[0])
+	foundDefault := false
+	foundSecondary := false
+	for _, agent := range results.Agents {
+		switch agent.ID {
+		case "default":
+			foundDefault = true
+		case "secondary":
+			foundSecondary = true
+			if agent.Model != override {
+				t.Fatalf("expected override model %q, got %q", override, agent.Model)
+			}
+		}
+	}
+	if !foundDefault || !foundSecondary {
+		t.Fatalf("expected agents default and secondary, got %+v", results.Agents)
 	}
 }
 
@@ -56,13 +75,20 @@ func TestE2EMultipleAgentsModelOverride(t *testing.T) {
 func TestE2EBudgetLimitFailure(t *testing.T) {
 	model := requireLiveLLM(t)
 	repoRoot := simpleRepo(t)
-	prompt := "Before answering, call the list_files tool with an empty glob. Do not answer until after the tool result. After the tool response, return ONLY JSON with keys \"answer\" and \"citations\".\n\n" + jsonRules
+	questionsPath := filepath.Join("spec", "questions", "budget.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "What is the project name in README.md?"
+    answers: ["Sample Service", "Other"]
+    correct_answers: ["Sample Service"]
+`)
 	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t7",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
-		Budget: spec.TaskBudget{MaxSteps: 1},
+		ID:            "t7",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
+		Budget:        spec.TaskBudget{MaxTokens: 1},
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 

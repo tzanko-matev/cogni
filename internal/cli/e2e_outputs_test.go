@@ -17,13 +17,19 @@ import (
 func TestE2EOutputArtifacts(t *testing.T) {
 	model := requireLiveLLM(t)
 	repoRoot := simpleRepo(t)
-	prompt := "Read README.md and report the project name. The answer must include the exact phrase \"Sample Service\". Cite README.md.\n\n" + jsonRules
+	questionsPath := filepath.Join("spec", "questions", "outputs.yml")
+	writeFile(t, repoRoot, questionsPath, `version: 1
+questions:
+  - id: q1
+    question: "What is the project name in README.md?"
+    answers: ["Sample Service", "Other"]
+    correct_answers: ["Sample Service"]
+`)
 	cfg := baseConfig("./cogni-results", []spec.AgentConfig{defaultAgent("default", model)}, "default", []spec.TaskConfig{{
-		ID:     "t8",
-		Type:   "qa",
-		Agent:  "default",
-		Prompt: prompt,
-		Eval:   spec.TaskEval{ValidateCitations: true, MustContainStrings: []string{"Sample Service", "README.md"}},
+		ID:            "t8",
+		Type:          "question_eval",
+		Agent:         "default",
+		QuestionsFile: questionsPath,
 	}})
 	specPath := writeConfig(t, repoRoot, cfg)
 

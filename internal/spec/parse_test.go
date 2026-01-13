@@ -15,9 +15,9 @@ agents:
 default_agent: default
 tasks:
   - id: task1
-    type: qa
+    type: question_eval
     agent: default
-    prompt: "hello"
+    questions_file: "questions.yml"
 `)
 	if _, err := ParseConfig(data); err != nil {
 		t.Fatalf("expected parse to succeed, got %v", err)

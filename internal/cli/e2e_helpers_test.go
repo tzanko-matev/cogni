@@ -20,12 +20,6 @@ import (
 // defaultLLMModel is the fallback model for live LLM tests.
 const defaultLLMModel = "gpt-4.1-mini"
 
-// jsonRules defines shared QA evaluation instructions for live tests.
-const jsonRules = `Rules:
-- Use repository tools to read the cited files.
-- Return ONLY a JSON object with keys "answer" and "citations".
-- "citations" must be an array of objects: {"path":"...","lines":[start,end]} with 1-based inclusive lines.`
-
 // requireLiveLLM ensures a live LLM key is available for integration tests.
 func requireLiveLLM(t *testing.T) string {
 	t.Helper()
