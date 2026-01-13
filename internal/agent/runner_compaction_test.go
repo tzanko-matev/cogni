@@ -1,4 +1,4 @@
-package agent
+package agent_test
 
 import (
 	"context"
@@ -6,16 +6,17 @@ import (
 	"strings"
 	"testing"
 
+	"cogni/internal/agent"
 	"cogni/internal/agent/call"
 	"cogni/internal/testutil"
 )
 
 type capturingProvider struct {
-	prompts []Prompt
-	streams [][]StreamEvent
+	prompts []agent.Prompt
+	streams [][]agent.StreamEvent
 }
 
-func (p *capturingProvider) Stream(_ context.Context, prompt Prompt) (Stream, error) {
+func (p *capturingProvider) Stream(_ context.Context, prompt agent.Prompt) (agent.Stream, error) {
 	p.prompts = append(p.prompts, prompt)
 	if len(p.streams) == 0 {
 		return nil, fmt.Errorf("no streams configured")
@@ -28,26 +29,26 @@ func (p *capturingProvider) Stream(_ context.Context, prompt Prompt) (Stream, er
 // TestRunTurnCompactionInsertsSummary verifies summaries are inserted into prompts.
 func TestRunTurnCompactionInsertsSummary(t *testing.T) {
 	ctx := testutil.Context(t, 0)
-	session := &Session{
-		Ctx: TurnContext{
-			ModelFamily: ModelFamily{BaseInstructionsTemplate: "base"},
+	session := &agent.Session{
+		Ctx: agent.TurnContext{
+			ModelFamily: agent.ModelFamily{BaseInstructionsTemplate: "base"},
 		},
-		History: []HistoryItem{
-			{Role: "user", Content: HistoryText{Text: "old question"}},
-			{Role: "assistant", Content: HistoryText{Text: "old answer"}},
+		History: []agent.HistoryItem{
+			{Role: "user", Content: agent.HistoryText{Text: "old question"}},
+			{Role: "assistant", Content: agent.HistoryText{Text: "old answer"}},
 		},
 	}
 	provider := &capturingProvider{
-		streams: [][]StreamEvent{
-			{{Type: StreamEventMessage, Message: "summary text"}},
-			{{Type: StreamEventMessage, Message: "done"}},
+		streams: [][]agent.StreamEvent{
+			{{Type: agent.StreamEventMessage, Message: "summary text"}},
+			{{Type: agent.StreamEventMessage, Message: "done"}},
 		},
 	}
 	executor := &fakeExecutor{}
 
 	_, err := call.RunCall(ctx, session, provider, executor, "new question", call.RunOptions{
-		TokenCounter: ApproxTokenCount,
-		Compaction: CompactionConfig{
+		TokenCounter: agent.ApproxTokenCount,
+		Compaction: agent.CompactionConfig{
 			SoftLimit:             1,
 			HardLimit:             100,
 			RecentUserTokenBudget: 1,
@@ -62,11 +63,11 @@ func TestRunTurnCompactionInsertsSummary(t *testing.T) {
 	mainPrompt := provider.prompts[1]
 	foundSummary := false
 	for _, item := range mainPrompt.InputItems {
-		text, ok := item.Content.(HistoryText)
+		text, ok := item.Content.(agent.HistoryText)
 		if !ok {
 			continue
 		}
-		if strings.HasPrefix(text.Text, SummaryPrefix) {
+		if strings.HasPrefix(text.Text, agent.SummaryPrefix) {
 			foundSummary = true
 			break
 		}

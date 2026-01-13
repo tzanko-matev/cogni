@@ -1,25 +1,26 @@
-package agent
+package agent_test
 
 import (
 	"bytes"
 	"strings"
 	"testing"
 
+	"cogni/internal/agent"
 	"cogni/internal/agent/call"
 	"cogni/internal/testutil"
 )
 
 // TestRunTurnHandlesToolCalls verifies tool-call execution flow.
 func TestRunTurnHandlesToolCalls(t *testing.T) {
-	session := &Session{
-		Ctx: TurnContext{
-			ModelFamily: ModelFamily{BaseInstructionsTemplate: "base"},
+	session := &agent.Session{
+		Ctx: agent.TurnContext{
+			ModelFamily: agent.ModelFamily{BaseInstructionsTemplate: "base"},
 		},
 	}
 	provider := &fakeProvider{
-		streams: [][]StreamEvent{
-			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: ToolCallArgs{}}}},
-			{{Type: StreamEventMessage, Message: "done"}},
+		streams: [][]agent.StreamEvent{
+			{{Type: agent.StreamEventToolCall, ToolCall: agent.ToolCall{Name: "list_files", Args: agent.ToolCallArgs{}}}},
+			{{Type: agent.StreamEventMessage, Message: "done"}},
 		},
 	}
 	executor := &fakeExecutor{}
@@ -45,21 +46,21 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 			t.Fatalf("unexpected role at %d: %s", i, session.History[i].Role)
 		}
 	}
-	call, ok := session.History[1].Content.(ToolCall)
+	call, ok := session.History[1].Content.(agent.ToolCall)
 	if !ok {
 		t.Fatalf("expected tool call content")
 	}
 	if call.Name != "list_files" || call.ID == "" {
 		t.Fatalf("unexpected tool call: %+v", call)
 	}
-	output, ok := session.History[2].Content.(ToolOutput)
+	output, ok := session.History[2].Content.(agent.ToolOutput)
 	if !ok {
 		t.Fatalf("expected tool output content")
 	}
 	if output.ToolCallID != call.ID {
 		t.Fatalf("expected tool output to reference call id")
 	}
-	if session.History[3].Content != (HistoryText{Text: "done"}) {
+	if session.History[3].Content != (agent.HistoryText{Text: "done"}) {
 		t.Fatalf("expected assistant message, got %v", session.History[3].Content)
 	}
 	if metrics.Steps != 2 {
@@ -72,14 +73,14 @@ func TestRunTurnHandlesToolCalls(t *testing.T) {
 
 // TestRunTurnBudgetExceeded verifies budget enforcement behavior.
 func TestRunTurnBudgetExceeded(t *testing.T) {
-	session := &Session{
-		Ctx: TurnContext{
-			ModelFamily: ModelFamily{BaseInstructionsTemplate: "base"},
+	session := &agent.Session{
+		Ctx: agent.TurnContext{
+			ModelFamily: agent.ModelFamily{BaseInstructionsTemplate: "base"},
 		},
 	}
 	provider := &fakeProvider{
-		streams: [][]StreamEvent{
-			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: ToolCallArgs{}}}},
+		streams: [][]agent.StreamEvent{
+			{{Type: agent.StreamEventToolCall, ToolCall: agent.ToolCall{Name: "list_files", Args: agent.ToolCallArgs{}}}},
 		},
 	}
 	executor := &fakeExecutor{}
@@ -95,15 +96,15 @@ func TestRunTurnBudgetExceeded(t *testing.T) {
 
 // TestRunTurnVerboseLogs verifies verbose logging output formatting.
 func TestRunTurnVerboseLogs(t *testing.T) {
-	session := &Session{
-		Ctx: TurnContext{
-			ModelFamily: ModelFamily{BaseInstructionsTemplate: "base"},
+	session := &agent.Session{
+		Ctx: agent.TurnContext{
+			ModelFamily: agent.ModelFamily{BaseInstructionsTemplate: "base"},
 		},
 	}
 	provider := &fakeProvider{
-		streams: [][]StreamEvent{
-			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: ToolCallArgs{}}}},
-			{{Type: StreamEventMessage, Message: "done"}},
+		streams: [][]agent.StreamEvent{
+			{{Type: agent.StreamEventToolCall, ToolCall: agent.ToolCall{Name: "list_files", Args: agent.ToolCallArgs{}}}},
+			{{Type: agent.StreamEventMessage, Message: "done"}},
 		},
 	}
 	executor := &verboseExecutor{output: verboseOutput()}
@@ -155,15 +156,15 @@ func TestRunTurnVerboseLogs(t *testing.T) {
 
 // TestRunTurnVerboseLogWriterCapturesFullOutput verifies log writer output is not truncated.
 func TestRunTurnVerboseLogWriterCapturesFullOutput(t *testing.T) {
-	session := &Session{
-		Ctx: TurnContext{
-			ModelFamily: ModelFamily{BaseInstructionsTemplate: "base"},
+	session := &agent.Session{
+		Ctx: agent.TurnContext{
+			ModelFamily: agent.ModelFamily{BaseInstructionsTemplate: "base"},
 		},
 	}
 	provider := &fakeProvider{
-		streams: [][]StreamEvent{
-			{{Type: StreamEventToolCall, ToolCall: ToolCall{Name: "list_files", Args: ToolCallArgs{}}}},
-			{{Type: StreamEventMessage, Message: "done"}},
+		streams: [][]agent.StreamEvent{
+			{{Type: agent.StreamEventToolCall, ToolCall: agent.ToolCall{Name: "list_files", Args: agent.ToolCallArgs{}}}},
+			{{Type: agent.StreamEventMessage, Message: "done"}},
 		},
 	}
 	executor := &verboseExecutor{output: verboseOutput()}
