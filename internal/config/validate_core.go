@@ -27,6 +27,7 @@ func Validate(cfg *spec.Config, baseDir string) error {
 
 	agentIDs := validateAgents(cfg, collector.add)
 	validateDefaultAgent(cfg, agentIDs, collector.add)
+	validateRateLimiter(cfg, collector.add)
 	validateTasks(cfg, baseDir, agentIDs, collector.add)
 
 	return collector.result()

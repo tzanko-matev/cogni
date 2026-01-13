@@ -28,6 +28,14 @@ func validateTasks(cfg *spec.Config, baseDir string, agentIDs map[string]struct{
 		} else if taskType != "question_eval" {
 			add(fieldPrefix+".type", fmt.Sprintf("unsupported type %q", task.Type))
 		}
+		if task.Concurrency != 0 {
+			if task.Concurrency < 1 {
+				add(fieldPrefix+".concurrency", "must be >= 1")
+			}
+			if taskType != "" && taskType != "question_eval" {
+				add(fieldPrefix+".concurrency", "is only valid for question_eval tasks")
+			}
+		}
 		if strings.TrimSpace(task.Agent) == "" {
 			add(fieldPrefix+".agent", "is required")
 		} else if _, ok := agentIDs[task.Agent]; !ok {

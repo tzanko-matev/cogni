@@ -15,6 +15,16 @@ func validConfig() spec.Config {
 		Repo: spec.RepoConfig{
 			OutputDir: "./out",
 		},
+		RateLimiter: spec.RateLimiterConfig{
+			Mode:             "disabled",
+			Workers:          1,
+			RequestTimeoutMs: 2000,
+			MaxOutputTokens:  2048,
+			Batch: spec.BatchConfig{
+				Size:    128,
+				FlushMs: 2,
+			},
+		},
 		Agents: []spec.AgentConfig{
 			{
 				ID:       "default",
