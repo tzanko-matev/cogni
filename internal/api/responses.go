@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+
+	"cogni/pkg/ratelimiter"
 )
 
 type errorResponse struct {
@@ -29,6 +31,22 @@ func writeAdminPutResponse(w http.ResponseWriter, status int, payload adminPutRe
 	writeBytes(w, status, mustJSONAdminPut(payload))
 }
 
+func writeReserveResponse(w http.ResponseWriter, status int, payload ratelimiter.ReserveResponse) {
+	writeBytes(w, status, mustJSONReserve(payload))
+}
+
+func writeCompleteResponse(w http.ResponseWriter, status int, payload ratelimiter.CompleteResponse) {
+	writeBytes(w, status, mustJSONComplete(payload))
+}
+
+func writeBatchReserveResponse(w http.ResponseWriter, status int, payload ratelimiter.BatchReserveResponse) {
+	writeBytes(w, status, mustJSONBatchReserve(payload))
+}
+
+func writeBatchCompleteResponse(w http.ResponseWriter, status int, payload ratelimiter.BatchCompleteResponse) {
+	writeBytes(w, status, mustJSONBatchComplete(payload))
+}
+
 func writeBytes(w http.ResponseWriter, status int, payload []byte) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -51,6 +69,26 @@ func mustJSONLimits(payload limitsResponse) []byte {
 }
 
 func mustJSONAdminPut(payload adminPutResponse) []byte {
+	data, _ := json.Marshal(payload)
+	return data
+}
+
+func mustJSONReserve(payload ratelimiter.ReserveResponse) []byte {
+	data, _ := json.Marshal(payload)
+	return data
+}
+
+func mustJSONComplete(payload ratelimiter.CompleteResponse) []byte {
+	data, _ := json.Marshal(payload)
+	return data
+}
+
+func mustJSONBatchReserve(payload ratelimiter.BatchReserveResponse) []byte {
+	data, _ := json.Marshal(payload)
+	return data
+}
+
+func mustJSONBatchComplete(payload ratelimiter.BatchCompleteResponse) []byte {
 	data, _ := json.Marshal(payload)
 	return data
 }

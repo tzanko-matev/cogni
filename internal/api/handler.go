@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"cogni/internal/backend"
 	"cogni/internal/registry"
@@ -13,6 +14,7 @@ type Config struct {
 	Registry     *registry.Registry
 	Backend      backend.Backend
 	RegistryPath string
+	Now          func() time.Time
 }
 
 // NewHandler builds an HTTP handler for the rate limiter API.
@@ -21,10 +23,15 @@ func NewHandler(cfg Config) http.Handler {
 		registry:     cfg.Registry,
 		backend:      cfg.Backend,
 		registryPath: cfg.RegistryPath,
+		nowFn:        cfg.Now,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/admin/limits", h.handleAdminLimits)
 	mux.HandleFunc("/v1/admin/limits/", h.handleAdminLimitByKey)
+	mux.HandleFunc("/v1/reserve", h.handleReserve)
+	mux.HandleFunc("/v1/reserve/batch", h.handleBatchReserve)
+	mux.HandleFunc("/v1/complete", h.handleComplete)
+	mux.HandleFunc("/v1/complete/batch", h.handleBatchComplete)
 	return mux
 }
 
@@ -32,6 +39,7 @@ type handler struct {
 	registry     *registry.Registry
 	backend      backend.Backend
 	registryPath string
+	nowFn        func() time.Time
 }
 
 func (h *handler) handleAdminLimits(w http.ResponseWriter, r *http.Request) {

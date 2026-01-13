@@ -9,7 +9,7 @@ Created: 2026-01-12
 Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-limiter.plan/)
 
 ## Current status
-- Phase 2 complete: in-memory backend implemented with deterministic tests.
+- Phase 3 complete: HTTP reserve/complete endpoints and batch handling wired to registry/backend.
 
 ## What was done so far
 - Created plan and status files for the rate limiter implementation.
@@ -25,9 +25,10 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - Implemented in-memory backend with rolling/concurrency limits, debt tracking, and decrease handling.
 - Added memory backend unit tests using FakeClock, plus test helpers and stress coverage.
 - Added FakeClock utilities in `internal/testutil`.
+- Implemented reserve/complete + batch HTTP handlers with validation and ordering tests.
 
 ## Next steps
-- Phase 3: implement HTTP server reserve/complete endpoints and batch support.
+- Phase 4: implement client library (HTTP + local, batcher, scheduler).
 
 ## Latest test run
 - 2026-01-12: `go test ./internal/agent/...` (failed: Go 1.25 toolchain not available in environment).
@@ -36,6 +37,8 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - 2026-01-12: `GOTOOLCHAIN=local go test ./internal/registry ./internal/api` (failed: repo requires go >= 1.25, local is 1.21.6).
 - 2026-01-12: `go test ./internal/backend/memory` (failed: Go 1.25 toolchain not available in environment).
 - 2026-01-12: `GOTOOLCHAIN=local go test ./internal/backend/memory` (failed: repo requires go >= 1.25, local is 1.21.6).
+- 2026-01-12: `go test ./internal/api` (failed: Go 1.25 toolchain not available in environment).
+- 2026-01-12: `GOTOOLCHAIN=local go test ./internal/api` (failed: repo requires go >= 1.25, local is 1.21.6).
 
 ## Relevant source files (current or planned)
 - internal/agent/runner.go
@@ -44,6 +47,7 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - internal/api/*
 - internal/backend/*
 - internal/backend/memory/*
+- internal/api/*
 - pkg/ratelimiter/*
 - internal/registry/*
 - internal/backend/memory/*
