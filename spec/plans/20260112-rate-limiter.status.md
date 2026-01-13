@@ -9,7 +9,7 @@ Created: 2026-01-12
 Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-limiter.plan/)
 
 ## Current status
-- Phase 3 complete: HTTP reserve/complete endpoints and batch handling wired to registry/backend.
+- Phase 4 complete: client library requirements helper, batcher, scheduler, and unit tests.
 
 ## What was done so far
 - Created plan and status files for the rate limiter implementation.
@@ -26,9 +26,11 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - Added memory backend unit tests using FakeClock, plus test helpers and stress coverage.
 - Added FakeClock utilities in `internal/testutil`.
 - Implemented reserve/complete + batch HTTP handlers with validation and ordering tests.
+- Added LLM requirement helper and ULID generator in `pkg/ratelimiter`.
+- Implemented client-side batcher and scheduler with deterministic unit tests.
 
 ## Next steps
-- Phase 4: implement client library (HTTP + local, batcher, scheduler).
+- Phase 5: implement TigerBeetle backend and submitter.
 
 ## Latest test run
 - 2026-01-12: `go test ./internal/agent/...` (failed: Go 1.25 toolchain not available in environment).
@@ -39,6 +41,7 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - 2026-01-12: `GOTOOLCHAIN=local go test ./internal/backend/memory` (failed: repo requires go >= 1.25, local is 1.21.6).
 - 2026-01-12: `go test ./internal/api` (failed: Go 1.25 toolchain not available in environment).
 - 2026-01-12: `GOTOOLCHAIN=local go test ./internal/api` (failed: repo requires go >= 1.25, local is 1.21.6).
+- 2026-01-13: `go test ./pkg/ratelimiter/...` (failed: Go 1.25 toolchain not available in environment).
 
 ## Relevant source files (current or planned)
 - internal/agent/runner.go

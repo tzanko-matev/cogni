@@ -36,6 +36,18 @@ func (m *MemoryBackend) ApplyDefinition(_ context.Context, def ratelimiter.Limit
 	return nil
 }
 
+// ApplyState loads a persisted limit state into memory.
+func (m *MemoryBackend) ApplyState(state ratelimiter.LimitState) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.defs[state.Definition.Key] = state.Definition
+	m.states[state.Definition.Key] = state
+	m.ensureLimitStoresLocked(state.Definition)
+	m.updateCapacityLocked(state.Definition)
+	return nil
+}
+
 // TryApplyDecrease applies a pending capacity decrease when usage allows.
 func (m *MemoryBackend) TryApplyDecrease(key ratelimiter.LimitKey) {
 	m.mu.Lock()
