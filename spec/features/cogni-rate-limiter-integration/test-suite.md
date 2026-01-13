@@ -50,7 +50,6 @@ File: `internal/runner/run_rate_limiter_test.go`
 
 Use a stub limiter that records Reserve/Complete calls.
 
-- `qa` task: one Reserve + one Complete per attempt.
 - `question_eval` task: Reserve/Complete per question.
 
 Timeout: 1s per test.

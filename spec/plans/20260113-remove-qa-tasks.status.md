@@ -2,12 +2,12 @@
 
 ID: 20260113-remove-qa-tasks.status  
 Created: 2026-01-13  
-Status: IN PROGRESS
+Status: DONE
 
 Linked plan: `spec/plans/20260113-remove-qa-tasks.plan.md`
 
 ## Current status
-- Step 1-3 in progress: QA task types removed from config/runner/CLI, tests updated, eval package removed.
+- Implementation complete; QA task support removed from code and docs.
 
 ## What was done so far
 - Removed `qa` fields from task schema and validation; only `question_eval` is accepted.
@@ -16,11 +16,12 @@ Linked plan: `spec/plans/20260113-remove-qa-tasks.plan.md`
 - Updated runner results to only include question_eval outputs.
 - Updated config scaffolding and unit tests to question_eval.
 - Updated live e2e CLI tests to question_eval semantics.
+- Updated specs/docs/examples to only reference `question_eval` tasks.
 - Verified `nix develop -c go test ./internal/...` passes (2026-01-13).
+- Verified `nix develop -c go test ./...` passes (2026-01-13).
 
 ## Next steps
-- Step 4: Clean docs/specs referencing `qa`.
-- Step 5: Remove any remaining QA references in specs/features and run full test suite.
+- None.
 
 ## Relevant source files (current or planned)
 - `internal/spec/types.go`

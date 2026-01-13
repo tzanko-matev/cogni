@@ -27,7 +27,6 @@ Tests:
 
 - In `runner.Run`, build the limiter once and pass it into task runners.
 - Add dependency injection for tests (`RunDependencies.LimiterFactory`).
-- For `qa` tasks, wrap the single call in a scheduler-backed execution path (workers=1).
 
 Tests:
 - `internal/runner/run_rate_limiter_test.go` (timeout <= 1s).

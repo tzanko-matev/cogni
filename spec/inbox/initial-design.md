@@ -15,8 +15,7 @@ This is how cogni looks in day-to-day use for a repo owner.
 
 1) Add questions
    - Start with `cogni init` to scaffold `.cogni.yml` and a `schemas/` folder.
-   - Define `qa` tasks with prompts tied to key product features and stakeholder concerns.
-   - Require citations so answers are traceable to code.
+   - Define `question_eval` tasks that reference a Question Spec file.
    - Define one or more agents and assign each question to an agent (or rely on the default agent).
    - Set the output folder once in `.cogni.yml` so CLI commands stay short.
    - Example questions for the future cogni codebase:
@@ -33,43 +32,23 @@ This is how cogni looks in day-to-day use for a repo owner.
          temperature: 0.0
      default_agent: "default"
      tasks:
-       - id: cli_command_map
-         type: qa
+       - id: core_questions
+         type: question_eval
          agent: "default"
-         prompt: >
-           List the CLI commands supported by cogni and where each is implemented.
-           Return JSON with keys:
-           {"commands":[{"name":...,"file":...,"description":...}],"citations":[{"path":...,"lines":[start,end]}]}
-         eval:
-           must_contain_strings: ["commands", "citations"]
-           validate_citations: true
-         budget:
-           max_tokens: 8000
-           max_seconds: 120
-       - id: report_generation_flow
-         type: qa
-         prompt: >
-           Explain how cogni generates report.html, including which inputs it reads and how it
-           summarizes results. Return JSON with keys:
-           {"inputs":[...],"outputs":[...],"steps":[...],"citations":[{"path":...,"lines":[start,end]}]}
-         eval:
-           must_contain_strings: ["inputs", "outputs", "citations"]
-           validate_citations: true
+         questions_file: "spec/questions/core.yml"
          budget:
            max_tokens: 9000
            max_seconds: 120
-       - id: results_json_summary
-         type: qa
-         prompt: >
-           Describe how results.json is structured and where summary metrics are computed.
-           Return JSON with keys:
-           {"summary_fields":[...],"computation":[...],"citations":[{"path":...,"lines":[start,end]}]}
-         eval:
-           must_contain_strings: ["summary_fields", "citations"]
-           validate_citations: true
-         budget:
-           max_tokens: 9000
-           max_seconds: 120
+     ```
+
+     ```yaml
+     # spec/questions/core.yml
+     version: 1
+     questions:
+       - id: cli_commands
+         question: "Which CLI commands are supported by Cogni?"
+         answers: ["run, eval, compare, report", "only run"]
+         correct_answers: ["run, eval, compare, report"]
      ```
 
 2) Validate the spec
@@ -203,7 +182,7 @@ The CLI is the product in MVP; no separate backend or SaaS components.
 * Human-editable, lives in repo, versioned like code
 * Supports one task type:
 
-  * `qa` : agent returns structured JSON (machine-checkable)
+  * `question_eval` : agent answers questions from a Question Spec (machine-checkable)
 * Per-task budgets/limits (tokens/time/steps)
 * Deterministic-ish evaluation (no LLM judge in MVP)
 * Configurable output folder for results and reports
@@ -234,21 +213,11 @@ default_agent: "default"
 
 tasks:
   - id: auth_flow_summary
-    type: qa
+    type: question_eval
     agent: "default"
     # Optional per-task model override (future)
     # model: "gpt-4.1-mini"
-    prompt: >
-      Explain how authorization is enforced for API requests.
-      Return JSON with keys:
-      {"entrypoints":[...],"middleware":[...],"checks":[...],"citations":[{"path":..., "lines":[start,end]}]}
-    eval:
-      json_schema: "schemas/auth_flow_summary.schema.json"
-      must_contain_strings:
-        - "middleware"
-        - "citations"
-      # Optional: verify citations refer to real files/line ranges
-      validate_citations: true
+    questions_file: "spec/questions/core.yml"
     budget:
       max_tokens: 12000
       max_seconds: 120
@@ -260,9 +229,9 @@ tasks:
 
   * YAML is valid
   * task IDs unique
-  * referenced schema files exist
+* referenced question spec files exist
   * budgets sane
-* `cogni init` creates a starter `.cogni.yml` and schema folder
+* `cogni init` creates a starter `.cogni.yml` and example Question Spec location
 
 ---
 
@@ -279,7 +248,7 @@ Implement a `CodingAgent` that can:
 
 * receive a task prompt
 * use tools iteratively
-* output a final JSON answer (`qa` task)
+* output a final `<answer>...</answer>` for `question_eval` tasks
 
 Each run instantiates the configured agent (selected by task agent ID or CLI override).
 
@@ -344,18 +313,15 @@ Runs are local and read-only. The agent must not modify the repo. Sandboxed runn
 
 ## 9) Evaluation logic (objective checks only)
 
-### 9.1 QA task evaluation (`type: qa`)
+### 9.1 Question evaluation (`type: question_eval`)
 
 MVP evaluation rules:
 
-1. The agent output must be valid JSON.
-2. If `json_schema` provided, validate output against JSON Schema.
-3. If `must_contain_strings` provided, verify substrings exist in JSON (stringified) OR check keys exist.
-4. If `validate_citations: true`, verify:
-
-   * each citation path exists
-   * line ranges are within file length
-   * (optional) cited lines contain at least one keyword from task prompt
+1. Load the Question Spec referenced by `questions_file`.
+2. For each question, build a prompt that includes the answer choices.
+3. The agent must end its response with `<answer>...</answer>`.
+4. Parse the answer and compare it to `correct_answers` (trim + case-insensitive).
+5. A parse error marks the question incorrect; any runtime error marks the task as error.
 
 **No LLM judging in MVP.**
 
@@ -364,11 +330,7 @@ MVP evaluation rules:
 ### 10.1 Correctness
 
 * `status`: `pass | fail | error`
-* `failure_reason`: (e.g., `invalid_json`, `schema_validation_failed`, `citation_validation_failed`, `budget_exceeded`, `runtime_error`)
-* `eval_artifacts`:
-
-  * schema validation errors
-  * citation validation errors
+* `failure_reason`: (e.g., `invalid_answer_format`, `budget_exceeded`, `runtime_error`)
 
 ### 10.2 Effort / cost proxies
 
@@ -427,33 +389,30 @@ Runner must emit a single `results.json` per run.
   "finished_at": "2025-12-27T12:40:12Z",
   "tasks": [
     {
-      "task_id": "auth_flow_summary",
-      "type": "qa",
+      "task_id": "core_questions",
+      "type": "question_eval",
       "status": "pass",
       "failure_reason": null,
-      "attempts": [
-        {
-          "attempt": 1,
-          "status": "pass",
-          "agent_id": "default",
-          "model": "gpt-4.1-mini",
-          "tokens_in": 3500,
-          "tokens_out": 900,
-          "tokens_total": 4400,
-          "wall_time_seconds": 42.1,
-          "agent_steps": 9,
-          "tool_calls": {
-            "search": 2,
-            "read_file": 5,
-            "list_files": 1
-          },
-          "unique_files_read": 4,
-          "eval": {
-            "schema_valid": true,
-            "citation_valid": true
+      "question_eval": {
+        "questions_file": "spec/questions/core.yml",
+        "summary": {
+          "questions_total": 2,
+          "questions_correct": 2,
+          "questions_incorrect": 0,
+          "accuracy": 1.0
+        },
+        "questions": [
+          {
+            "id": "q1",
+            "question": "What is the project name?",
+            "agent_answer": "Sample Service",
+            "correct": true,
+            "tokens_total": 1200,
+            "wall_time_seconds": 12.3,
+            "agent_steps": 3
           }
-        }
-      ]
+        ]
+      }
     }
   ],
   "summary": {
@@ -574,8 +533,7 @@ These are intentionally out of scope for the initial MVP.
    * expand row to show:
 
      * tool usage breakdown
-     * schema errors (for qa tasks)
-     * citation validation errors
+     * per-question correctness and parse errors
 
 ### 14.2 Regression highlighting (MVP)
 

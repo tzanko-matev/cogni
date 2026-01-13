@@ -4,7 +4,7 @@
 
 - CLI commands: `cogni init`, `cogni validate`, `cogni run`, `cogni eval`, `cogni compare`, `cogni report`
 - Configuration: `.cogni.yml` and JSON schemas
-- Task types: `qa`, `question_eval`
+- Task types: `question_eval`
 
 ## Endpoints or interfaces
 

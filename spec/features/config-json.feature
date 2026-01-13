@@ -4,6 +4,19 @@ Feature: JSON configuration format
   So Cogni can use the same schema as YAML
 
   Scenario: Minimal valid .cogni.json passes validation
+    Given a file named "spec/questions/sample.json" with:
+      """
+      {
+        "version": 1,
+        "questions": [
+          {
+            "question": "What is 1+1?",
+            "answers": ["2"],
+            "correct_answers": ["2"]
+          }
+        ]
+      }
+      """
     Given a file named ".cogni.json" with:
       """
       {
@@ -23,8 +36,8 @@ Feature: JSON configuration format
         "tasks": [
           {
             "id": "auth_flow_summary",
-            "type": "qa",
-            "prompt": "Explain how authorization is enforced for API requests."
+            "type": "question_eval",
+            "questions_file": "spec/questions/sample.json"
           }
         ]
       }

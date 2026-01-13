@@ -5,7 +5,7 @@ This document defines **how `question_eval` runs concurrently** while preserving
 ## Scope
 
 - Only `question_eval` tasks run concurrently in v1.
-- `qa` tasks and `repeat` attempts remain sequential (but still rate-limited).
+- Other task types are out of scope; `question_eval` is the only supported task type.
 
 ## Execution model
 

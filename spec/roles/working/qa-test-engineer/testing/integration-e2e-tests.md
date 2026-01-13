@@ -95,16 +95,13 @@ agents:
 default_agent: "default"
 tasks:
   - id: sample_task
-    type: qa
-    prompt: >
-      Replace this prompt per test case.
-    eval:
-      validate_citations: true
+    type: question_eval
+    questions_file: "spec/questions/sample.yml"
 EOF
 ```
 
-Prompts are written in plain language with objective, verifiable answers
-(titles, file names, short quotes, enumerations).
+Questions are written in plain language with objective, verifiable answers
+(titles, file names, short enumerations).
 
 ### Question spec fixture recipe (per test)
 

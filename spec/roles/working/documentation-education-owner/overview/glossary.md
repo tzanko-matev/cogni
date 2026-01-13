@@ -4,7 +4,7 @@
 - Cognitive test: A single question answered by an agent with citations.
 - Probe question: A repo-specific question tied to a product feature.
 - Config dir: The `.cogni/` folder that contains `config.yml` and `schemas/`.
-- Task: A `qa` or `question_eval` item in `.cogni/config.yml`.
+- Task: A `question_eval` item in `.cogni/config.yml`.
 - Run: An execution of tasks at a specific commit.
 - Attempt: A single execution of a task (supports repeats).
 - Agent: The configured system that answers questions.

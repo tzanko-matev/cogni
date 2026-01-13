@@ -94,16 +94,13 @@ agents:
 default_agent: "default"
 tasks:
   - id: sample_task
-    type: qa
-    prompt: >
-      Replace this prompt per test case.
-    eval:
-      validate_citations: true
+    type: question_eval
+    questions_file: "spec/questions/sample.yml"
 EOF
 ```
 
-Prompts are written in plain language with objective, verifiable answers
-(titles, file names, short quotes, enumerations).
+Questions are written in plain language with objective, verifiable answers
+(titles, file names, short enumerations).
 
 ### Question spec fixture recipe (per test)
 
@@ -133,35 +130,35 @@ EOF
 ### T1: Provider connectivity smoke test
 
 - Goal: confirm a valid provider key enables a full run.
-- Setup: Simple repo recipe with one QA task in `.cogni.yml`.
+- Setup: Simple repo recipe with one question_eval task in `.cogni.yml`.
 - Steps: run `cogni run` from the fixture repo.
 - Expected: run succeeds, 1 task passes, artifacts exist.
 
-### T2: Basic QA with citations
+### T2: Basic question evaluation
 
-- Goal: verify the agent cites a specific file to support an answer.
-- Setup: Simple repo recipe where README contains a clear sentence to quote.
-- Steps: ask “What is the project name? Cite the README.”
-- Expected: pass status; answer references the README content.
+- Goal: verify question_eval returns the correct answer from the provided choices.
+- Setup: Simple repo recipe where README contains the project name.
+- Steps: include a Question Spec with answers ["Sample Service", "Other"].
+- Expected: pass status; question marked correct.
 
-### T3: Multi-file evidence
+### T3: Multi-question evaluation
 
-- Goal: ensure the agent can combine evidence from more than one file.
-- Setup: Simple repo recipe where README and app notes each contain part of the answer.
-- Steps: ask a question that requires both sources.
-- Expected: pass status; citations reference both files.
+- Goal: ensure multiple questions are evaluated in one task.
+- Setup: Simple repo recipe with README and app notes.
+- Steps: include a Question Spec with two questions (project name + service owner).
+- Expected: pass status; summary shows 2 questions with correct answers.
 
 ### T4: Repository navigation
 
 - Goal: confirm the agent can locate information without hints.
 - Setup: Simple repo recipe includes `config/app-config.yml`.
-- Steps: ask “Where is app-config.yml located? Provide the path.”
-- Expected: pass status; answer includes the correct relative path.
+- Steps: include a question with answers ["config/app-config.yml", "config.yml"].
+- Expected: pass status; correct path chosen.
 
 ### T5: Multiple tasks in one run
 
 - Goal: validate summary counts and per-task statuses.
-- Setup: Simple repo recipe and a config with 3 QA tasks of varying difficulty.
+- Setup: Simple repo recipe and a config with 3 question_eval tasks of varying difficulty.
 - Steps: run `cogni run`.
 - Expected: all tasks report status; summary counts match task outcomes.
 
@@ -170,7 +167,7 @@ EOF
 - Goal: show that per-task agent selection works in real runs.
 - Setup: Simple repo recipe and a config with two agents and one task per agent.
 - Steps: run `cogni run`.
-- Expected: results list the correct agent and model per task.
+- Expected: results list both agents and the overridden model where configured.
 
 ### T7: Budget limits and graceful failure
 

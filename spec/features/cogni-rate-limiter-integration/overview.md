@@ -27,7 +27,7 @@ Audience: junior Go developer. This spec is self-contained. Follow the files in 
 - Running TigerBeetle inside Cogni.
 - Managing `ratelimiterd` admin state (no automatic PUT/GET of limits).
 - Authentication or authorization.
-- Parallelizing `qa` tasks or `repeat` attempts beyond existing semantics.
+- Parallelizing other task types beyond `question_eval` (not currently supported).
 - Changing rate limiter semantics or API.
 
 ## Decisions (source of truth)

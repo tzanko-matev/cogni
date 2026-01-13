@@ -1,7 +1,7 @@
 # Plan: Remove QA Task Logic
 
 Date: 2026-01-13  
-Status: TODO
+Status: DONE
 
 ## Goal
 Remove all `qa` task logic from code, specs, and documentation so that `question_eval`

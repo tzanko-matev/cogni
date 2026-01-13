@@ -14,9 +14,7 @@ Set up a repeatable benchmark for your repo with clear outputs you can share.
 - Choose a results folder when prompted (default `.cogni/results`); `cogni init` writes it to `repo.output_dir` in `.cogni/config.yml`.
 - If a git repo is detected, `cogni init` offers to add the results folder to the repo root `.gitignore`.
 - `cogni init` creates `.cogni/config.yml` and `.cogni/schemas/`.
-- Add `qa` tasks with prompts tied to product features.
-- For Question Specs, add `question_eval` tasks that reference the spec file.
-- Require citations so answers are traceable to code.
+- Add `question_eval` tasks that reference a Question Spec file.
 - Set `output_dir` once so run commands stay short.
 
 ## Run and review

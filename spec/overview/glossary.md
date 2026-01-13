@@ -3,7 +3,7 @@
 - Cognitive benchmark: A repeatable suite of questions used to measure codebase understanding.
 - Cognitive test: A single question answered by an agent with citations.
 - Probe question: A repo-specific question tied to a product feature.
-- Task: A `qa` or `question_eval` item in `.cogni.yml`.
+- Task: A `question_eval` item in `.cogni.yml`.
 - Run: An execution of tasks at a specific commit.
 - Attempt: A single execution of a task (supports repeats).
 - Agent: The configured system that answers questions.

@@ -59,7 +59,7 @@ Remove cucumber-related logic and docs:
 1. **Config Schema Cleanup**
    - Remove `Adapters`/`AdapterConfig` from `spec.Config`.
    - Add `questions_file` to `spec.TaskConfig`.
-   - Update config validation to accept only `question_eval` and `qa` task types.
+   - Update config validation to accept only `question_eval` task types.
 2. **Question Spec Loader**
    - Add a new package (e.g. `internal/question`) to load JSON/YAML.
    - Validate `answers`/`correct_answers`, normalize for matching.

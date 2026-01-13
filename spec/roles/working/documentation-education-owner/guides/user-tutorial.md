@@ -6,9 +6,7 @@ This is how cogni looks in day-to-day use for a repo owner.
    - In a git repo, `cogni init` defaults to the repo root; otherwise it uses the current folder.
    - Choose a results folder when prompted (default `.cogni/results`); this is written to `repo.output_dir`.
    - If a git repo is detected, decide whether to add the results folder to `.gitignore`.
-   - Define `qa` tasks with prompts tied to key product features and stakeholder concerns.
-   - If you maintain a Question Spec, add `question_eval` tasks that reference the spec file.
-   - Require citations so answers are traceable to code.
+   - Define `question_eval` tasks that reference a Question Spec file.
    - Define one or more agents and assign each question to an agent (or rely on the default agent).
    - Set the output folder once in `.cogni/config.yml` so CLI commands stay short.
    - Save the following example in `.cogni/config.yml` (sample questions for the future cogni codebase):
@@ -25,43 +23,24 @@ This is how cogni looks in day-to-day use for a repo owner.
          temperature: 0.0
      default_agent: "default"
      tasks:
-       - id: cli_command_map
-         type: qa
+       - id: core_questions
+         type: question_eval
          agent: "default"
-         prompt: >
-           List the CLI commands supported by cogni and where each is implemented.
-           Return JSON with keys:
-           {"commands":[{"name":...,"file":...,"description":...}],"citations":[{"path":...,"lines":[start,end]}]}
-         eval:
-           must_contain_strings: ["commands", "citations"]
-           validate_citations: true
-         budget:
-           max_tokens: 8000
-           max_seconds: 120
-       - id: report_generation_flow
-         type: qa
-         prompt: >
-           Explain how cogni generates report.html, including which inputs it reads and how it
-           summarizes results. Return JSON with keys:
-           {"inputs":[...],"outputs":[...],"steps":[...],"citations":[{"path":...,"lines":[start,end]}]}
-         eval:
-           must_contain_strings: ["inputs", "outputs", "citations"]
-           validate_citations: true
+         questions_file: "spec/questions/core.yml"
          budget:
            max_tokens: 9000
            max_seconds: 120
-       - id: results_json_summary
-         type: qa
-         prompt: >
-           Describe how results.json is structured and where summary metrics are computed.
-           Return JSON with keys:
-           {"summary_fields":[...],"computation":[...],"citations":[{"path":...,"lines":[start,end]}]}
-         eval:
-           must_contain_strings: ["summary_fields", "citations"]
-           validate_citations: true
-         budget:
-           max_tokens: 9000
-           max_seconds: 120
+     ```
+
+   - Example Question Spec (`spec/questions/core.yml`):
+
+     ```yaml
+     version: 1
+     questions:
+       - id: cli_commands
+         question: "Which CLI commands are supported by Cogni?"
+         answers: ["run, eval, compare, report", "only run"]
+         correct_answers: ["run, eval, compare, report"]
      ```
 
 2) Validate the spec
