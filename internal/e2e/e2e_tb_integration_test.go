@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cogni/internal/backend/tb"
+	"cogni/internal/ratelimitertest"
 	"cogni/internal/registry"
 	"cogni/internal/testutil"
 	"cogni/pkg/ratelimiter"
@@ -17,11 +18,11 @@ import (
 
 // TestE2E_TB_AdminDefineThenReserve verifies admin-defined limits allow reservations immediately.
 func TestE2E_TB_AdminDefineThenReserve(t *testing.T) {
-	runWithTimeout(t, 10*time.Second, func() {
-		server, backend := startTBServer(t)
-		defer server.Close()
-		defer backend.Close()
+	server, backend := startTBServer(t)
+	defer server.Close()
+	defer backend.Close()
 
+	runWithTimeout(t, 10*time.Second, func() {
 		def := ratelimiter.LimitDefinition{
 			Key:           "global:llm:test:model:rpm",
 			Kind:          ratelimiter.KindRolling,
@@ -30,8 +31,8 @@ func TestE2E_TB_AdminDefineThenReserve(t *testing.T) {
 			Unit:          "requests",
 			Overage:       ratelimiter.OverageDebt,
 		}
-		testutil.HTTPPutLimit(t, server.BaseURL, def)
-		res := testutil.HTTPReserve(t, server.BaseURL, ratelimiter.ReserveRequest{
+		ratelimitertest.HTTPPutLimit(t, server.BaseURL, def)
+		res := ratelimitertest.HTTPReserve(t, server.BaseURL, ratelimiter.ReserveRequest{
 			LeaseID:      "e2e-lease-1",
 			Requirements: []ratelimiter.Requirement{{Key: def.Key, Amount: 1}},
 		})
@@ -43,11 +44,11 @@ func TestE2E_TB_AdminDefineThenReserve(t *testing.T) {
 
 // TestE2E_TB_ReserveComplete_Idempotency asserts Reserve/Complete idempotency over HTTP.
 func TestE2E_TB_ReserveComplete_Idempotency(t *testing.T) {
-	runWithTimeout(t, 12*time.Second, func() {
-		server, backend := startTBServer(t)
-		defer server.Close()
-		defer backend.Close()
+	server, backend := startTBServer(t)
+	defer server.Close()
+	defer backend.Close()
 
+	runWithTimeout(t, 12*time.Second, func() {
 		def := ratelimiter.LimitDefinition{
 			Key:           "global:llm:test:model:rpm",
 			Kind:          ratelimiter.KindRolling,
@@ -56,25 +57,25 @@ func TestE2E_TB_ReserveComplete_Idempotency(t *testing.T) {
 			Unit:          "requests",
 			Overage:       ratelimiter.OverageDebt,
 		}
-		testutil.HTTPPutLimit(t, server.BaseURL, def)
+		ratelimitertest.HTTPPutLimit(t, server.BaseURL, def)
 		req := ratelimiter.ReserveRequest{
 			LeaseID:      "e2e-lease-2",
 			Requirements: []ratelimiter.Requirement{{Key: def.Key, Amount: 1}},
 		}
-		first := testutil.HTTPReserve(t, server.BaseURL, req)
+		first := ratelimitertest.HTTPReserve(t, server.BaseURL, req)
 		if !first.Allowed {
 			t.Fatalf("expected allow on first reserve, got %+v", first)
 		}
-		second := testutil.HTTPReserve(t, server.BaseURL, req)
+		second := ratelimitertest.HTTPReserve(t, server.BaseURL, req)
 		if !second.Allowed {
 			t.Fatalf("expected idempotent allow, got %+v", second)
 		}
 		completeReq := ratelimiter.CompleteRequest{LeaseID: req.LeaseID}
-		res := testutil.HTTPComplete(t, server.BaseURL, completeReq)
+		res := ratelimitertest.HTTPComplete(t, server.BaseURL, completeReq)
 		if !res.Ok {
 			t.Fatalf("expected complete ok, got %+v", res)
 		}
-		res = testutil.HTTPComplete(t, server.BaseURL, completeReq)
+		res = ratelimitertest.HTTPComplete(t, server.BaseURL, completeReq)
 		if !res.Ok {
 			t.Fatalf("expected idempotent complete ok, got %+v", res)
 		}
@@ -83,12 +84,48 @@ func TestE2E_TB_ReserveComplete_Idempotency(t *testing.T) {
 
 // TestE2E_TB_Scheduler_NoHOL_WithRealServer ensures denied queues do not block others.
 func TestE2E_TB_Scheduler_NoHOL_WithRealServer(t *testing.T) {
-	runWithTimeout(t, 15*time.Second, func() {
-		server, backend := startTBServer(t)
-		defer server.Close()
-		defer backend.Close()
+	server, backend := startTBServer(t)
+	defer server.Close()
+	defer backend.Close()
 
-		applyLLMLimits(t, server.BaseURL, "openai", "gpt-4o-mini", 0, 0, 1)
+	runWithTimeout(t, 15*time.Second, func() {
+		openaiDefs := []ratelimiter.LimitDefinition{
+			{
+				Key:           "global:llm:openai:gpt-4o-mini:rpm",
+				Kind:          ratelimiter.KindRolling,
+				Capacity:      1,
+				WindowSeconds: 10,
+				Unit:          "requests",
+				Overage:       ratelimiter.OverageDebt,
+			},
+			{
+				Key:           "global:llm:openai:gpt-4o-mini:tpm",
+				Kind:          ratelimiter.KindRolling,
+				Capacity:      1,
+				WindowSeconds: 10,
+				Unit:          "tokens",
+				Overage:       ratelimiter.OverageDebt,
+			},
+			{
+				Key:            "global:llm:openai:gpt-4o-mini:concurrency",
+				Kind:           ratelimiter.KindConcurrency,
+				Capacity:       1,
+				TimeoutSeconds: 10,
+				Unit:           "requests",
+				Overage:        ratelimiter.OverageDebt,
+			},
+		}
+		for _, def := range openaiDefs {
+			ratelimitertest.HTTPPutLimit(t, server.BaseURL, def)
+		}
+		ratelimitertest.HTTPReserve(t, server.BaseURL, ratelimiter.ReserveRequest{
+			LeaseID: "openai-block",
+			Requirements: []ratelimiter.Requirement{
+				{Key: openaiDefs[0].Key, Amount: 1},
+				{Key: openaiDefs[1].Key, Amount: 1},
+				{Key: openaiDefs[2].Key, Amount: 1},
+			},
+		})
 		applyLLMLimits(t, server.BaseURL, "anthropic", "claude-3-haiku", 5, 500, 2)
 
 		client := httpclient.New(server.BaseURL)
@@ -132,11 +169,11 @@ func TestE2E_TB_Scheduler_NoHOL_WithRealServer(t *testing.T) {
 
 // TestE2E_TB_BatchReserveAndComplete validates batch ordering and idempotency.
 func TestE2E_TB_BatchReserveAndComplete(t *testing.T) {
-	runWithTimeout(t, 12*time.Second, func() {
-		server, backend := startTBServer(t)
-		defer server.Close()
-		defer backend.Close()
+	server, backend := startTBServer(t)
+	defer server.Close()
+	defer backend.Close()
 
+	runWithTimeout(t, 12*time.Second, func() {
 		def := ratelimiter.LimitDefinition{
 			Key:           "global:llm:test:model:rpm",
 			Kind:          ratelimiter.KindRolling,
@@ -145,7 +182,7 @@ func TestE2E_TB_BatchReserveAndComplete(t *testing.T) {
 			Unit:          "requests",
 			Overage:       ratelimiter.OverageDebt,
 		}
-		testutil.HTTPPutLimit(t, server.BaseURL, def)
+		ratelimitertest.HTTPPutLimit(t, server.BaseURL, def)
 
 		client := httpclient.New(server.BaseURL)
 		ctx := testutil.Context(t, 2*time.Second)
@@ -202,7 +239,7 @@ func TestE2E_TB_BatchReserveAndComplete(t *testing.T) {
 }
 
 // startTBServer launches a TB backend and HTTP server for integration tests.
-func startTBServer(t *testing.T) (*testutil.ServerInstance, *tb.Backend) {
+func startTBServer(t *testing.T) (*ratelimitertest.ServerInstance, *tb.Backend) {
 	t.Helper()
 	instance := testutil.StartTigerBeetleSingleReplica(t)
 	clusterID, err := strconv.ParseUint(instance.ClusterID, 10, 32)
@@ -221,7 +258,7 @@ func startTBServer(t *testing.T) (*testutil.ServerInstance, *tb.Backend) {
 	if err != nil {
 		t.Fatalf("tb backend: %v", err)
 	}
-	server := testutil.StartServer(t, testutil.ServerConfig{
+	server := ratelimitertest.StartServer(t, ratelimitertest.ServerConfig{
 		Registry: reg,
 		Backend:  backend,
 	})
@@ -258,7 +295,7 @@ func applyLLMLimits(t *testing.T, baseURL, provider, model string, rpmCap, tpmCa
 		},
 	}
 	for _, def := range defs {
-		testutil.HTTPPutLimit(t, baseURL, def)
+		ratelimitertest.HTTPPutLimit(t, baseURL, def)
 	}
 }
 

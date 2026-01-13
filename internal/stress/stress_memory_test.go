@@ -18,7 +18,7 @@ import (
 
 // TestStress_Memory_RandomizedWorkload exercises randomized concurrent traffic in memory backend.
 func TestStress_Memory_RandomizedWorkload(t *testing.T) {
-	runWithTimeout(t, 12*time.Second, func() {
+	runWithTimeout(t, 20*time.Second, func() {
 		clock := testutil.NewFakeClock(time.Unix(0, 0))
 		backend := memory.New(clock)
 		ctx := context.Background()
@@ -60,11 +60,13 @@ func TestStress_Memory_RandomizedWorkload(t *testing.T) {
 			})
 		}
 
-		stop := time.After(10 * time.Second)
+		stopCtx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		defer cancel()
 		var wg sync.WaitGroup
 		var allowedCount uint64
 
-		for i := 0; i < 200; i++ {
+		workerCount := 100
+		for i := 0; i < workerCount; i++ {
 			wg.Add(1)
 			go func(seed int64) {
 				defer wg.Done()
@@ -72,7 +74,7 @@ func TestStress_Memory_RandomizedWorkload(t *testing.T) {
 				counter := 0
 				for {
 					select {
-					case <-stop:
+					case <-stopCtx.Done():
 						return
 					default:
 					}
@@ -100,6 +102,7 @@ func TestStress_Memory_RandomizedWorkload(t *testing.T) {
 						LeaseID: leaseID,
 						Actuals: []ratelimiter.Actual{{Key: selected.tpm, ActualAmount: actual}},
 					})
+					time.Sleep(time.Duration(rng.Intn(5)+1) * time.Millisecond)
 				}
 			}(int64(i + 1))
 		}

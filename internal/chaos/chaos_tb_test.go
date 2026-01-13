@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"cogni/internal/backend/tb"
+	"cogni/internal/ratelimitertest"
 	"cogni/internal/registry"
 	"cogni/internal/testutil"
 	"cogni/pkg/ratelimiter"
@@ -27,7 +28,7 @@ func TestChaos_TBRestart_ServerRecovers(t *testing.T) {
 
 		defs := basicDefs()
 		for _, def := range defs {
-			testutil.HTTPPutLimit(t, server.BaseURL, def)
+			ratelimitertest.HTTPPutLimit(t, server.BaseURL, def)
 		}
 
 		stop := make(chan struct{})
@@ -44,7 +45,7 @@ func TestChaos_TBRestart_ServerRecovers(t *testing.T) {
 						return
 					default:
 					}
-					leaseID := testutil.NewULID()
+					leaseID := ratelimiter.NewULID()
 					ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 					res, err := client.Reserve(ctx, reserveReq(leaseID, 10))
 					cancel()
@@ -77,12 +78,12 @@ func TestChaos_TBRestart_ServerRecovers(t *testing.T) {
 		defer newServer.Close()
 		defer newBackend.Close()
 		for _, def := range defs {
-			testutil.HTTPPutLimit(t, newServer.BaseURL, def)
+			ratelimitertest.HTTPPutLimit(t, newServer.BaseURL, def)
 		}
 
 		testutil.Eventually(t, 5*time.Second, 100*time.Millisecond, func() bool {
-			leaseID := testutil.NewULID()
-			res := testutil.HTTPReserve(t, newServer.BaseURL, reserveReq(leaseID, 10))
+			leaseID := ratelimiter.NewULID()
+			res := ratelimitertest.HTTPReserve(t, newServer.BaseURL, reserveReq(leaseID, 10))
 			return res.Allowed
 		}, "expected server to recover after TB restart")
 	})
@@ -98,14 +99,14 @@ func TestChaos_ServerRestart_InFlightReservationsExpire(t *testing.T) {
 		defs[0].WindowSeconds = 2
 		defs[1].WindowSeconds = 2
 		for _, def := range defs {
-			testutil.HTTPPutLimit(t, server.BaseURL, def)
+			ratelimitertest.HTTPPutLimit(t, server.BaseURL, def)
 		}
 
-		res1 := testutil.HTTPReserve(t, server.BaseURL, reserveReq("lease-a", 10))
+		res1 := ratelimitertest.HTTPReserve(t, server.BaseURL, reserveReq("lease-a", 10))
 		if !res1.Allowed {
 			t.Fatalf("expected allow")
 		}
-		res2 := testutil.HTTPReserve(t, server.BaseURL, reserveReq("lease-b", 10))
+		res2 := ratelimitertest.HTTPReserve(t, server.BaseURL, reserveReq("lease-b", 10))
 		if !res2.Allowed {
 			t.Fatalf("expected allow")
 		}
@@ -117,20 +118,20 @@ func TestChaos_ServerRestart_InFlightReservationsExpire(t *testing.T) {
 		defer newServer.Close()
 		defer newBackend.Close()
 		for _, def := range defs {
-			testutil.HTTPPutLimit(t, newServer.BaseURL, def)
+			ratelimitertest.HTTPPutLimit(t, newServer.BaseURL, def)
 		}
 
 		time.Sleep(3 * time.Second)
 		testutil.Eventually(t, 4*time.Second, 100*time.Millisecond, func() bool {
-			leaseID := testutil.NewULID()
-			res := testutil.HTTPReserve(t, newServer.BaseURL, reserveReq(leaseID, 10))
+			leaseID := ratelimiter.NewULID()
+			res := ratelimitertest.HTTPReserve(t, newServer.BaseURL, reserveReq(leaseID, 10))
 			return res.Allowed
 		}, "expected reservations to allow after restart")
 	})
 }
 
 // startTBServer wires a TB backend with a test HTTP server.
-func startTBServer(t *testing.T, instance *testutil.TBInstance) (*testutil.ServerInstance, *tb.Backend) {
+func startTBServer(t *testing.T, instance *testutil.TBInstance) (*ratelimitertest.ServerInstance, *tb.Backend) {
 	t.Helper()
 	clusterID, err := strconv.ParseUint(instance.ClusterID, 10, 32)
 	if err != nil {
@@ -148,7 +149,7 @@ func startTBServer(t *testing.T, instance *testutil.TBInstance) (*testutil.Serve
 	if err != nil {
 		t.Fatalf("tb backend: %v", err)
 	}
-	server := testutil.StartServer(t, testutil.ServerConfig{
+	server := ratelimitertest.StartServer(t, ratelimitertest.ServerConfig{
 		Registry: reg,
 		Backend:  backend,
 	})

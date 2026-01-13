@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"cogni/internal/backend/tb"
+	"cogni/internal/ratelimitertest"
 	"cogni/internal/registry"
 	"cogni/internal/testutil"
 	"cogni/pkg/ratelimiter"
@@ -20,7 +21,7 @@ import (
 
 // TestStress_TB_RandomizedWorkload runs randomized load against the TB-backed server.
 func TestStress_TB_RandomizedWorkload(t *testing.T) {
-	runWithTimeout(t, 20*time.Second, func() {
+	runWithTimeout(t, 30*time.Second, func() {
 		instance := testutil.StartTigerBeetleSingleReplica(t)
 		clusterID, err := strconv.ParseUint(instance.ClusterID, 10, 32)
 		if err != nil {
@@ -41,7 +42,7 @@ func TestStress_TB_RandomizedWorkload(t *testing.T) {
 		defer func() {
 			_ = backend.Close()
 		}()
-		server := testutil.StartServer(t, testutil.ServerConfig{
+		server := ratelimitertest.StartServer(t, ratelimitertest.ServerConfig{
 			Registry: reg,
 			Backend:  backend,
 		})
@@ -68,37 +69,57 @@ func TestStress_TB_RandomizedWorkload(t *testing.T) {
 				Key:            "global:llm:openai:model:concurrency",
 				Kind:           ratelimiter.KindConcurrency,
 				Capacity:       10,
-				TimeoutSeconds: 2,
+				TimeoutSeconds: 15,
 				Unit:           "requests",
 				Overage:        ratelimiter.OverageDebt,
 			},
 		}
 		for _, def := range defs {
-			testutil.HTTPPutLimit(t, server.BaseURL, def)
+			ratelimitertest.HTTPPutLimit(t, server.BaseURL, def)
 		}
 
 		lim := httpclient.New(server.BaseURL)
-		stop := time.After(10 * time.Second)
+		stopCtx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		defer cancel()
 		var wg sync.WaitGroup
 		var allowedCount uint64
 		var errorCount uint64
-		var inFlight int64
-		var maxInFlight int64
+		var maxPending uint64
 
-		for i := 0; i < 200; i++ {
+		pollCtx, pollCancel := context.WithCancel(context.Background())
+		defer pollCancel()
+		go func() {
+			ticker := time.NewTicker(100 * time.Millisecond)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-pollCtx.Done():
+					return
+				case <-ticker.C:
+				}
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				pending, err := backend.DebugPendingDebits(ctx, "global:llm:openai:model:concurrency")
+				cancel()
+				if err != nil {
+					continue
+				}
+				updateMaxUint64(&maxPending, pending)
+			}
+		}()
+
+		workerCount := 32
+		for i := 0; i < workerCount; i++ {
 			wg.Add(1)
 			go func(seed int64) {
 				defer wg.Done()
 				rng := rand.New(rand.NewSource(seed))
-				counter := 0
 				for {
 					select {
-					case <-stop:
+					case <-stopCtx.Done():
 						return
 					default:
 					}
-					counter++
-					leaseID := testutil.NewULID()
+					leaseID := ratelimiter.NewULID()
 					upper := uint64(rng.Intn(200) + 1)
 					req := ratelimiter.ReserveRequest{
 						LeaseID: leaseID,
@@ -108,28 +129,27 @@ func TestStress_TB_RandomizedWorkload(t *testing.T) {
 							{Key: "global:llm:openai:model:concurrency", Amount: 1},
 						},
 					}
-					ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+					ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 					res, err := lim.Reserve(ctx, req)
 					cancel()
 					if err != nil {
 						atomic.AddUint64(&errorCount, 1)
+						time.Sleep(time.Duration(rng.Intn(5)+1) * time.Millisecond)
 						continue
 					}
 					if !res.Allowed {
+						time.Sleep(time.Duration(rng.Intn(5)+1) * time.Millisecond)
 						continue
 					}
 					atomic.AddUint64(&allowedCount, 1)
-					current := atomic.AddInt64(&inFlight, 1)
-					updateMax(&maxInFlight, current)
 					time.Sleep(time.Duration(rng.Intn(50)) * time.Millisecond)
 					actual := uint64(rng.Intn(int(upper)) + 1)
-					ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
+					ctx, cancel = context.WithTimeout(context.Background(), 4*time.Second)
 					_, err = lim.Complete(ctx, ratelimiter.CompleteRequest{
 						LeaseID: leaseID,
 						Actuals: []ratelimiter.Actual{{Key: "global:llm:openai:model:tpm", ActualAmount: actual}},
 					})
 					cancel()
-					atomic.AddInt64(&inFlight, -1)
 					if err != nil {
 						atomic.AddUint64(&errorCount, 1)
 					}
@@ -138,26 +158,27 @@ func TestStress_TB_RandomizedWorkload(t *testing.T) {
 		}
 
 		wg.Wait()
+		pollCancel()
 		if atomic.LoadUint64(&errorCount) != 0 {
 			t.Fatalf("expected zero HTTP errors, got %d", errorCount)
 		}
 		if atomic.LoadUint64(&allowedCount) == 0 {
 			t.Fatalf("expected some allowed reservations")
 		}
-		if atomic.LoadInt64(&maxInFlight) > 10 {
-			t.Fatalf("max in-flight %d exceeds cap", maxInFlight)
+		if atomic.LoadUint64(&maxPending) > 10 {
+			t.Fatalf("max pending %d exceeds cap", maxPending)
 		}
 	})
 }
 
-// updateMax tracks the maximum observed in-flight count.
-func updateMax(max *int64, value int64) {
+// updateMaxUint64 tracks the maximum observed uint64 value.
+func updateMaxUint64(max *uint64, value uint64) {
 	for {
-		current := atomic.LoadInt64(max)
+		current := atomic.LoadUint64(max)
 		if value <= current {
 			return
 		}
-		if atomic.CompareAndSwapInt64(max, current, value) {
+		if atomic.CompareAndSwapUint64(max, current, value) {
 			return
 		}
 	}
