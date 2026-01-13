@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"cogni/pkg/ratelimiter"
 )
@@ -21,6 +22,14 @@ type Client struct {
 // New constructs a client for the given base URL.
 func New(baseURL string) *Client {
 	return &Client{baseURL: strings.TrimRight(baseURL, "/"), client: &http.Client{}}
+}
+
+// NewWithTimeout constructs a client for the given base URL with a request timeout.
+func NewWithTimeout(baseURL string, timeout time.Duration) *Client {
+	return &Client{
+		baseURL: strings.TrimRight(baseURL, "/"),
+		client:  &http.Client{Timeout: timeout},
+	}
 }
 
 // Reserve requests a reservation over HTTP.
