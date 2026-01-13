@@ -9,7 +9,7 @@ Created: 2026-01-12
 Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-limiter.plan/)
 
 ## Current status
-- Phase 5 in progress: ratelimiterd wiring + test utilities added.
+- Phase 5 in progress: TB integration tests added.
 
 ## What was done so far
 - Created plan and status files for the rate limiter implementation.
@@ -33,9 +33,10 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - Added ratelimiterd config + main wiring for memory/TB backends and healthz.
 - Added test utilities (Eventually, ULID, StartTigerBeetle, StartServer, HTTP helpers).
 - Fixed submitter batching to avoid oversize batches.
+- Added TB backend integration tests (integration tag).
 
 ## Next steps
-- Finish Phase 5: TB integration tests and remaining backend polish.
+- Finish Phase 5: e2e TB tests and server helpers for integration suite.
 
 ## Latest test run
 - 2026-01-12: `go test ./internal/agent/...` (failed: Go 1.25 toolchain not available in environment).
@@ -49,6 +50,7 @@ Linked plan: [spec/plans/20260112-rate-limiter.plan.md](/plans/20260112-rate-lim
 - 2026-01-13: `go test ./pkg/ratelimiter/...` (failed: Go 1.25 toolchain not available in environment).
 - 2026-01-13: `go test ./internal/backend/tb ./internal/tbutil` (failed: Go 1.25 toolchain not available in environment).
 - 2026-01-13: `go test ./internal/testutil ./cmd/ratelimiterd` (failed: Go 1.25 toolchain not available in environment).
+- 2026-01-13: `go test -tags=integration ./internal/backend/tb` (failed: Go 1.25 toolchain not available in environment).
 
 ## Relevant source files (current or planned)
 - internal/agent/runner.go
