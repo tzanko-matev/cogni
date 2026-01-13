@@ -53,6 +53,10 @@ func (s *Submitter) Run(ctx context.Context) {
 				s.respond(item, WorkResult{Err: fmt.Errorf("work item exceeds max batch size")})
 				continue
 			}
+			if len(pending) > 0 && totalTransfers(pending)+len(item.Transfers) > s.MaxEvents {
+				flush()
+				resetTimer(timer, s.FlushEvery)
+			}
 			pending = append(pending, item)
 			if totalTransfers(pending) >= s.MaxEvents {
 				flush()
