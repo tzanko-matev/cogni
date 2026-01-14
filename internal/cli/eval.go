@@ -12,6 +12,7 @@ import (
 	"cogni/internal/config"
 	"cogni/internal/runner"
 	"cogni/internal/spec"
+	"cogni/internal/ui/live"
 )
 
 // runEvalAndWrite is a test seam for question evaluation execution.
@@ -22,6 +23,7 @@ var evalFlagsRequiringValue = map[string]bool{
 	"agent":      true,
 	"output-dir": true,
 	"log":        true,
+	"ui":         true,
 }
 
 var evalFlagsWithoutValue = map[string]bool{
@@ -50,6 +52,7 @@ func runEval(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 		verbose := fs.Bool("verbose", false, "Verbose logging")
 		logPath := fs.String("log", "", "Write verbose logs to a file")
 		noColor := fs.Bool("no-color", false, "Disable ANSI colors in verbose logs")
+		uiMode := fs.String("ui", "auto", "UI mode: auto, live, plain")
 		if err := fs.Parse(normalizedArgs); err != nil {
 			return ExitUsage
 		}
@@ -124,6 +127,31 @@ func runEval(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			defer func() { _ = logFile.Close() }()
 		}
 
+		decision, err := resolveUIMode(*uiMode, *verbose, stdout)
+		if err != nil {
+			fmt.Fprintf(stderr, "Invalid ui mode: %v\n", err)
+			return ExitUsage
+		}
+		if decision.warning != "" {
+			fmt.Fprintln(stderr, decision.warning)
+		}
+		var uiController *live.Controller
+		if decision.useLive {
+			uiController = live.Start(stdout, live.Options{NoColor: *noColor})
+		}
+		stopUI := func() {
+			if uiController != nil {
+				uiController.Close()
+				uiController.Wait()
+			}
+		}
+		defer stopUI()
+
+		var observer runner.RunObserver
+		if uiController != nil {
+			observer = uiController
+		}
+
 		results, paths, err := runEvalAndWrite(context.Background(), evalConfig, runner.RunParams{
 			RepoRoot:         repoRoot,
 			OutputDir:        *outputDir,
@@ -131,7 +159,9 @@ func runEval(cmd *Command) func(args []string, stdout, stderr io.Writer) int {
 			VerboseWriter:    stdout,
 			VerboseLogWriter: logFile,
 			NoColor:          *noColor,
+			Observer:         observer,
 		})
+		stopUI()
 		if err != nil {
 			fmt.Fprintf(stderr, "Eval failed: %v\n", err)
 			return ExitError
