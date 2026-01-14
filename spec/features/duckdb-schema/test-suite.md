@@ -1,12 +1,12 @@
 # Test Suite Specification (v1)
 
 This test suite is correctness-first and mirrors the memo in
-`spec/inbox/duckdb-schema-test.md`. Start with Tier A tests; Tier B/C can be
-added later when the schema is stable.
+`spec/inbox/duckdb-schema-test.md`. All tiers (A/B/C/D) are included in this
+spec and are run manually via `just` commands.
 
 ## Test tiers
 
-### Tier A (required for v1)
+### Tier A (required)
 
 - Schema creation (DDL runs from scratch).
 - Primary key + unique constraint enforcement.
@@ -15,15 +15,37 @@ added later when the schema is stable.
 - Orphan checks (manual referential integrity).
 - `v_points` view shape + row semantics.
 
-### Tier B (later)
+### Tier B (property-based + fuzz, Go only)
 
 - Property-based fuzz for agent/question/context specs.
 - Canonicalization collision detection (statistical).
+- Seeded, deterministic generators; failing seeds are saved to disk.
 
-### Tier C (later)
+Suggested approach (Go standard library only):
+- Use `testing/quick` for randomized generators.
+- Wrap the RNG with a logged seed and write failing inputs to
+  `tests/fixtures/duckdb/fuzz/seed-<seed>.json`.
 
-- Large-scale performance + concurrency.
+### Tier C (performance + durability)
+
+- Large-scale performance + concurrency using on-disk DBs.
 - Crash safety and durability on-disk.
+- Performance target: 10k commits with 10 metrics per commit must support
+  core report queries in <5s on a developer laptop.
+
+Core report queries to benchmark:
+- tokens over time (`v_points` filter by metric + status)
+- latest value per context
+- compare two runs for same context/metric
+
+Measure with `EXPLAIN ANALYZE` or timed Go queries and record results.
+
+### Tier D (compatibility: DuckDB-WASM, latest stable)
+
+- Verify the latest stable DuckDB version can open the generated `.duckdb` file
+  in the browser (DuckDB-WASM).
+- Ensure the `v_points` view is readable and returns expected rows.
+- JSON extraction (`->`, `->>`) works in WASM for agent/question specs.
 
 ## Test harness (Go)
 
@@ -58,6 +80,36 @@ func applySchema(t *testing.T, db *sql.DB, ddl string) {
 	}
 }
 ```
+
+## Tier B example: canonicalization stability (Go)
+
+```go
+func TestCanonicalJSONStableKeyOrdering(t *testing.T) {
+	f := func(seed int64) bool {
+		rng := rand.New(rand.NewSource(seed))
+		spec := randomSpec(rng)
+		a, err := CanonicalJSON(spec)
+		if err != nil {
+			return false
+		}
+		// Shuffle map key order by re-marshaling through map iteration.
+		spec2 := rehydrateMap(spec)
+		b, err := CanonicalJSON(spec2)
+		if err != nil {
+			return false
+		}
+		return bytes.Equal(a, b)
+	}
+	cfg := &quick.Config{MaxCount: 200, Rand: rand.New(rand.NewSource(42))}
+	if err := quick.Check(f, cfg); err != nil {
+		t.Fatalf("canonicalization not stable: %v", err)
+	}
+}
+```
+
+Notes:
+- Log and persist seeds on failure to `tests/fixtures/duckdb/fuzz/`.
+- Keep test runtime under 2s.
 
 ## Core invariant queries
 
@@ -135,10 +187,40 @@ FROM contexts
 WHERE dims IS NOT NULL;
 ```
 
+## Tier D example: DuckDB-WASM smoke test (TypeScript)
+
+```ts
+import * as duckdb from "@duckdb/duckdb-wasm";
+
+export async function runWasmSmokeTest(dbPath: string) {
+  const bundles = duckdb.getJsDelivrBundles();
+  const bundle = await duckdb.selectBundle(bundles);
+  const worker = new Worker(bundle.mainWorker);
+  const logger = new duckdb.ConsoleLogger();
+  const db = new duckdb.AsyncDuckDB(logger, worker);
+  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  await db.registerFileURL("cogni.duckdb", dbPath);
+  const conn = await db.connect();
+  await conn.query("SELECT COUNT(*) FROM v_points");
+  await conn.query("SELECT spec->>'$.model' FROM agents LIMIT 1");
+  await conn.close();
+  await db.terminate();
+}
+```
+
+Notes:
+- The smoke test only validates open + query, not performance.
+- Use the latest stable DuckDB-WASM package.
+
 ## Fixture strategy
 
-- Tiny fixture: ~10 revisions, 2 agents, 2 questions, multiple metrics.
-- Medium fixture: ~10k revisions, used for `v_points` queries.
+- Tiny fixture (correctness): 20 revisions, 2 agents, 2 questions, 3 metrics,
+  include at least one `status='error'` measurement for invariant testing.
+- Medium fixture (performance target): 10,000 revisions, 1 agent, 1 question,
+  10 metrics per revision (100,000 measurements). This is the baseline for the
+  <5s query requirement.
+- Large fixture (stress): 100,000 revisions, 1 agent, 1 question, 10 metrics
+  per revision (1,000,000 measurements). Optional manual run.
 - Keep fixtures under version control in `tests/fixtures/duckdb/`.
 
 Next: `implementation-plan.md`

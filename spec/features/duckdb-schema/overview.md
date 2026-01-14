@@ -29,7 +29,7 @@ on:
 - Implement the DuckDB measurement schema described in the inbox memos.
 - Provide a stable `v_points` view for plot-ready data.
 - Define a correctness-first test suite that validates schema, invariants, and
-  view contracts.
+  view contracts across all tiers (A, B, C, D).
 - Keep the schema append-only for measurements and idempotent for dimension
   tables (agents/questions/contexts).
 
@@ -49,6 +49,11 @@ on:
 - Store derived metrics as SQL definitions in `derived_metric_defs` (not
   materialized by default).
 - Keep schema DDL in one place and make it easy to load from Go tests.
+- Tier B uses Go tests only (no external property-based tools).
+- Tier C performance target: 10k commits, 10 metrics per commit, <5s query
+  latency for core reporting queries.
+- Tier D prioritizes DuckDB-WASM compatibility with the latest stable release.
+- Tests are manual-only (run via `just` commands); no CI/CD requirement yet.
 
 ## Deliverables in implementation
 
