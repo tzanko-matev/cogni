@@ -13,6 +13,7 @@ type Config struct {
 type RateLimiterConfig struct {
   Mode             string      `yaml:"mode"`               // disabled | remote | embedded
   BaseURL          string      `yaml:"base_url"`           // remote only
+  Limits           []ratelimiter.LimitState `yaml:"limits"` // embedded only (same schema as limits.json)
   LimitsPath       string      `yaml:"limits_path"`        // embedded only
   Workers          int         `yaml:"workers"`            // scheduler workers (default 1)
   RequestTimeoutMs int         `yaml:"request_timeout_ms"` // HTTP timeout (default 2000)
@@ -45,7 +46,7 @@ type TaskConfig struct {
 
 - `rate_limiter.mode` must be one of: `disabled`, `remote`, `embedded`.
 - `remote` mode requires `base_url`.
-- `embedded` mode requires `limits_path`.
+- `embedded` mode requires exactly one of `limits` or `limits_path`.
 - `workers >= 1`.
 - `batch.size >= 1`, `batch.flush_ms >= 1`.
 - `request_timeout_ms >= 1`.
@@ -87,7 +88,49 @@ tasks:
     concurrency: 8
 ```
 
-### Embedded mode (single binary)
+### Embedded mode (inline limits)
+
+```yaml
+rate_limiter:
+  mode: "embedded"
+  limits:
+    - definition:
+        key: "global:llm:openrouter:model:rpm"
+        kind: "rolling"
+        capacity: 600
+        window_seconds: 60
+        unit: "requests"
+        description: "example rpm"
+        overage: "debt"
+      status: "active"
+      pending_decrease_to: 0
+    - definition:
+        key: "global:llm:openrouter:model:tpm"
+        kind: "rolling"
+        capacity: 50000
+        window_seconds: 60
+        unit: "tokens"
+        description: "example tpm"
+        overage: "debt"
+      status: "active"
+      pending_decrease_to: 0
+    - definition:
+        key: "global:llm:openrouter:model:concurrency"
+        kind: "concurrency"
+        capacity: 2
+        timeout_seconds: 1
+        unit: "requests"
+        description: "example concurrency"
+        overage: "debt"
+      status: "active"
+      pending_decrease_to: 0
+  workers: 4
+  batch:
+    size: 64
+    flush_ms: 2
+```
+
+### Embedded mode (single binary, file)
 
 ```yaml
 rate_limiter:

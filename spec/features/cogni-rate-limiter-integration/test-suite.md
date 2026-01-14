@@ -9,7 +9,9 @@ All tests must use explicit timeouts.
 File: `internal/config/config_rate_limiter_test.go`
 
 - Missing `base_url` in remote mode => validation error.
-- Missing `limits_path` in embedded mode => validation error.
+- Missing both `limits` and `limits_path` in embedded mode => validation error.
+- Both `limits` and `limits_path` set in embedded mode => validation error.
+- Inline `limits` in embedded mode => validation success.
 - Invalid `mode` => validation error.
 - `workers <= 0` => validation error.
 - `batch.size <= 0` or `batch.flush_ms <= 0` => validation error.
@@ -24,6 +26,7 @@ File: `internal/ratelimit/limiter_test.go`
 
 - Disabled mode returns NoopLimiter.
 - Embedded mode loads limits from file and succeeds with valid JSON.
+- Embedded mode uses inline limits when provided.
 - Embedded mode fails with missing file.
 - Remote mode constructs HTTP client with timeout.
 - Batcher wraps when `batch.size > 1`.

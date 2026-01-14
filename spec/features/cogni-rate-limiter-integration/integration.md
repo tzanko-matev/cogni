@@ -24,11 +24,12 @@ func MaxOutputTokens(cfg spec.Config, task spec.TaskConfig) uint64
 ```
 disabled: return ratelimiter.NoopLimiter
 remote:   return httpclient.NewWithTimeout(baseURL, timeout)
-embedded: return local.NewMemoryLimiterFromFile(limitsPath)
+embedded: return local.NewMemoryLimiterFromStates(limits) or local.NewMemoryLimiterFromFile(limitsPath)
 ```
 
 Notes:
 
+- `limits` uses the same schema as limits.json.
 - `limitsPath` is resolved relative to the repo root if not absolute.
 - `remote` mode **does not** call admin endpoints in v1.
 - `BuildLimiter` should return a wrapped limiter with batching if enabled.

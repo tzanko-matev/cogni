@@ -31,3 +31,5 @@ Allow embedded rate limiter config to accept inline `limits` (same schema as lim
 
 ## Completion
 Mark this plan and the status file as DONE when all steps and tests are complete.
+
+Status: DONE

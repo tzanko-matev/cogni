@@ -62,6 +62,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^a fake provider that sleeps (\d+) milliseconds per call$`, state.givenSleepProvider)
 	ctx.Step(`^a config with rate_limiter mode "([^"]+)" and workers (\d+)$`, state.givenConfigWithModeAndWorkers)
 	ctx.Step(`^a limits file with concurrency capacity (\d+) for provider "([^"]+)" model "([^"]+)"$`, state.givenLimitsFile)
+	ctx.Step(`^inline limits with concurrency capacity (\d+) for provider "([^"]+)" model "([^"]+)"$`, state.givenInlineLimits)
 	ctx.Step(`^a stub ratelimiterd server that always allows$`, state.givenStubServer)
 	ctx.Step(`^a config with rate_limiter mode "([^"]+)" and the stub base URL$`, state.givenConfigWithModeAndBaseURL)
 	ctx.Step(`^I run "([^"]+)"$`, state.whenIRunCommand)
@@ -76,6 +77,7 @@ type cogniRateLimiterState struct {
 	repoRoot      string
 	questionsPath string
 	limitsPath    string
+	inlineLimits  []ratelimiter.LimitState
 	config        spec.Config
 	provider      *sleepProvider
 	runDuration   time.Duration
@@ -115,6 +117,7 @@ func (s *cogniRateLimiterState) reset() error {
 	s.runErr = nil
 	s.reserveCount = 0
 	s.completeCount = 0
+	s.inlineLimits = nil
 	return nil
 }
 
@@ -169,11 +172,16 @@ func (s *cogniRateLimiterState) givenConfigWithModeAndWorkers(mode string, worke
 		Batch:            spec.BatchConfig{Size: 1, FlushMs: 1},
 	}
 	s.config.Tasks[0].Concurrency = workers
+	if s.inlineLimits != nil {
+		s.config.RateLimiter.Limits = s.inlineLimits
+	}
 	if mode == "embedded" {
-		if s.limitsPath == "" {
-			return fmt.Errorf("limits file not configured")
+		if s.limitsPath == "" && s.inlineLimits == nil {
+			return fmt.Errorf("limits not configured")
 		}
-		s.config.RateLimiter.LimitsPath = s.limitsPath
+		if s.limitsPath != "" {
+			s.config.RateLimiter.LimitsPath = s.limitsPath
+		}
 	}
 	return nil
 }
@@ -187,42 +195,20 @@ func (s *cogniRateLimiterState) givenLimitsFile(capacity int, provider, model st
 		return err
 	}
 	s.limitsPath = filepath.Join(limitsDir, "limits.json")
-
-	defs := []ratelimiter.LimitDefinition{
-		{
-			Key:           ratelimiter.LimitKey(fmt.Sprintf("global:llm:%s:%s:rpm", provider, model)),
-			Kind:          ratelimiter.KindRolling,
-			Capacity:      1000,
-			WindowSeconds: 60,
-			Unit:          "requests",
-			Overage:       ratelimiter.OverageDebt,
-		},
-		{
-			Key:           ratelimiter.LimitKey(fmt.Sprintf("global:llm:%s:%s:tpm", provider, model)),
-			Kind:          ratelimiter.KindRolling,
-			Capacity:      100000,
-			WindowSeconds: 60,
-			Unit:          "tokens",
-			Overage:       ratelimiter.OverageDebt,
-		},
-		{
-			Key:            ratelimiter.LimitKey(fmt.Sprintf("global:llm:%s:%s:concurrency", provider, model)),
-			Kind:           ratelimiter.KindConcurrency,
-			Capacity:       uint64(capacity),
-			TimeoutSeconds: 1,
-			Unit:           "requests",
-			Overage:        ratelimiter.OverageDebt,
-		},
-	}
-	states := make([]ratelimiter.LimitState, 0, len(defs))
-	for _, def := range defs {
-		states = append(states, ratelimiter.LimitState{Definition: def, Status: ratelimiter.LimitStatusActive})
-	}
+	states := buildLimitStates(capacity, provider, model)
 	payload, err := json.Marshal(states)
 	if err != nil {
 		return err
 	}
 	return os.WriteFile(s.limitsPath, payload, 0o644)
+}
+
+func (s *cogniRateLimiterState) givenInlineLimits(capacity int, provider, model string) error {
+	if capacity < 1 {
+		return fmt.Errorf("capacity must be >= 1")
+	}
+	s.inlineLimits = buildLimitStates(capacity, provider, model)
+	return nil
 }
 
 func (s *cogniRateLimiterState) givenStubServer() error {
@@ -270,6 +256,40 @@ func (s *cogniRateLimiterState) givenStubServer() error {
 		}
 	}))
 	return nil
+}
+
+func buildLimitStates(capacity int, provider, model string) []ratelimiter.LimitState {
+	defs := []ratelimiter.LimitDefinition{
+		{
+			Key:           ratelimiter.LimitKey(fmt.Sprintf("global:llm:%s:%s:rpm", provider, model)),
+			Kind:          ratelimiter.KindRolling,
+			Capacity:      1000,
+			WindowSeconds: 60,
+			Unit:          "requests",
+			Overage:       ratelimiter.OverageDebt,
+		},
+		{
+			Key:           ratelimiter.LimitKey(fmt.Sprintf("global:llm:%s:%s:tpm", provider, model)),
+			Kind:          ratelimiter.KindRolling,
+			Capacity:      100000,
+			WindowSeconds: 60,
+			Unit:          "tokens",
+			Overage:       ratelimiter.OverageDebt,
+		},
+		{
+			Key:            ratelimiter.LimitKey(fmt.Sprintf("global:llm:%s:%s:concurrency", provider, model)),
+			Kind:           ratelimiter.KindConcurrency,
+			Capacity:       uint64(capacity),
+			TimeoutSeconds: 1,
+			Unit:           "requests",
+			Overage:        ratelimiter.OverageDebt,
+		},
+	}
+	states := make([]ratelimiter.LimitState, 0, len(defs))
+	for _, def := range defs {
+		states = append(states, ratelimiter.LimitState{Definition: def, Status: ratelimiter.LimitStatusActive})
+	}
+	return states
 }
 
 func (s *cogniRateLimiterState) givenConfigWithModeAndBaseURL(mode string) error {

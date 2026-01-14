@@ -6,4 +6,6 @@ Sample configs and fixtures live here.
 
 - `examples/cogni-config-rate-limiter.yml` shows a full Cogni config with an embedded
   limiter and per-task concurrency.
+- `examples/cogni-config-rate-limiter-inline.yml` shows the same embedded config with
+  inline limits in the config file.
 - `examples/limits.json` provides a matching limits registry for the embedded mode.
