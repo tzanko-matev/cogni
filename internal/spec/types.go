@@ -1,5 +1,7 @@
 package spec
 
+import "cogni/pkg/ratelimiter"
+
 // Config is the top-level Cogni configuration schema.
 type Config struct {
 	Version      int               `yaml:"version"`
@@ -56,13 +58,14 @@ type TaskCompaction struct {
 
 // RateLimiterConfig configures the rate limiter integration.
 type RateLimiterConfig struct {
-	Mode             string      `yaml:"mode"`
-	BaseURL          string      `yaml:"base_url"`
-	LimitsPath       string      `yaml:"limits_path"`
-	Workers          int         `yaml:"workers"`
-	RequestTimeoutMs int         `yaml:"request_timeout_ms"`
-	MaxOutputTokens  uint64      `yaml:"max_output_tokens"`
-	Batch            BatchConfig `yaml:"batch"`
+	Mode             string                   `yaml:"mode"`
+	BaseURL          string                   `yaml:"base_url"`
+	Limits           []ratelimiter.LimitState `yaml:"limits"`
+	LimitsPath       string                   `yaml:"limits_path"`
+	Workers          int                      `yaml:"workers"`
+	RequestTimeoutMs int                      `yaml:"request_timeout_ms"`
+	MaxOutputTokens  uint64                   `yaml:"max_output_tokens"`
+	Batch            BatchConfig              `yaml:"batch"`
 }
 
 // BatchConfig configures request batching for the limiter client.

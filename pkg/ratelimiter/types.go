@@ -35,31 +35,31 @@ const (
 
 // LimitDefinition is the server-side definition for a limit.
 type LimitDefinition struct {
-	Key            LimitKey      `json:"key"`
-	Kind           LimitKind     `json:"kind"`
-	Capacity       uint64        `json:"capacity"`
-	WindowSeconds  int           `json:"window_seconds"`
-	TimeoutSeconds int           `json:"timeout_seconds"`
-	Unit           string        `json:"unit"`
-	Description    string        `json:"description"`
-	Overage        OveragePolicy `json:"overage"`
+	Key            LimitKey      `json:"key" yaml:"key"`
+	Kind           LimitKind     `json:"kind" yaml:"kind"`
+	Capacity       uint64        `json:"capacity" yaml:"capacity"`
+	WindowSeconds  int           `json:"window_seconds" yaml:"window_seconds"`
+	TimeoutSeconds int           `json:"timeout_seconds" yaml:"timeout_seconds"`
+	Unit           string        `json:"unit" yaml:"unit"`
+	Description    string        `json:"description" yaml:"description"`
+	Overage        OveragePolicy `json:"overage" yaml:"overage"`
 }
 
 // LimitState captures runtime state for a limit.
 type LimitState struct {
-	Definition        LimitDefinition `json:"definition"`
-	Status            LimitStatus     `json:"status"`
-	PendingDecreaseTo uint64          `json:"pending_decrease_to"`
+	Definition        LimitDefinition `json:"definition" yaml:"definition"`
+	Status            LimitStatus     `json:"status" yaml:"status"`
+	PendingDecreaseTo uint64          `json:"pending_decrease_to" yaml:"pending_decrease_to"`
 }
 
 // Requirement is a requested reservation for a limit.
 type Requirement struct {
-	Key    LimitKey `json:"key"`
-	Amount uint64   `json:"amount"`
+	Key    LimitKey `json:"key" yaml:"key"`
+	Amount uint64   `json:"amount" yaml:"amount"`
 }
 
 // Actual reports the actual usage for reconciliation.
 type Actual struct {
-	Key          LimitKey `json:"key"`
-	ActualAmount uint64   `json:"actual_amount"`
+	Key          LimitKey `json:"key" yaml:"key"`
+	ActualAmount uint64   `json:"actual_amount" yaml:"actual_amount"`
 }

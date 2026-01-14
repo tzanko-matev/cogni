@@ -26,6 +26,6 @@
 
 ## Status
 - State: IN_PROGRESS
-- Completed steps: none
-- Current step: Plan created; ready to start Step 1.
-- Notes: Added plan and status files for inline embedded limits config work.
+- Completed steps: Step 1 (config schema + validation)
+- Current step: Step 2 (embedded limiter construction from inline limits)
+- Notes: Added RateLimiterConfig.limits field, YAML tags for ratelimiter types, and embedded validation rules. Tests passing: `nix develop -c go test ./internal/config`.

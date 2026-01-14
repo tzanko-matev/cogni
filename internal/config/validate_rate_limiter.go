@@ -17,8 +17,13 @@ func validateRateLimiter(cfg *spec.Config, add issueAdder) {
 			add("rate_limiter.base_url", "is required when mode is remote")
 		}
 	case "embedded":
-		if strings.TrimSpace(cfg.RateLimiter.LimitsPath) == "" {
-			add("rate_limiter.limits_path", "is required when mode is embedded")
+		limitsPath := strings.TrimSpace(cfg.RateLimiter.LimitsPath)
+		limitsProvided := cfg.RateLimiter.Limits != nil
+		switch {
+		case limitsPath == "" && !limitsProvided:
+			add("rate_limiter.limits", "or limits_path is required when mode is embedded")
+		case limitsPath != "" && limitsProvided:
+			add("rate_limiter.limits", "cannot be set with limits_path when mode is embedded")
 		}
 	default:
 		add("rate_limiter.mode", "must be one of disabled, remote, embedded")

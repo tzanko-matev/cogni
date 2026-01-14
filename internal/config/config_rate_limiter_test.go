@@ -7,6 +7,7 @@ import (
 
 	"cogni/internal/spec"
 	"cogni/internal/testutil"
+	"cogni/pkg/ratelimiter"
 )
 
 // TestValidateRateLimiterRemoteRequiresBaseURL ensures remote mode requires a base URL.
@@ -26,8 +27,8 @@ func TestValidateRateLimiterRemoteRequiresBaseURL(t *testing.T) {
 	}
 }
 
-// TestValidateRateLimiterEmbeddedRequiresLimitsPath ensures embedded mode requires limits_path.
-func TestValidateRateLimiterEmbeddedRequiresLimitsPath(t *testing.T) {
+// TestValidateRateLimiterEmbeddedRequiresLimits ensures embedded mode requires inline limits or limits_path.
+func TestValidateRateLimiterEmbeddedRequiresLimits(t *testing.T) {
 	cfg := validConfig()
 	cfg.RateLimiter.Mode = "embedded"
 	cfg.RateLimiter.LimitsPath = ""
@@ -38,8 +39,40 @@ func TestValidateRateLimiterEmbeddedRequiresLimitsPath(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected validation error")
 	}
-	if !strings.Contains(err.Error(), "rate_limiter.limits_path") {
-		t.Fatalf("expected limits_path error, got %q", err.Error())
+	if !strings.Contains(err.Error(), "rate_limiter.limits") {
+		t.Fatalf("expected limits error, got %q", err.Error())
+	}
+}
+
+// TestValidateRateLimiterEmbeddedRejectsLimitsPathAndLimits ensures embedded mode rejects both limits and limits_path.
+func TestValidateRateLimiterEmbeddedRejectsLimitsPathAndLimits(t *testing.T) {
+	cfg := validConfig()
+	cfg.RateLimiter.Mode = "embedded"
+	cfg.RateLimiter.LimitsPath = "limits.json"
+	cfg.RateLimiter.Limits = []ratelimiter.LimitState{}
+
+	baseDir := t.TempDir()
+	writeQuestionSpec(t, baseDir)
+	err := validateWithTimeout(t, cfg, baseDir)
+	if err == nil {
+		t.Fatalf("expected validation error")
+	}
+	if !strings.Contains(err.Error(), "rate_limiter.limits") {
+		t.Fatalf("expected limits error, got %q", err.Error())
+	}
+}
+
+// TestValidateRateLimiterEmbeddedAcceptsInlineLimits ensures embedded mode accepts inline limits.
+func TestValidateRateLimiterEmbeddedAcceptsInlineLimits(t *testing.T) {
+	cfg := validConfig()
+	cfg.RateLimiter.Mode = "embedded"
+	cfg.RateLimiter.Limits = []ratelimiter.LimitState{}
+
+	baseDir := t.TempDir()
+	writeQuestionSpec(t, baseDir)
+	err := validateWithTimeout(t, cfg, baseDir)
+	if err != nil {
+		t.Fatalf("expected no validation error, got %v", err)
 	}
 }
 
