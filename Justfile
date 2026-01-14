@@ -43,3 +43,7 @@ test-chaos:
 
 # Run all test suites (unit + tagged).
 test-all: test test-live test-cucumber test-integration test-stress test-chaos
+
+# Run DuckDB Tier B fuzz/property tests.
+duckdb-tier-b:
+    go test ./internal/duckdb -run 'TestCanonicalJSONFuzzStability|TestFingerprintCollisionFuzz'
