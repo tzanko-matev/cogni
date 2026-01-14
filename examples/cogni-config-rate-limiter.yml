@@ -1,0 +1,35 @@
+version: 1
+repo:
+  output_dir: "./out"
+  setup_commands:
+    - "go mod download"
+
+agents:
+  - id: default
+    type: builtin
+    provider: "openrouter"
+    model: "model"
+    max_steps: 25
+    temperature: 0.0
+
+default_agent: "default"
+
+rate_limiter:
+  mode: "embedded"
+  limits_path: "examples/limits.json"
+  workers: 2
+  request_timeout_ms: 2000
+  max_output_tokens: 2048
+  batch:
+    size: 64
+    flush_ms: 2
+
+tasks:
+  - id: question_eval_example
+    type: question_eval
+    agent: "default"
+    questions_file: "spec/questions/example.yml"
+    concurrency: 2
+    budget:
+      max_tokens: 12000
+      max_seconds: 120
