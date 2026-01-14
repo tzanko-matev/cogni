@@ -7,14 +7,16 @@ Status: IN PROGRESS
 Linked plan: `spec/plans/20260114-duckdb-schema-impl.plan.md`
 
 ## Current status
-- Step 1 complete: dev environment updated and DuckDB driver added.
+- Step 2 complete: schema DDL + loader helpers added.
 
 ## What was done so far
 - Added DuckDB tooling (DuckDB CLI, C toolchain, nodejs) to `flake.nix`.
 - Added `github.com/marcboeker/go-duckdb` dependency to `go.mod`.
+- Added `internal/duckdb/schema.sql` and schema loader helpers.
+- Added test helper package for DuckDB connections.
 
 ## Next steps
-- Add schema DDL + loader helpers.
+- Implement ingestion helpers + unit tests.
 
 ## Relevant source files (current or planned)
 - `flake.nix`
