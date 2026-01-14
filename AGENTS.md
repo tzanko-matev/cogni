@@ -67,6 +67,19 @@ in the agent's environment.
   - Crashing due to not having enough memory or disk space.
   - Having exhausted rate limits from dependent third-party services
   and so on.
+  
+- If at any point in the process you notice an error in the
+  specification documents you need to STOP immediately and ask for
+  feedback. Such errors are:
+  - contradictions in different parts of the specification documents
+  - Spec has wrong understanding of existing code or dependencies. For
+    example spec expects a library to exist which doesn't, or to use a
+    toolchain whose version is not released at the current moment.
+  - Specification contains a serious gap which is discovered while
+    implementing the spec. A serious gap exists if we need to write a
+    lot of code (>200 lines) that is not mentioned in any way as work
+    that needs to be done in the spec, but is required for
+    implementing the spec.
 
 - After each successful step and jj commit you are allowed to do a
   **partial refactor**. This means: review the code that was just
