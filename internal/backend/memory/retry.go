@@ -14,17 +14,17 @@ const (
 func retryAfter(def ratelimiter.LimitDefinition) int {
 	switch def.Kind {
 	case ratelimiter.KindConcurrency:
-		capMs := def.TimeoutSeconds * 1000
-		if capMs <= 0 {
-			capMs = maxConcurrencyRetryMs
-		}
-		if capMs > maxConcurrencyRetryMs {
-			capMs = maxConcurrencyRetryMs
+		capMs := maxConcurrencyRetryMs
+		if def.TimeoutSeconds > 0 {
+			timeoutMs := def.TimeoutSeconds * 1000
+			if timeoutMs < capMs {
+				capMs = timeoutMs
+			}
 		}
 		if capMs < defaultConcurrencyMs {
-			capMs = defaultConcurrencyMs
+			return capMs
 		}
-		return capMs
+		return defaultConcurrencyMs
 	case ratelimiter.KindRolling:
 		base := int(float64(def.WindowSeconds*1000) * rollingWindowFraction)
 		if base < defaultRollingRetryMs {
