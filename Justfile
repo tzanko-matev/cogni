@@ -47,3 +47,11 @@ test-all: test test-live test-cucumber test-integration test-stress test-chaos
 # Run DuckDB Tier B fuzz/property tests.
 duckdb-tier-b:
     go test ./internal/duckdb -run 'TestCanonicalJSONFuzzStability|TestFingerprintCollisionFuzz'
+
+# Run DuckDB Tier C medium fixture performance + durability tests.
+duckdb-tier-c:
+    go test -tags=duckdbtierc ./internal/duckdb -run 'TestTierC'
+
+# Run DuckDB Tier C large fixture stress test (optional).
+duckdb-tier-c-large:
+    go test -tags=duckdbtierc,duckdbtierclarge ./internal/duckdb -run 'TestTierCLarge'

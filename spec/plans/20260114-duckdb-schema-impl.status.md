@@ -7,7 +7,7 @@ Status: IN PROGRESS
 Linked plan: `spec/plans/20260114-duckdb-schema-impl.plan.md`
 
 ## Current status
-- Step 6 complete: Tier B fuzz/property tests added.
+- Step 7 complete: Tier C performance and durability tests added.
 
 ## What was done so far
 - Added DuckDB tooling (DuckDB CLI, C toolchain, nodejs) to `flake.nix`.
@@ -19,9 +19,10 @@ Linked plan: `spec/plans/20260114-duckdb-schema-impl.plan.md`
 - Added Tier A schema existence, constraint, JSON/MAP, and invariant tests.
 - Added v_points view contract test coverage.
 - Added Tier B fuzz/property tests with seed capture fixtures.
+- Added Tier C fixture configs, performance queries, and durability smoke tests.
 
 ## Next steps
-- Implement Tier C performance + durability tests.
+- Implement Tier D DuckDB-WASM smoke test.
 
 ## Relevant source files (current or planned)
 - `flake.nix`
