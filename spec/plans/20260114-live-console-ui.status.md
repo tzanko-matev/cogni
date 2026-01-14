@@ -24,7 +24,7 @@
 - internal/cli/eval.go
 
 ## Status
-- State: IN_PROGRESS
-- Completed steps: Step 1 (UI state + reducer), Step 2 (runner event emission)
-- Current step: Step 3 (tool activity wiring)
-- Notes: Added runner observer events and scheduler hooks. Tests passing: `nix develop -c go test ./internal/ui/live`, `nix develop -c go test ./internal/runner`.
+- State: DONE
+- Completed steps: Step 1 (UI state + reducer), Step 2 (runner event emission), Step 3 (tool activity wiring), Step 4 (CLI integration), Step 5 (docs + BDD)
+- Current step: DONE
+- Notes: Added cucumber coverage for live UI selection behavior. Tests passing: `nix develop -c go test ./internal/ui/live`, `nix develop -c go test ./internal/runner`, `nix develop -c go test ./internal/cli`, `nix develop -c go test ./internal/cli -tags=cucumber`.
