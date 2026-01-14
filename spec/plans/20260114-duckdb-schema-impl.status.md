@@ -7,16 +7,18 @@ Status: IN PROGRESS
 Linked plan: `spec/plans/20260114-duckdb-schema-impl.plan.md`
 
 ## Current status
-- Step 2 complete: schema DDL + loader helpers added.
+- Step 3 complete: ingestion helpers and idempotency tests added.
 
 ## What was done so far
 - Added DuckDB tooling (DuckDB CLI, C toolchain, nodejs) to `flake.nix`.
 - Added `github.com/marcboeker/go-duckdb` dependency to `go.mod`.
 - Added `internal/duckdb/schema.sql` and schema loader helpers.
 - Added test helper package for DuckDB connections.
+- Added canonical JSON + fingerprint helpers and upsert helpers.
+- Added ingestion helper tests for canonicalization stability and idempotency.
 
 ## Next steps
-- Implement ingestion helpers + unit tests.
+- Implement Tier A constraint + invariant tests.
 
 ## Relevant source files (current or planned)
 - `flake.nix`
