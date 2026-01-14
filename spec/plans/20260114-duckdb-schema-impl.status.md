@@ -7,13 +7,14 @@ Status: IN PROGRESS
 Linked plan: `spec/plans/20260114-duckdb-schema-impl.plan.md`
 
 ## Current status
-- Plan created; implementation not started yet.
+- Step 1 complete: dev environment updated and DuckDB driver added.
 
 ## What was done so far
-- Added implementation plan and status files.
+- Added DuckDB tooling (DuckDB CLI, C toolchain, nodejs) to `flake.nix`.
+- Added `github.com/marcboeker/go-duckdb` dependency to `go.mod`.
 
 ## Next steps
-- Update dev environment and add DuckDB driver dependency.
+- Add schema DDL + loader helpers.
 
 ## Relevant source files (current or planned)
 - `flake.nix`

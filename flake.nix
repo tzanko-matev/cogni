@@ -42,6 +42,10 @@
               ripgrep
               just
               jq
+              duckdb
+              pkg-config
+              clang
+              nodejs
               bashInteractive
               hugo
               tigerbeetle
@@ -75,6 +79,11 @@
               if [ -z "$TB_BIN" ]; then
                 if command -v tigerbeetle >/dev/null 2>&1; then
                   export TB_BIN="$(command -v tigerbeetle)"
+                fi
+              fi
+              if [ -z "$DUCKDB_BIN" ]; then
+                if command -v duckdb >/dev/null 2>&1; then
+                  export DUCKDB_BIN="$(command -v duckdb)"
                 fi
               fi
               export PATH="$project_root:$PATH"
