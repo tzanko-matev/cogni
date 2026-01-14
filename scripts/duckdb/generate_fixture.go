@@ -24,6 +24,7 @@ type fixtureConfig struct {
 	Runs      int    `json:"runs"`
 }
 
+// main generates an on-disk DuckDB fixture from a JSON config.
 func main() {
 	configPath := flag.String("config", "", "path to fixture config JSON")
 	outPath := flag.String("out", "", "output duckdb file path")
@@ -49,6 +50,7 @@ func main() {
 	}
 }
 
+// loadConfig parses a fixture JSON config from disk.
 func loadConfig(path string) (fixtureConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -61,6 +63,7 @@ func loadConfig(path string) (fixtureConfig, error) {
 	return cfg, nil
 }
 
+// generateFixture creates and populates the DuckDB file at path.
 func generateFixture(ctx context.Context, path string, cfg fixtureConfig) error {
 	db, err := sql.Open("duckdb", path)
 	if err != nil {
@@ -138,10 +141,12 @@ func generateFixture(ctx context.Context, path string, cfg fixtureConfig) error 
 	return tx.Commit()
 }
 
+// deterministicID generates a repeatable UUID for fixture rows.
 func deterministicID(prefix string, index int) string {
 	return uuid.NewSHA1(fixtureNamespace, []byte(fmt.Sprintf("%s-%d", prefix, index))).String()
 }
 
+// dirOf returns the parent directory for a file path.
 func dirOf(path string) string {
 	if path == "" {
 		return "."
@@ -152,4 +157,5 @@ func dirOf(path string) string {
 	return filepath.Dir(path)
 }
 
+// fixtureNamespace ensures stable UUIDs across fixture runs.
 var fixtureNamespace = uuid.MustParse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")

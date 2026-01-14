@@ -29,6 +29,7 @@ func randomSpec(rng *rand.Rand, depth int) interface{} {
 	}
 }
 
+// randomMap builds a JSON map with random keys and values.
 func randomMap(rng *rand.Rand, depth int) map[string]interface{} {
 	count := rng.Intn(maxMapKeys + 1)
 	out := make(map[string]interface{}, count)
@@ -38,6 +39,7 @@ func randomMap(rng *rand.Rand, depth int) map[string]interface{} {
 	return out
 }
 
+// randomList builds a JSON list with random elements.
 func randomList(rng *rand.Rand, depth int) []interface{} {
 	count := rng.Intn(maxListElements + 1)
 	out := make([]interface{}, 0, count)
@@ -47,6 +49,7 @@ func randomList(rng *rand.Rand, depth int) []interface{} {
 	return out
 }
 
+// randomScalar produces a JSON scalar value.
 func randomScalar(rng *rand.Rand) interface{} {
 	switch rng.Intn(5) {
 	case 0:
@@ -62,6 +65,7 @@ func randomScalar(rng *rand.Rand) interface{} {
 	}
 }
 
+// randomString creates a short lowercase token for fuzz specs.
 func randomString(rng *rand.Rand) string {
 	length := rng.Intn(8) + 1
 	letters := make([]byte, length)
@@ -106,6 +110,7 @@ func writeSeedFixture(name string, seed int64, spec interface{}) error {
 	return os.WriteFile(file, data, 0o644)
 }
 
+// repoRoot searches upward for the repository root containing go.mod.
 func repoRoot() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {

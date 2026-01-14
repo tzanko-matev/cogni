@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// constraintCase defines a constraint assertion fixture.
 type constraintCase struct {
 	name  string
 	query string

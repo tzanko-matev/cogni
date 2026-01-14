@@ -43,15 +43,18 @@ func CanonicalDims(dims map[string]string) []string {
 	return out
 }
 
+// fingerprintBytes hashes canonical JSON bytes into a hex digest.
 func fingerprintBytes(data []byte) string {
 	hash := sha256.Sum256(data)
 	return hex.EncodeToString(hash[:])
 }
 
+// sortStrings provides a shared sortable helper for deterministic ordering.
 func sortStrings(values []string) {
 	sort.Strings(values)
 }
 
+// normalizeJSON recursively normalizes JSON-like values for stable encoding.
 func normalizeJSON(value interface{}) (interface{}, error) {
 	switch v := value.(type) {
 	case json.RawMessage:

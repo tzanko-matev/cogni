@@ -81,6 +81,7 @@ func TestFingerprintCollisionFuzz(t *testing.T) {
 	})
 }
 
+// extractSeed extracts the failing seed from a quick.Check error.
 func extractSeed(err error) (int64, bool) {
 	var checkErr *quick.CheckError
 	if !errors.As(err, &checkErr) {

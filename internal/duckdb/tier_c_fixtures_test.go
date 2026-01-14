@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// fixtureConfig describes a Tier C fixture specification.
 type fixtureConfig struct {
 	Name      string `json:"name"`
 	Revisions int    `json:"revisions"`
@@ -21,6 +22,7 @@ type fixtureConfig struct {
 	Runs      int    `json:"runs"`
 }
 
+// fixtureData captures identifiers used by Tier C queries.
 type fixtureData struct {
 	RepoID         string
 	RunIDs         []string
@@ -29,8 +31,10 @@ type fixtureData struct {
 	FirstRevID     string
 }
 
+// fixtureNamespace ensures deterministic UUID generation.
 var fixtureNamespace = uuid.MustParse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
+// loadFixtureConfig reads a fixture config from tests/fixtures/duckdb.
 func loadFixtureConfig(name string) (fixtureConfig, error) {
 	root, err := repoRoot()
 	if err != nil {
@@ -51,6 +55,7 @@ func loadFixtureConfig(name string) (fixtureConfig, error) {
 	return cfg, nil
 }
 
+// loadFixture inserts a deterministic dataset for Tier C tests.
 func loadFixture(ctx context.Context, db *sql.DB, cfg fixtureConfig) (fixtureData, error) {
 	repoID := deterministicID("repo", 0)
 	if _, err := db.ExecContext(ctx, "INSERT INTO repos (repo_id, name, vcs) VALUES (?, ?, 'git')", repoID, "fixture-"+cfg.Name); err != nil {
@@ -125,6 +130,7 @@ func loadFixture(ctx context.Context, db *sql.DB, cfg fixtureConfig) (fixtureDat
 	return fixtureData{RepoID: repoID, RunIDs: runIDs, MetricIDs: metricIDs, FirstContextID: firstContextID, FirstRevID: firstRevID}, nil
 }
 
+// deterministicID generates a repeatable UUID from a prefix and index.
 func deterministicID(prefix string, index int) string {
 	return uuid.NewSHA1(fixtureNamespace, []byte(fmt.Sprintf("%s-%d", prefix, index))).String()
 }

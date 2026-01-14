@@ -41,6 +41,7 @@ func mapExpression(dims map[string]string) string {
 	return fmt.Sprintf("map([%s], [%s])", strings.Join(keyLiterals, ", "), strings.Join(valLiterals, ", "))
 }
 
+// quoteLiteral escapes a string for SQL literal use.
 func quoteLiteral(value string) string {
 	escaped := strings.ReplaceAll(value, "'", "''")
 	return "'" + escaped + "'"

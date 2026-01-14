@@ -22,6 +22,7 @@ func measureQuery(ctx context.Context, db *sql.DB, query string, args ...interfa
 	return time.Since(start), nil
 }
 
+// drainRows consumes all rows to include scan time in benchmarks.
 func drainRows(rows *sql.Rows) error {
 	cols, err := rows.Columns()
 	if err != nil {
