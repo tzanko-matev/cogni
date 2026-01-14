@@ -25,15 +25,21 @@ func renderHeader(state State, now time.Time, noColor bool) string {
 // renderSummary renders the status counts line.
 func renderSummary(state State, noColor bool) string {
 	counts := state.Counts
-	line := "Queued: " + fmtInt(counts.Queued) +
+	total := fmtInt(len(state.Rows))
+	line := "Total: " + total +
+		" | Queued: " + fmtInt(counts.Queued) +
+		" Scheduled: " + fmtInt(counts.Scheduled) +
+		" Reserving: " + fmtInt(counts.Reserving) +
 		" Waiting: " + fmtInt(counts.Waiting) +
 		" Running: " + fmtInt(counts.Running) +
+		" Parsing: " + fmtInt(counts.Parsing) +
 		" Done: " + fmtInt(counts.Done) +
-		" Correct: " + fmtInt(counts.Correct) +
+		" | Correct: " + fmtInt(counts.Correct) +
 		" Incorrect: " + fmtInt(counts.Incorrect) +
 		" ParseErr: " + fmtInt(counts.ParseError) +
 		" Budget: " + fmtInt(counts.BudgetExceeded) +
-		" Error: " + fmtInt(counts.RuntimeError)
+		" Error: " + fmtInt(counts.RuntimeError) +
+		" Skipped: " + fmtInt(counts.Skipped)
 	return stylize(line, noColor, lipgloss.Color("242"))
 }
 
@@ -49,15 +55,19 @@ func renderTaskLine(state State, noColor bool) string {
 	if state.AgentID != "" || state.Model != "" {
 		line += " | " + state.AgentID + " / " + state.Model
 	}
+	if len(state.Rows) > 0 {
+		line += " | Progress: " + fmtInt(state.Counts.Done) + "/" + fmtInt(len(state.Rows))
+	}
 	return stylize(line, noColor, lipgloss.Color("240"))
 }
 
 // renderFooter renders the last event line.
 func renderFooter(state State, noColor bool) string {
+	hint := "Ctrl+C to stop"
 	if state.LastEvent == "" {
-		return ""
+		return stylize("Last event: (none) | "+hint, noColor, lipgloss.Color("244"))
 	}
-	return stylize("Last event: "+state.LastEvent, noColor, lipgloss.Color("244"))
+	return stylize("Last event: "+state.LastEvent+" | "+hint, noColor, lipgloss.Color("244"))
 }
 
 // stylize applies optional color styling.

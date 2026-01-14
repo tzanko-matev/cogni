@@ -8,10 +8,12 @@ import (
 
 // ToolStatus captures the latest tool call activity for a question.
 type ToolStatus struct {
-	Name     string
-	State    string
-	Duration time.Duration
-	Error    string
+	Name       string
+	State      string
+	Duration   time.Duration
+	Error      string
+	StartedAt  time.Time
+	FinishedAt time.Time
 }
 
 // QuestionRow holds UI state for a single question.

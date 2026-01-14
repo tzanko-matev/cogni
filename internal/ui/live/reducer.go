@@ -12,7 +12,9 @@ func Reduce(state State, event runner.QuestionEvent) State {
 	state = ensureRow(state, event)
 	state = applyQuestionEvent(state, event)
 	state.Counts = recount(state.Rows)
-	state.LastEvent = formatLastEvent(event)
+	if message := formatLastEvent(event); message != "" {
+		state.LastEvent = message
+	}
 	return state
 }
 
@@ -47,14 +49,24 @@ func applyQuestionEvent(state State, event runner.QuestionEvent) State {
 	}
 	switch event.Type {
 	case runner.QuestionToolStart:
-		row.Tool = ToolStatus{Name: event.ToolName, State: "running"}
+		row.Tool = ToolStatus{
+			Name:      event.ToolName,
+			State:     "running",
+			StartedAt: event.EmittedAt,
+		}
 		row.HasTool = true
 	case runner.QuestionToolFinish:
+		duration := event.ToolDuration
+		if duration <= 0 && !row.Tool.StartedAt.IsZero() && !event.EmittedAt.IsZero() {
+			duration = event.EmittedAt.Sub(row.Tool.StartedAt)
+		}
 		row.Tool = ToolStatus{
-			Name:     event.ToolName,
-			State:    "done",
-			Duration: event.ToolDuration,
-			Error:    event.ToolError,
+			Name:       event.ToolName,
+			State:      "done",
+			Duration:   duration,
+			Error:      event.ToolError,
+			StartedAt:  row.Tool.StartedAt,
+			FinishedAt: event.EmittedAt,
 		}
 		row.HasTool = true
 	default:
@@ -141,7 +153,10 @@ func recount(rows []QuestionRow) StatusCounts {
 func formatLastEvent(event runner.QuestionEvent) string {
 	switch event.Type {
 	case runner.QuestionWaitingRateLimit:
-		return fmt.Sprintf("Q%d rate limited (retry_after_ms=%d)", event.QuestionIndex+1, event.RetryAfterMs)
+		if event.RetryAfterMs > 0 {
+			return fmt.Sprintf("Q%d rate limited (retry in %s)", event.QuestionIndex+1, formatRetryAfter(event.RetryAfterMs))
+		}
+		return fmt.Sprintf("Q%d rate limited", event.QuestionIndex+1)
 	case runner.QuestionWaitingLimitDecreasing:
 		return fmt.Sprintf("Q%d limit decreasing", event.QuestionIndex+1)
 	case runner.QuestionWaitingLimiterError:
@@ -149,6 +164,9 @@ func formatLastEvent(event runner.QuestionEvent) string {
 	case runner.QuestionToolStart:
 		return fmt.Sprintf("Q%d tool %s started", event.QuestionIndex+1, event.ToolName)
 	case runner.QuestionToolFinish:
+		if event.ToolError != "" {
+			return fmt.Sprintf("Q%d tool %s error (%s)", event.QuestionIndex+1, event.ToolName, event.ToolError)
+		}
 		return fmt.Sprintf("Q%d tool %s finished (%s)", event.QuestionIndex+1, event.ToolName, formatDuration(event.ToolDuration))
 	case runner.QuestionRuntimeError:
 		return fmt.Sprintf("Q%d runtime error: %s", event.QuestionIndex+1, event.Error)

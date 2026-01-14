@@ -30,16 +30,8 @@ func NewModel(events <-chan Event, opts Options) Model {
 	if tickInterval <= 0 {
 		tickInterval = 200 * time.Millisecond
 	}
-	columns := []table.Column{
-		{Title: "ID", Width: 4},
-		{Title: "Question", Width: 60},
-		{Title: "Status", Width: 24},
-		{Title: "Time", Width: 8},
-		{Title: "Tokens", Width: 8},
-		{Title: "Retries", Width: 7},
-	}
 	t := table.New(
-		table.WithColumns(columns),
+		table.WithColumns(defaultColumns()),
 		table.WithRows([]table.Row{}),
 		table.WithFocused(false),
 	)
@@ -64,7 +56,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch typed := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.table.SetWidth(typed.Width)
-		m.table.SetHeight(max(typed.Height-7, 1))
+		m.table.SetHeight(max(typed.Height-4, 1))
+		m.table.SetColumns(columnsForWidth(typed.Width))
 		return m, nil
 	case EventMsg:
 		m = applyEvent(m, typed.Event)
@@ -129,6 +122,7 @@ func applyEvent(model Model, event Event) Model {
 		model.state.Model = event.Model
 		model.state.Rows = nil
 		model.state.Counts = StatusCounts{}
+		model.state.LastEvent = ""
 	case EventQuestion:
 		model.state = Reduce(model.state, event.Question)
 	case EventTaskEnd:
@@ -136,6 +130,6 @@ func applyEvent(model Model, event Event) Model {
 	case EventRunEnd:
 		return model
 	}
-	model.table.SetRows(rowsForState(model.state, model.now))
+	model.table.SetRows(rowsForState(model.state, model.now, model.noColor))
 	return model
 }
