@@ -32,7 +32,7 @@ func TestBuildLimiterDisabledReturnsNoop(t *testing.T) {
 func TestBuildLimiterEmbeddedLoadsLimits(t *testing.T) {
 	runWithTimeout(t, func() {
 		repoRoot := t.TempDir()
-		limitsPath := writeLimitsFile(t, repoRoot)
+		limitsPath := writeLimitsFile(t, repoRoot, sampleLimitStates())
 		cfg := spec.Config{
 			RateLimiter: spec.RateLimiterConfig{
 				Mode:       "embedded",
@@ -46,6 +46,46 @@ func TestBuildLimiterEmbeddedLoadsLimits(t *testing.T) {
 		}
 		if _, ok := limiter.(*local.Client); !ok {
 			t.Fatalf("expected local limiter, got %T", limiter)
+		}
+	})
+}
+
+// TestBuildLimiterEmbeddedUsesInlineLimits ensures embedded mode can use inline limits.
+func TestBuildLimiterEmbeddedUsesInlineLimits(t *testing.T) {
+	runWithTimeout(t, func() {
+		repoRoot := t.TempDir()
+		cfg := spec.Config{
+			RateLimiter: spec.RateLimiterConfig{
+				Mode:   "embedded",
+				Limits: sampleLimitStates(),
+				Batch:  spec.BatchConfig{Size: 1, FlushMs: 1},
+			},
+		}
+		limiter, err := BuildLimiter(cfg, repoRoot)
+		if err != nil {
+			t.Fatalf("build limiter: %v", err)
+		}
+		if _, ok := limiter.(*local.Client); !ok {
+			t.Fatalf("expected local limiter, got %T", limiter)
+		}
+	})
+}
+
+// TestBuildLimiterEmbeddedRejectsLimitsAndPath ensures embedded mode rejects both limits and limits_path.
+func TestBuildLimiterEmbeddedRejectsLimitsAndPath(t *testing.T) {
+	runWithTimeout(t, func() {
+		repoRoot := t.TempDir()
+		cfg := spec.Config{
+			RateLimiter: spec.RateLimiterConfig{
+				Mode:       "embedded",
+				Limits:     sampleLimitStates(),
+				LimitsPath: "limits.json",
+				Batch:      spec.BatchConfig{Size: 1, FlushMs: 1},
+			},
+		}
+		_, err := BuildLimiter(cfg, repoRoot)
+		if err == nil {
+			t.Fatalf("expected error for embedded limits with path")
 		}
 	})
 }
@@ -127,9 +167,21 @@ func runWithTimeout(t *testing.T, fn func()) {
 }
 
 // writeLimitsFile writes a minimal limits JSON file and returns the path.
-func writeLimitsFile(t *testing.T, dir string) string {
+func writeLimitsFile(t *testing.T, dir string, states []ratelimiter.LimitState) string {
 	t.Helper()
-	states := []ratelimiter.LimitState{
+	payload, err := json.Marshal(states)
+	if err != nil {
+		t.Fatalf("marshal limits: %v", err)
+	}
+	path := filepath.Join(dir, "limits.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatalf("write limits file: %v", err)
+	}
+	return path
+}
+
+func sampleLimitStates() []ratelimiter.LimitState {
+	return []ratelimiter.LimitState{
 		{
 			Definition: ratelimiter.LimitDefinition{
 				Key:            "global:llm:openrouter:model:concurrency",
@@ -142,13 +194,4 @@ func writeLimitsFile(t *testing.T, dir string) string {
 			Status: ratelimiter.LimitStatusActive,
 		},
 	}
-	payload, err := json.Marshal(states)
-	if err != nil {
-		t.Fatalf("marshal limits: %v", err)
-	}
-	path := filepath.Join(dir, "limits.json")
-	if err := os.WriteFile(path, payload, 0o644); err != nil {
-		t.Fatalf("write limits file: %v", err)
-	}
-	return path
 }

@@ -26,6 +26,6 @@
 
 ## Status
 - State: IN_PROGRESS
-- Completed steps: Step 1 (config schema + validation)
-- Current step: Step 2 (embedded limiter construction from inline limits)
-- Notes: Added RateLimiterConfig.limits field, YAML tags for ratelimiter types, and embedded validation rules. Tests passing: `nix develop -c go test ./internal/config`.
+- Completed steps: Step 1 (config schema + validation), Step 2 (embedded limiter construction from inline limits)
+- Current step: Step 3 (docs + BDD coverage)
+- Notes: Added inline limits support in BuildLimiter, local constructor, and tests. Tests passing: `nix develop -c go test ./internal/config`, `nix develop -c go test ./internal/ratelimit ./pkg/ratelimiter/local`.

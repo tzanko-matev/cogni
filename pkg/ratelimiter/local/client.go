@@ -22,8 +22,13 @@ func NewMemoryLimiterFromFile(path string) (*Client, error) {
 	if err := reg.Load(path); err != nil {
 		return nil, err
 	}
+	return NewMemoryLimiterFromStates(reg.List())
+}
+
+// NewMemoryLimiterFromStates loads limits from memory and returns a local client.
+func NewMemoryLimiterFromStates(states []ratelimiter.LimitState) (*Client, error) {
 	backend := memory.New(nil)
-	for _, state := range reg.List() {
+	for _, state := range states {
 		if err := backend.ApplyState(state); err != nil {
 			return nil, fmt.Errorf("apply limit state: %w", err)
 		}

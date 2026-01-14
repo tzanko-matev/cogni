@@ -64,16 +64,31 @@ func buildRemoteLimiter(cfg spec.Config) (ratelimiter.Limiter, error) {
 
 // buildEmbeddedLimiter constructs an in-memory limiter client and wraps batching when enabled.
 func buildEmbeddedLimiter(cfg spec.Config, repoRoot string) (ratelimiter.Limiter, error) {
-	if strings.TrimSpace(cfg.RateLimiter.LimitsPath) == "" {
-		return nil, fmt.Errorf("rate limiter limits_path is required for embedded mode")
+	limitsPath := strings.TrimSpace(cfg.RateLimiter.LimitsPath)
+	limitsProvided := cfg.RateLimiter.Limits != nil
+	switch {
+	case limitsPath == "" && !limitsProvided:
+		return nil, fmt.Errorf("rate limiter limits or limits_path is required for embedded mode")
+	case limitsPath != "" && limitsProvided:
+		return nil, fmt.Errorf("rate limiter limits cannot be set with limits_path for embedded mode")
 	}
-	limitsPath := resolveLimitsPath(repoRoot, cfg.RateLimiter.LimitsPath)
-	if _, err := os.Stat(limitsPath); err != nil {
-		return nil, fmt.Errorf("read limits file: %w", err)
-	}
-	limiter, err := local.NewMemoryLimiterFromFile(limitsPath)
-	if err != nil {
-		return nil, err
+	var limiter ratelimiter.Limiter
+	if limitsProvided {
+		embeddedLimiter, err := local.NewMemoryLimiterFromStates(cfg.RateLimiter.Limits)
+		if err != nil {
+			return nil, err
+		}
+		limiter = embeddedLimiter
+	} else {
+		limitsPath = resolveLimitsPath(repoRoot, limitsPath)
+		if _, err := os.Stat(limitsPath); err != nil {
+			return nil, fmt.Errorf("read limits file: %w", err)
+		}
+		embeddedLimiter, err := local.NewMemoryLimiterFromFile(limitsPath)
+		if err != nil {
+			return nil, err
+		}
+		limiter = embeddedLimiter
 	}
 	return wrapBatcher(cfg, limiter), nil
 }
