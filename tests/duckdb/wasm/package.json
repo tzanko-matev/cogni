@@ -1,0 +1,11 @@
+{
+  "name": "cogni-duckdb-wasm-smoke",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "smoke": "node smoke_test.mjs"
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "latest"
+  }
+}

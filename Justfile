@@ -55,3 +55,9 @@ duckdb-tier-c:
 # Run DuckDB Tier C large fixture stress test (optional).
 duckdb-tier-c-large:
     go test -tags=duckdbtierc,duckdbtierclarge ./internal/duckdb -run 'TestTierCLarge'
+
+# Run DuckDB Tier D DuckDB-WASM smoke test.
+duckdb-tier-d:
+    go run ./scripts/duckdb/generate_fixture.go --config tests/fixtures/duckdb/medium.json --out tests/fixtures/duckdb/medium.duckdb
+    if [ ! -d tests/duckdb/wasm/node_modules ]; then (cd tests/duckdb/wasm && npm install); fi
+    node tests/duckdb/wasm/smoke_test.mjs tests/fixtures/duckdb/medium.duckdb

@@ -1,7 +1,7 @@
 # Plan: Implement DuckDB Schema + Test Suite
 
 Date: 2026-01-14  
-Status: IN PROGRESS
+Status: DONE
 
 ## Goal
 Implement the DuckDB measurement schema, ingestion helpers, and Tier A/B/C/D tests

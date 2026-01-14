@@ -12,3 +12,4 @@
 /data/test_results.json
 /data/test_results.json.tmp
 .cogni/results
+node_modules/
