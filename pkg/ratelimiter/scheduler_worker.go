@@ -1,6 +1,9 @@
 package ratelimiter
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // worker consumes jobs from the work channel and executes them.
 func (s *Scheduler) worker() {
@@ -84,7 +87,7 @@ func buildLLMActuals(job Job, actualTokens uint64) []Actual {
 
 // complete reports completion to the limiter, ignoring errors.
 func (s *Scheduler) complete(job Job, actuals []Actual) {
-	_, _ = s.limiter.Complete(s.ctx, CompleteRequest{
+	_, _ = s.limiter.Complete(context.Background(), CompleteRequest{
 		LeaseID: job.LeaseID,
 		JobID:   job.JobID,
 		Actuals: actuals,
