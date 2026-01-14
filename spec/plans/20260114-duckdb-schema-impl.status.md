@@ -7,7 +7,7 @@ Status: IN PROGRESS
 Linked plan: `spec/plans/20260114-duckdb-schema-impl.plan.md`
 
 ## Current status
-- Step 4 complete: Tier A constraint, JSON/MAP, and invariant tests added.
+- Step 5 complete: v_points view contract tests added.
 
 ## What was done so far
 - Added DuckDB tooling (DuckDB CLI, C toolchain, nodejs) to `flake.nix`.
@@ -17,9 +17,10 @@ Linked plan: `spec/plans/20260114-duckdb-schema-impl.plan.md`
 - Added canonical JSON + fingerprint helpers and upsert helpers.
 - Added ingestion helper tests for canonicalization stability and idempotency.
 - Added Tier A schema existence, constraint, JSON/MAP, and invariant tests.
+- Added v_points view contract test coverage.
 
 ## Next steps
-- Implement v_points view contract tests.
+- Implement Tier B fuzz/property tests.
 
 ## Relevant source files (current or planned)
 - `flake.nix`
