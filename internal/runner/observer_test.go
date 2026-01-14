@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cogni/internal/agent"
+	"cogni/internal/question"
 	"cogni/internal/spec"
 	"cogni/internal/testutil"
 	"cogni/internal/tools"
@@ -133,6 +134,21 @@ questions:
 	}
 }
 
+// TestObservedToolExecutorEmitsEvents verifies tool events are emitted.
+func TestObservedToolExecutorEmitsEvents(t *testing.T) {
+	observer := &recordingObserver{}
+	jobObserver := newQuestionJobObserver(observer, "task-1", []question.Question{{
+		ID:     "q1",
+		Prompt: "Question",
+	}})
+	executor := newObservedToolExecutor(jobObserver, 0, stubExecutor{})
+	_ = executor.Execute(context.Background(), agent.ToolCall{Name: "search", Args: agent.ToolCallArgs{}})
+
+	events := observer.eventsForQuestion(0)
+	expected := []QuestionEventType{QuestionToolStart, QuestionToolFinish}
+	assertSequence(t, events, expected)
+}
+
 // recordingObserver stores events for assertions.
 type recordingObserver struct {
 	mu     sync.Mutex
@@ -195,6 +211,17 @@ func assertSequence(t *testing.T, events []QuestionEventType, expected []Questio
 	}
 	if pos != len(expected) {
 		t.Fatalf("expected sequence %v, got %v", expected, events)
+	}
+}
+
+// stubExecutor returns a successful tool result.
+type stubExecutor struct{}
+
+// Execute returns a simple tool result for tests.
+func (stubExecutor) Execute(_ context.Context, call agent.ToolCall) tools.CallResult {
+	return tools.CallResult{
+		Tool:     call.Name,
+		Duration: 10 * time.Millisecond,
 	}
 }
 
