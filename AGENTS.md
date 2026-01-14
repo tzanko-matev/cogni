@@ -54,6 +54,19 @@ in the agent's environment.
   unit of work is self-contained when all relevant checks pass (for
   example the code builds successfully and relevant tests exist and
   pass).
+  
+- If you are unable to follow this process due to reasons that are not
+  under your control, you need to STOP immediately and ask for
+  feedback.
+  Such reasons are:
+  - Missing software in the dev environment (compilers, databases,
+    etc.) which prevents building the software or running the tests
+  - Missing credentials needed for running tests, or other operations
+  - Wrong file permissions that block building or running tests
+  - Other types of missing configuration or environment variables
+  - Crashing due to not having enough memory or disk space.
+  - Having exhausted rate limits from dependent third-party services
+  and so on.
 
 - After each successful step and jj commit you are allowed to do a
   **partial refactor**. This means: review the code that was just
