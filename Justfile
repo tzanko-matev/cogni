@@ -24,3 +24,22 @@ test:
 # Run live-key integration tests.
 test-live:
     go test -tags=live -timeout 10m ./internal/cli
+
+# Run cucumber feature tests.
+test-cucumber:
+    go test -tags=cucumber ./...
+
+# Run integration-tagged tests.
+test-integration:
+    go test -tags=integration ./...
+
+# Run stress-tagged tests.
+test-stress:
+    go test -tags=stress ./...
+
+# Run chaos-tagged tests.
+test-chaos:
+    go test -tags=chaos ./...
+
+# Run all test suites (unit + tagged).
+test-all: test test-live test-cucumber test-integration test-stress test-chaos
