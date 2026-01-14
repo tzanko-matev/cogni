@@ -18,3 +18,7 @@ tasks:
     type: question_eval
     agent: "default"
     questions_file: "spec/questions/example.yml"
+
+rate_limiter:
+  mode: "disabled"   # or "embedded"/"remote" if you’re using limits
+  workers: 4         # global default for question_eval
