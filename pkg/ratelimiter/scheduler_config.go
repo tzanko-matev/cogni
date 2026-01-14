@@ -19,6 +19,7 @@ type schedulerConfig struct {
 	jitter          func(time.Duration) time.Duration
 	errorRetryDelay time.Duration
 	idleInterval    time.Duration
+	observer        SchedulerObserver
 }
 
 // defaultSchedulerConfig returns the production scheduler defaults.
@@ -30,6 +31,7 @@ func defaultSchedulerConfig() schedulerConfig {
 		jitter:          jitterSource.Jitter,
 		errorRetryDelay: defaultErrorRetryDelay,
 		idleInterval:    defaultIdleInterval,
+		observer:        nil,
 	}
 }
 

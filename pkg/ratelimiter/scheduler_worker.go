@@ -16,13 +16,16 @@ func (s *Scheduler) worker() {
 // handleJob runs a single reserve/execute/complete attempt.
 func (s *Scheduler) handleJob(job Job) {
 	job = s.ensureLeaseID(job)
+	s.notifyReserveStart(job)
 	req := buildReserveRequest(job)
 	res, err := s.limiter.Reserve(s.ctx, req)
 	if err != nil {
+		s.notifyReserveError(job, err)
 		s.requeue(job, s.now().Add(s.errorRetryDelay))
 		return
 	}
 	if !res.Allowed {
+		s.notifyReserveDenied(job, res)
 		job.LeaseID = s.newLeaseID()
 		s.requeue(job, s.now().Add(s.retryDelay(res)))
 		return
@@ -92,4 +95,25 @@ func (s *Scheduler) complete(job Job, actuals []Actual) {
 		JobID:   job.JobID,
 		Actuals: actuals,
 	})
+}
+
+// notifyReserveStart forwards reserve start events to observers.
+func (s *Scheduler) notifyReserveStart(job Job) {
+	if s.observer != nil {
+		s.observer.OnReserveStart(job)
+	}
+}
+
+// notifyReserveDenied forwards reserve denials to observers.
+func (s *Scheduler) notifyReserveDenied(job Job, res ReserveResponse) {
+	if s.observer != nil {
+		s.observer.OnReserveDenied(job, res)
+	}
+}
+
+// notifyReserveError forwards reserve errors to observers.
+func (s *Scheduler) notifyReserveError(job Job, err error) {
+	if s.observer != nil {
+		s.observer.OnReserveError(job, err)
+	}
 }

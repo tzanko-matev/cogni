@@ -55,6 +55,7 @@ type RunParams struct {
 	VerboseWriter    io.Writer
 	VerboseLogWriter io.Writer
 	NoColor          bool
+	Observer         RunObserver
 	Deps             RunDependencies
 }
 

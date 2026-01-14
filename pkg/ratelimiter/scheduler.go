@@ -21,8 +21,9 @@ type Job struct {
 
 // Scheduler coordinates Reserve/Complete attempts across per-provider queues.
 type Scheduler struct {
-	limiter Limiter
-	workers int
+	limiter  Limiter
+	workers  int
+	observer SchedulerObserver
 
 	submitCh  chan Job
 	requeueCh chan requeueRequest
@@ -47,6 +48,13 @@ type Scheduler struct {
 // NewScheduler creates a Scheduler with the default configuration.
 func NewScheduler(limiter Limiter, workers int) *Scheduler {
 	return newScheduler(limiter, workers, defaultSchedulerConfig())
+}
+
+// NewSchedulerWithObserver creates a Scheduler with an observer.
+func NewSchedulerWithObserver(limiter Limiter, workers int, observer SchedulerObserver) *Scheduler {
+	cfg := defaultSchedulerConfig()
+	cfg.observer = observer
+	return newScheduler(limiter, workers, cfg)
 }
 
 // Submit enqueues a job for scheduling.
@@ -102,6 +110,7 @@ func newScheduler(limiter Limiter, workers int, cfg schedulerConfig) *Scheduler 
 	s := &Scheduler{
 		limiter:         limiter,
 		workers:         workers,
+		observer:        cfg.observer,
 		submitCh:        make(chan Job, workers*4),
 		requeueCh:       make(chan requeueRequest, workers*4),
 		workCh:          make(chan Job, workers),

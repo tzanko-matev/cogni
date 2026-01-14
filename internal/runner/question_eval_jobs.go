@@ -28,6 +28,7 @@ type questionJobDeps struct {
 	noColor         bool
 	maxOutputTokens uint64
 	questionTotal   int
+	observer        *questionJobObserver
 }
 
 // questionJobResult captures the outcome of a question evaluation job.
@@ -61,6 +62,10 @@ func runQuestionJobsSequential(ctx context.Context, sched *ratelimiter.Scheduler
 				resultCh <- jobResult
 				return jobResult.actualTokens, jobResult.runErr
 			},
+		}
+		if deps.observer != nil {
+			deps.observer.RegisterJob(job.JobID, index)
+			deps.observer.Emit(index, questionEventOptions{EventType: QuestionScheduled})
 		}
 		sched.Submit(job)
 		jobResult := <-resultCh
@@ -99,6 +104,10 @@ func runQuestionJobsConcurrent(ctx context.Context, sched *ratelimiter.Scheduler
 				return jobResult.actualTokens, jobResult.runErr
 			},
 		}
+		if deps.observer != nil {
+			deps.observer.RegisterJob(job.JobID, idx)
+			deps.observer.Emit(idx, questionEventOptions{EventType: QuestionScheduled})
+		}
 		sched.Submit(job)
 	}
 
@@ -125,13 +134,23 @@ func runQuestionJobsConcurrent(ctx context.Context, sched *ratelimiter.Scheduler
 func executeQuestionJob(ctx context.Context, deps questionJobDeps, index int, item question.Question, promptText string) questionJobResult {
 	logVerbose(deps.verbose, deps.verboseWriter, deps.verboseLog, deps.noColor, styleTask,
 		fmt.Sprintf("Task %s question %d/%d agent=%s model=%s", deps.task.Task.ID, index+1, deps.questionTotal, deps.task.AgentID, deps.task.Model))
+	if deps.observer != nil {
+		deps.observer.Emit(index, questionEventOptions{EventType: QuestionRunning})
+	}
 	provider, err := deps.providerFactory(deps.task.Agent, deps.task.Model)
 	if err != nil {
 		result := buildQuestionResult(item, call.RunMetrics{}, err)
+		if deps.observer != nil {
+			deps.observer.Emit(index, questionEventOptions{EventType: QuestionRuntimeError, Error: err.Error()})
+		}
 		return questionJobResult{index: index, result: result, runtimeError: true, actualTokens: 0, runErr: err}
 	}
 	session := newSession(deps.task, deps.repoRoot, deps.toolDefs, deps.verbose)
-	callResult, runErr := call.RunCall(ctx, session, provider, deps.executor, promptText, call.RunOptions{
+	toolExecutor := deps.executor
+	if deps.observer != nil {
+		toolExecutor = newObservedToolExecutor(deps.observer, index, deps.executor)
+	}
+	callResult, runErr := call.RunCall(ctx, session, provider, toolExecutor, promptText, call.RunOptions{
 		TokenCounter: deps.tokenCounter,
 		Compaction:   deps.compaction,
 		Limits: call.RunLimits{
@@ -152,6 +171,9 @@ func executeQuestionJob(ctx context.Context, deps questionJobDeps, index int, it
 	logVerbose(deps.verbose, deps.verboseWriter, deps.verboseLog, deps.noColor, styleMetrics,
 		fmt.Sprintf("Metrics task=%s question=%d steps=%d tokens=%d wall_time=%s tool_calls=%s", deps.task.Task.ID, index+1, metrics.Steps, metrics.Tokens, metrics.WallTime, formatToolCounts(metrics.ToolCalls)))
 
+	if deps.observer != nil {
+		deps.observer.Emit(index, questionEventOptions{EventType: QuestionParsing})
+	}
 	result := buildQuestionResult(item, metrics, runErr)
 	jobResult := questionJobResult{
 		index:        index,
@@ -162,8 +184,24 @@ func executeQuestionJob(ctx context.Context, deps questionJobDeps, index int, it
 	if runErr != nil {
 		if errors.Is(runErr, call.ErrBudgetExceeded) {
 			jobResult.budgetExceeded = true
+			if deps.observer != nil {
+				deps.observer.Emit(index, questionEventOptions{
+					EventType: QuestionBudgetExceeded,
+					Error:     runErr.Error(),
+					Tokens:    metrics.Tokens,
+					WallTime:  metrics.WallTime,
+				})
+			}
 		} else {
 			jobResult.runtimeError = true
+			if deps.observer != nil {
+				deps.observer.Emit(index, questionEventOptions{
+					EventType: QuestionRuntimeError,
+					Error:     runErr.Error(),
+					Tokens:    metrics.Tokens,
+					WallTime:  metrics.WallTime,
+				})
+			}
 		}
 		return jobResult
 	}
@@ -171,12 +209,35 @@ func executeQuestionJob(ctx context.Context, deps questionJobDeps, index int, it
 	answer, parseErr := question.ParseAnswerFromOutput(callResult.Output)
 	if parseErr != nil {
 		jobResult.result.ParseError = parseErr.Error()
+		if deps.observer != nil {
+			deps.observer.Emit(index, questionEventOptions{
+				EventType: QuestionParseError,
+				Error:     parseErr.Error(),
+				Tokens:    metrics.Tokens,
+				WallTime:  metrics.WallTime,
+			})
+		}
 		return jobResult
 	}
 	jobResult.result.AgentAnswer = answer.Raw
 	if isCorrectAnswer(answer.Normalized, item.CorrectAnswers) {
 		jobResult.result.Correct = true
 		jobResult.correct = true
+		if deps.observer != nil {
+			deps.observer.Emit(index, questionEventOptions{
+				EventType: QuestionCorrect,
+				Tokens:    metrics.Tokens,
+				WallTime:  metrics.WallTime,
+			})
+		}
+		return jobResult
+	}
+	if deps.observer != nil {
+		deps.observer.Emit(index, questionEventOptions{
+			EventType: QuestionIncorrect,
+			Tokens:    metrics.Tokens,
+			WallTime:  metrics.WallTime,
+		})
 	}
 	return jobResult
 }

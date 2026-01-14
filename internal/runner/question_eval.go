@@ -27,6 +27,7 @@ func runQuestionTask(
 	verboseWriter io.Writer,
 	verboseLogWriter io.Writer,
 	noColor bool,
+	observer RunObserver,
 ) TaskResult {
 	result := TaskResult{TaskID: task.Task.ID, Type: task.Task.Type}
 	questionsPath := resolveQuestionsFile(repoRoot, task.Task.QuestionsFile)
@@ -53,8 +54,13 @@ func runQuestionTask(
 		return result
 	}
 
+	jobObserver := newQuestionJobObserver(observer, task.Task.ID, questionSpec.Questions)
+	if jobObserver != nil {
+		jobObserver.EmitQueuedAll()
+	}
+
 	workers := ratelimit.ResolveTaskWorkers(cfg, task.Task)
-	scheduler := ratelimiter.NewScheduler(limiter, workers)
+	scheduler := ratelimiter.NewSchedulerWithObserver(limiter, workers, jobObserver)
 	maxOutputTokens := ratelimit.MaxOutputTokens(cfg, task.Task)
 	verboseWriter, verboseLogWriter = wrapVerboseWriters(workers, verboseWriter, verboseLogWriter)
 	deps := questionJobDeps{
@@ -71,6 +77,7 @@ func runQuestionTask(
 		noColor:         noColor,
 		maxOutputTokens: maxOutputTokens,
 		questionTotal:   len(questionSpec.Questions),
+		observer:        jobObserver,
 	}
 
 	var (

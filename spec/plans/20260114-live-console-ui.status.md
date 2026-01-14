@@ -25,6 +25,6 @@
 
 ## Status
 - State: IN_PROGRESS
-- Completed steps: none
-- Current step: Plan created; ready to start Step 1.
-- Notes: Added live UI spec and test-suite pack under spec/features/output-live-ui.
+- Completed steps: Step 1 (UI state + reducer), Step 2 (runner event emission)
+- Current step: Step 3 (tool activity wiring)
+- Notes: Added runner observer events and scheduler hooks. Tests passing: `nix develop -c go test ./internal/ui/live`, `nix develop -c go test ./internal/runner`.

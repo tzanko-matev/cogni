@@ -41,6 +41,10 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 	if err != nil {
 		return Results{}, err
 	}
+	observer := params.Observer
+	if observer != nil {
+		observer.OnRunStart(runID, repoMeta.Name)
+	}
 	now := params.Deps.Now
 	if now == nil {
 		now = time.Now
@@ -95,9 +99,16 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 
 	for _, taskRun := range taskRuns {
 		usedAgents[taskRun.Agent.ID] = taskRun.Agent
+		if observer != nil {
+			observer.OnTaskStart(taskRun.Task.ID, taskRun.Task.Type, taskRun.Task.QuestionsFile, taskRun.AgentID, taskRun.Model)
+		}
 		switch taskRun.Task.Type {
 		case "question_eval":
-			taskResults = append(taskResults, runQuestionTask(ctx, repoRoot, cfg, taskRun, limiter, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor))
+			result := runQuestionTask(ctx, repoRoot, cfg, taskRun, limiter, toolDefs, executor, providerFactory, tokenCounter, params.Verbose, verboseWriter, verboseLogWriter, params.NoColor, observer)
+			taskResults = append(taskResults, result)
+			if observer != nil {
+				observer.OnTaskEnd(taskRun.Task.ID, result.Status, result.FailureReason)
+			}
 		default:
 			return Results{}, fmt.Errorf("unsupported task type %q", taskRun.Task.Type)
 		}
@@ -125,6 +136,9 @@ func Run(ctx context.Context, cfg spec.Config, params RunParams) (Results, error
 		FinishedAt: finishedAt,
 		Tasks:      taskResults,
 		Summary:    summarize(taskResults),
+	}
+	if observer != nil {
+		observer.OnRunEnd(results)
 	}
 	_ = params.OutputDir
 	return results, nil
