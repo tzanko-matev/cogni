@@ -34,9 +34,12 @@
 - pkg/ratelimiter/scheduler_worker.go
 - internal/backend/memory/retry.go
 - tests/cogni_rate_limiter_integration/cogni_rate_limiter_integration_cucumber_test.go
+- examples/README.md
+- examples/cogni-config-rate-limiter.yml
+- examples/limits.json
 
 ## Status
-- State: IN PROGRESS
-- Completed steps: Step 1 (config schema + defaults + validation), Step 2 (limiter construction helpers), Step 3 (runner wiring for rate limiting), Step 4 (concurrent question evaluation), Step 5 (remote mode integration), Step 6 (BDD scenarios)
-- Current step: Step 7 (docs/examples update)
-- Notes: Added concurrency execution path with deterministic ordering and locked verbose writers. Added remote mode integration test and adjusted scheduler completes to ignore shutdown cancellation. Implemented Cogni rate limiter BDD scenarios and tuned memory backend retry delay to keep concurrency tests deterministic. `nix develop -c go test ./internal/runner`, `nix develop -c go test ./tests/cogni_rate_limiter_integration -tags=cucumber`, and `nix develop -c go test ./internal/backend/memory` passed. `go test ./internal/config` and `go test ./internal/ratelimit ./pkg/ratelimiter/httpclient` still failed earlier because the Go toolchain download for go1.25 was unavailable in the sandbox.
+- State: DONE
+- Completed steps: Step 1 (config schema + defaults + validation), Step 2 (limiter construction helpers), Step 3 (runner wiring for rate limiting), Step 4 (concurrent question evaluation), Step 5 (remote mode integration), Step 6 (BDD scenarios), Step 7 (docs/examples update)
+- Current step: DONE
+- Notes: Added concurrency execution path with deterministic ordering and locked verbose writers. Added remote mode integration test and adjusted scheduler completes to ignore shutdown cancellation. Implemented Cogni rate limiter BDD scenarios and tuned memory backend retry delay to keep concurrency tests deterministic. Added example config and limits registry. Tests passing: `nix develop -c go test ./internal/config`, `nix develop -c go test ./internal/ratelimit ./pkg/ratelimiter/httpclient`, `nix develop -c go test ./internal/runner`, `nix develop -c go test ./tests/cogni_rate_limiter_integration -tags=cucumber`, `nix develop -c go test ./internal/backend/memory`.
