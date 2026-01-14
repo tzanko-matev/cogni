@@ -78,6 +78,49 @@ func runQuestionJobsSequential(ctx context.Context, sched *ratelimiter.Scheduler
 	return results, correctCount, runtimeError, budgetExceeded
 }
 
+// runQuestionJobsConcurrent executes question jobs concurrently and preserves ordering.
+func runQuestionJobsConcurrent(ctx context.Context, sched *ratelimiter.Scheduler, questions []question.Question, deps questionJobDeps) ([]QuestionResult, int, bool, bool) {
+	results := make([]QuestionResult, len(questions))
+	resultCh := make(chan questionJobResult, len(questions))
+
+	for index, item := range questions {
+		idx := index
+		questionItem := item
+		promptText := buildQuestionPrompt(questionItem)
+		job := ratelimiter.Job{
+			JobID:           fmt.Sprintf("%s-%d", deps.task.Task.ID, idx+1),
+			Provider:        deps.task.Agent.Provider,
+			Model:           deps.task.Model,
+			Prompt:          promptText,
+			MaxOutputTokens: deps.maxOutputTokens,
+			Execute: func(_ context.Context) (uint64, error) {
+				jobResult := executeQuestionJob(ctx, deps, idx, questionItem, promptText)
+				resultCh <- jobResult
+				return jobResult.actualTokens, jobResult.runErr
+			},
+		}
+		sched.Submit(job)
+	}
+
+	correctCount := 0
+	runtimeError := false
+	budgetExceeded := false
+	for i := 0; i < len(questions); i++ {
+		jobResult := <-resultCh
+		results[jobResult.index] = jobResult.result
+		if jobResult.correct {
+			correctCount++
+		}
+		if jobResult.runtimeError {
+			runtimeError = true
+		}
+		if jobResult.budgetExceeded {
+			budgetExceeded = true
+		}
+	}
+	return results, correctCount, runtimeError, budgetExceeded
+}
+
 // executeQuestionJob runs a single question evaluation and returns its outcome.
 func executeQuestionJob(ctx context.Context, deps questionJobDeps, index int, item question.Question, promptText string) questionJobResult {
 	logVerbose(deps.verbose, deps.verboseWriter, deps.verboseLog, deps.noColor, styleTask,

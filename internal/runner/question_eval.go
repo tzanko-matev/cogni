@@ -56,6 +56,7 @@ func runQuestionTask(
 	workers := ratelimit.ResolveTaskWorkers(cfg, task.Task)
 	scheduler := ratelimiter.NewScheduler(limiter, workers)
 	maxOutputTokens := ratelimit.MaxOutputTokens(cfg, task.Task)
+	verboseWriter, verboseLogWriter = wrapVerboseWriters(workers, verboseWriter, verboseLogWriter)
 	deps := questionJobDeps{
 		repoRoot:        repoRoot,
 		task:            task,
@@ -72,7 +73,17 @@ func runQuestionTask(
 		questionTotal:   len(questionSpec.Questions),
 	}
 
-	questionResults, correctCount, runtimeError, budgetExceeded := runQuestionJobsSequential(ctx, scheduler, questionSpec.Questions, deps)
+	var (
+		questionResults []QuestionResult
+		correctCount    int
+		runtimeError    bool
+		budgetExceeded  bool
+	)
+	if workers <= 1 {
+		questionResults, correctCount, runtimeError, budgetExceeded = runQuestionJobsSequential(ctx, scheduler, questionSpec.Questions, deps)
+	} else {
+		questionResults, correctCount, runtimeError, budgetExceeded = runQuestionJobsConcurrent(ctx, scheduler, questionSpec.Questions, deps)
+	}
 	shutdownCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	if err := scheduler.Shutdown(shutdownCtx); err != nil {

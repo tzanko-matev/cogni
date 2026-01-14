@@ -28,9 +28,11 @@
 - internal/runner/question_eval_helpers.go
 - internal/runner/question_eval_jobs.go
 - internal/runner/run_rate_limiter_test.go
+- internal/runner/question_eval_concurrency_test.go
+- internal/runner/locked_writer.go
 
 ## Status
 - State: IN PROGRESS
-- Completed steps: Step 1 (config schema + defaults + validation), Step 2 (limiter construction helpers), Step 3 (runner wiring for rate limiting)
-- Current step: Step 4 (concurrent question evaluation)
-- Notes: Added rate limiter config schema, defaults, validation, and tests. Added limiter construction helpers, noop limiter, and HTTP timeout constructor tests. Wired limiter creation into runner and added rate limiter usage test. `go test ./internal/config`, `go test ./internal/ratelimit ./pkg/ratelimiter/httpclient`, and `go test ./internal/runner` failed because the Go toolchain download for go1.25 was unavailable in the sandbox.
+- Completed steps: Step 1 (config schema + defaults + validation), Step 2 (limiter construction helpers), Step 3 (runner wiring for rate limiting), Step 4 (concurrent question evaluation)
+- Current step: Step 5 (remote mode integration)
+- Notes: Added concurrency execution path with deterministic ordering and locked verbose writers. Added concurrency tests. `nix develop -c go test ./internal/runner` passed. `go test ./internal/config` and `go test ./internal/ratelimit ./pkg/ratelimiter/httpclient` still failed earlier because the Go toolchain download for go1.25 was unavailable in the sandbox.
