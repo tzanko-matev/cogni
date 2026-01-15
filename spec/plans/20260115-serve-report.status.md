@@ -20,6 +20,6 @@
 
 ## Status
 - State: IN PROGRESS
-- Completed steps: Step 1 (CLI command + server skeleton)
-- Current step: Step 2 (HTTP handlers + asset resolution layer)
-- Notes: Added `serve` command, report server skeleton, and CLI tests. Tests: `nix develop -c go test ./internal/cli -timeout 10s`.
+- Completed steps: Step 1 (CLI command + server skeleton), Step 2 (HTTP handlers + asset resolution layer)
+- Current step: Step 3 (TypeScript client build pipeline)
+- Notes: Added embedded asset manifest + resolver, asset routing, and reportserver tests. Tests: `nix develop -c go test ./internal/cli -timeout 10s`, `nix develop -c go test ./internal/reportserver -timeout 10s`.

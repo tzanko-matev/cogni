@@ -2,20 +2,25 @@ package reportserver
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 )
 
-const indexHTML = `<!doctype html>
+const indexHTMLTemplate = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cogni Report</title>
+    <link rel="stylesheet" href="%s" />
   </head>
   <body>
-    <h1>Cogni Report</h1>
-    <p>Report assets and interactive charts will load here.</p>
+    <div id="app">
+      <h1>Cogni Report</h1>
+      <p>Report assets and interactive charts will load here.</p>
+    </div>
+    <script type="module" src="%s"></script>
   </body>
 </html>`
 
@@ -25,16 +30,42 @@ func NewHandler(cfg Config) (http.Handler, error) {
 		return nil, errors.New("reportserver: db path is required")
 	}
 
+	manifest, err := loadEmbeddedManifest()
+	if err != nil {
+		return nil, err
+	}
+	resolver := newAssetResolver(cfg.AssetsBaseURL, manifest)
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", serveIndex)
+	mux.HandleFunc("/", serveIndex(resolver))
 	mux.Handle("/data/db.duckdb", serveDatabase(cfg.DBPath))
+	if cfg.AssetsBaseURL == "" {
+		assetsFS, err := embeddedAssetsFS()
+		if err != nil {
+			return nil, err
+		}
+		mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assetsFS))))
+	}
 	return mux, nil
 }
 
-// serveIndex writes the base HTML shell for the report UI.
-func serveIndex(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = io.WriteString(w, indexHTML)
+// serveIndex builds a handler that writes the HTML shell with resolved assets.
+func serveIndex(resolver AssetResolver) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		cssURL, err := resolver.URL("app.css")
+		if err != nil {
+			http.Error(w, "missing css asset", http.StatusInternalServerError)
+			return
+		}
+		jsURL, err := resolver.URL("app.js")
+		if err != nil {
+			http.Error(w, "missing js asset", http.StatusInternalServerError)
+			return
+		}
+		html := fmt.Sprintf(indexHTMLTemplate, cssURL, jsURL)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = io.WriteString(w, html)
+	}
 }
 
 // serveDatabase serves the DuckDB file from disk for browser-side processing.
