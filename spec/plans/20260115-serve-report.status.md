@@ -20,6 +20,6 @@
 
 ## Status
 - State: IN PROGRESS
-- Completed steps: Step 1 (CLI command + server skeleton), Step 2 (HTTP handlers + asset resolution layer), Step 3 (TypeScript client build pipeline), Step 4 ("Hello world" report in the browser)
-- Current step: Step 5 (BDD + docs updates)
-- Notes: Added DuckDB-WASM + vgplot hello-world flow and rebuilt report assets. Tests: `nix develop -c npm --cache .cache/npm --prefix web run build`.
+- Completed steps: Step 1 (CLI command + server skeleton), Step 2 (HTTP handlers + asset resolution layer), Step 3 (TypeScript client build pipeline), Step 4 ("Hello world" report in the browser), Step 5 (BDD + docs updates)
+- Current step: DONE
+- Notes: Added serve feature scenarios and cucumber coverage. Tests: `nix develop -c npm --cache .cache/npm --prefix web run build`, `nix develop -c go test -tags=cucumber ./internal/reportserver -timeout 10s`.

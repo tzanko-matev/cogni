@@ -15,6 +15,7 @@ Feature: Cogni CLI
       | validate |
       | run      |
       | compare  |
+      | serve    |
       | report   |
 
   Scenario: Run uses defaults and produces outputs
