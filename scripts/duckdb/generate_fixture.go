@@ -65,6 +65,9 @@ func loadConfig(path string) (fixtureConfig, error) {
 
 // generateFixture creates and populates the DuckDB file at path.
 func generateFixture(ctx context.Context, path string, cfg fixtureConfig) error {
+	if err := removeIfExists(path); err != nil {
+		return err
+	}
 	db, err := sql.Open("duckdb", path)
 	if err != nil {
 		return err
@@ -155,6 +158,21 @@ func dirOf(path string) string {
 		return path
 	}
 	return filepath.Dir(path)
+}
+
+// removeIfExists deletes an existing fixture file so we always start fresh.
+func removeIfExists(path string) error {
+	_, err := os.Stat(path)
+	if err == nil {
+		if err := os.Remove(path); err != nil {
+			return fmt.Errorf("remove existing fixture: %w", err)
+		}
+		return nil
+	}
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return fmt.Errorf("stat fixture: %w", err)
 }
 
 // fixtureNamespace ensures stable UUIDs across fixture runs.

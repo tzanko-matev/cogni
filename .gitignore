@@ -13,3 +13,5 @@
 /data/test_results.json.tmp
 .cogni/results
 node_modules/
+/tests/duckdb/wasm/.duckdb_home/
+/web/dist/
