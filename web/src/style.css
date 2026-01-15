@@ -18,3 +18,65 @@ body {
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(24, 19, 14, 0.12);
 }
+
+.report-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.report-header h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.status {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.status[data-level="idle"] {
+  background: #f1ebe3;
+  border-color: #dccfc0;
+  color: #6f655a;
+}
+
+.status[data-level="loading"] {
+  background: #ffe9d6;
+  border-color: #ffc9a6;
+  color: #8a4f2b;
+}
+
+.status[data-level="ready"] {
+  background: #e7f5ee;
+  border-color: #b5e3cc;
+  color: #2f6b4b;
+}
+
+.status[data-level="error"] {
+  background: #fde6e6;
+  border-color: #f5baba;
+  color: #8a2f2f;
+}
+
+.details {
+  margin: 0 0 24px;
+  color: #51483f;
+}
+
+.chart {
+  min-height: 280px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px dashed #d3c6b7;
+  background: radial-gradient(circle at top, #fffaf5, #f4eadf);
+}
