@@ -12,8 +12,23 @@ docs-test-results:
 docs-serve-with-tests: docs-test-results
     hugo server --bind 0.0.0.0 --port 1313
 
+# Build report UI assets.
+web-build:
+    mkdir -p .cache/npm
+    if [ ! -d web/node_modules ]; then npm --cache .cache/npm --prefix web install; fi
+    npm --cache .cache/npm --prefix web run build
+
+# Sync built report assets into the embedded reportserver directory.
+web-sync-assets:
+    mkdir -p .cache/npm
+    if [ ! -d web/node_modules ]; then npm --cache .cache/npm --prefix web install; fi
+    npm --cache .cache/npm --prefix web run build
+    rm -rf internal/reportserver/assets
+    mkdir -p internal/reportserver/assets
+    cp -R web/dist/. internal/reportserver/assets/
+
 # Build the cogni CLI.
-build:
+build: web-build
     go generate ./...
     go build -o cogni ./cmd/cogni
 

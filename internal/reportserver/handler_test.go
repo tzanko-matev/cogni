@@ -25,11 +25,14 @@ func TestNewHandlerServesHTML(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", resp.Code)
 	}
 	body := resp.Body.String()
-	if !strings.Contains(body, "app.js") {
-		t.Fatalf("expected app.js reference in HTML")
+	assets := expectedAssets(t, "")
+	if !strings.Contains(body, assets.ScriptURL) {
+		t.Fatalf("expected script url %s in HTML", assets.ScriptURL)
 	}
-	if !strings.Contains(body, "app.css") {
-		t.Fatalf("expected app.css reference in HTML")
+	for _, styleURL := range assets.StyleURLs {
+		if !strings.Contains(body, styleURL) {
+			t.Fatalf("expected style url %s in HTML", styleURL)
+		}
 	}
 }
 
@@ -56,9 +59,10 @@ func TestNewHandlerServesDatabase(t *testing.T) {
 // TestNewHandlerUsesAssetsBaseURL verifies HTML assets use the configured base URL.
 func TestNewHandlerUsesAssetsBaseURL(t *testing.T) {
 	dbPath := writeTempDB(t, "duckdb")
+	baseURL := "https://cdn.example.com/assets"
 	handler, err := NewHandler(Config{
 		DBPath:        dbPath,
-		AssetsBaseURL: "https://cdn.example.com/assets",
+		AssetsBaseURL: baseURL,
 	})
 	if err != nil {
 		t.Fatalf("new handler: %v", err)
@@ -72,11 +76,14 @@ func TestNewHandlerUsesAssetsBaseURL(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", resp.Code)
 	}
 	body := resp.Body.String()
-	if !strings.Contains(body, "https://cdn.example.com/assets/app.js") {
+	assets := expectedAssets(t, baseURL)
+	if !strings.Contains(body, assets.ScriptURL) {
 		t.Fatalf("expected base url in js asset")
 	}
-	if !strings.Contains(body, "https://cdn.example.com/assets/app.css") {
-		t.Fatalf("expected base url in css asset")
+	for _, styleURL := range assets.StyleURLs {
+		if !strings.Contains(body, styleURL) {
+			t.Fatalf("expected base url in css asset")
+		}
 	}
 }
 
@@ -89,4 +96,32 @@ func writeTempDB(t *testing.T, contents string) string {
 		t.Fatalf("write temp db: %v", err)
 	}
 	return dbPath
+}
+
+// expectedAssets resolves asset URLs using the embedded manifest.
+func expectedAssets(t *testing.T, baseURL string) resolvedAssets {
+	t.Helper()
+	manifest, err := loadEmbeddedManifest()
+	if err != nil {
+		t.Fatalf("load manifest: %v", err)
+	}
+	reportAssets, err := resolveReportAssets(manifest)
+	if err != nil {
+		t.Fatalf("resolve assets: %v", err)
+	}
+	resolver := newAssetResolver(baseURL)
+	styleURLs := make([]string, 0, len(reportAssets.Styles))
+	for _, style := range reportAssets.Styles {
+		styleURLs = append(styleURLs, resolver.URL(style))
+	}
+	return resolvedAssets{
+		ScriptURL: resolver.URL(reportAssets.Script),
+		StyleURLs: styleURLs,
+	}
+}
+
+// resolvedAssets holds resolved URLs for HTML assertions.
+type resolvedAssets struct {
+	ScriptURL string
+	StyleURLs []string
 }

@@ -1,0 +1,20 @@
+:root {
+  color: #1d1a16;
+  background-color: #f7f1e9;
+  font-family: "Space Grotesk", "IBM Plex Mono", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.report-shell {
+  max-width: 720px;
+  margin: 80px auto;
+  padding: 32px;
+  background: #fff6ec;
+  border: 1px solid #e3d8cc;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(24, 19, 14, 0.12);
+}

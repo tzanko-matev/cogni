@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 const indexHTMLTemplate = `<!doctype html>
@@ -13,7 +14,7 @@ const indexHTMLTemplate = `<!doctype html>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cogni Report</title>
-    <link rel="stylesheet" href="%s" />
+    %s
   </head>
   <body>
     <div id="app">
@@ -34,10 +35,14 @@ func NewHandler(cfg Config) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	resolver := newAssetResolver(cfg.AssetsBaseURL, manifest)
+	reportAssets, err := resolveReportAssets(manifest)
+	if err != nil {
+		return nil, err
+	}
+	resolver := newAssetResolver(cfg.AssetsBaseURL)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", serveIndex(resolver))
+	mux.HandleFunc("/", serveIndex(resolver, reportAssets))
 	mux.Handle("/data/db.duckdb", serveDatabase(cfg.DBPath))
 	if cfg.AssetsBaseURL == "" {
 		assetsFS, err := embeddedAssetsFS()
@@ -50,22 +55,26 @@ func NewHandler(cfg Config) (http.Handler, error) {
 }
 
 // serveIndex builds a handler that writes the HTML shell with resolved assets.
-func serveIndex(resolver AssetResolver) http.HandlerFunc {
+func serveIndex(resolver AssetResolver, assets ReportAssets) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
-		cssURL, err := resolver.URL("app.css")
-		if err != nil {
-			http.Error(w, "missing css asset", http.StatusInternalServerError)
-			return
-		}
-		jsURL, err := resolver.URL("app.js")
-		if err != nil {
-			http.Error(w, "missing js asset", http.StatusInternalServerError)
-			return
-		}
-		html := fmt.Sprintf(indexHTMLTemplate, cssURL, jsURL)
+		cssLinks := buildCSSLinks(resolver, assets.Styles)
+		jsURL := resolver.URL(assets.Script)
+		html := fmt.Sprintf(indexHTMLTemplate, cssLinks, jsURL)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = io.WriteString(w, html)
 	}
+}
+
+// buildCSSLinks renders link tags for the provided stylesheet assets.
+func buildCSSLinks(resolver AssetResolver, styles []string) string {
+	if len(styles) == 0 {
+		return ""
+	}
+	var builder strings.Builder
+	for _, style := range styles {
+		fmt.Fprintf(&builder, "<link rel=\"stylesheet\" href=\"%s\" />\n", resolver.URL(style))
+	}
+	return builder.String()
 }
 
 // serveDatabase serves the DuckDB file from disk for browser-side processing.
