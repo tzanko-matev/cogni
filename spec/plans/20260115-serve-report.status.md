@@ -20,6 +20,6 @@
 
 ## Status
 - State: IN PROGRESS
-- Completed steps: None
-- Current step: Step 1 (CLI command + server skeleton)
-- Notes: Plan and status files created.
+- Completed steps: Step 1 (CLI command + server skeleton)
+- Current step: Step 2 (HTTP handlers + asset resolution layer)
+- Notes: Added `serve` command, report server skeleton, and CLI tests. Tests: `nix develop -c go test ./internal/cli -timeout 10s`.

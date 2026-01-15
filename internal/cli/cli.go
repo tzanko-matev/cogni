@@ -145,6 +145,11 @@ var commands = []*Command{
 		"cogni compare --base <commit|run-id|ref> [--head <commit|run-id|ref>]",
 		"cogni compare --range <start>..<end>",
 	}, runCompare),
+	command("serve", "Serve a browser report from a DuckDB file", []string{
+		"cogni serve <db.duckdb>",
+		"cogni serve <db.duckdb> --addr <host:port>",
+		"cogni serve <db.duckdb> --assets-base-url <url>",
+	}, runServe),
 	command("report", "Generate HTML reports", []string{
 		"cogni report --range <start>..<end>",
 	}, runReport),
