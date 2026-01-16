@@ -16,6 +16,7 @@ type fakeLimiter struct {
 	reserveCalls  []ReserveRequest
 	completeCalls []CompleteRequest
 	reserveFn     func(ReserveRequest) (ReserveResponse, error)
+	completeCh    chan struct{}
 }
 
 func (f *fakeLimiter) Reserve(_ context.Context, req ReserveRequest) (ReserveResponse, error) {
@@ -32,7 +33,14 @@ func (f *fakeLimiter) Reserve(_ context.Context, req ReserveRequest) (ReserveRes
 func (f *fakeLimiter) Complete(_ context.Context, req CompleteRequest) (CompleteResponse, error) {
 	f.mu.Lock()
 	f.completeCalls = append(f.completeCalls, req)
+	completeCh := f.completeCh
 	f.mu.Unlock()
+	if completeCh != nil {
+		select {
+		case completeCh <- struct{}{}:
+		default:
+		}
+	}
 	return CompleteResponse{Ok: true}, nil
 }
 
@@ -163,6 +171,8 @@ func TestScheduler_RetryUsesNewLeaseID(t *testing.T) {
 func TestScheduler_CompleteAlwaysCalledAfterAllowed(t *testing.T) {
 	runWithTimeout(t, 2*time.Second, func() {
 		lim := &fakeLimiter{}
+		completeCalled := make(chan struct{}, 2)
+		lim.completeCh = completeCalled
 		ids := &idSource{}
 		cfg := schedulerConfig{
 			now:             time.Now,
@@ -176,19 +186,17 @@ func TestScheduler_CompleteAlwaysCalledAfterAllowed(t *testing.T) {
 			_ = sched.Shutdown(testutil.Context(t, time.Second))
 		}()
 
-		done := make(chan struct{}, 2)
 		for i := 0; i < 2; i++ {
 			sched.Submit(Job{
 				JobID:    fmt.Sprintf("job-%d", i),
 				Provider: "anthropic",
 				Model:    "claude",
 				Execute: func(context.Context) (uint64, error) {
-					done <- struct{}{}
 					return 42, fmt.Errorf("execute error")
 				},
 			})
 		}
-		waitForCount(t, done, 2, 200*time.Millisecond)
+		waitForCount(t, completeCalled, 2, 200*time.Millisecond)
 
 		lim.mu.Lock()
 		count := len(lim.completeCalls)
