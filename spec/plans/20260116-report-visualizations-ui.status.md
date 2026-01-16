@@ -31,8 +31,9 @@ toggle, bucket size control, and client-side graph/component computation.
 - Completed:
   - Plan/status files created.
   - Step 1 scaffolding: report modules, Zod types, Vitest config, and a format label test.
+  - Step 2 metric selection: DuckDB queries, metric_points view, and selector wiring.
 - In progress:
-  - Step 2: DuckDB integration + metric selection.
+  - Step 3: Graph computation + points view edges.
 
 ## Notes
 

@@ -1,4 +1,6 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
+import { buildMetricPointsSelectSQL, buildMetricPointsViewSQL, sqlStringLiteral } from "./sql";
+import { parseMetricDefRows, parseMetricPointRows, parseParentEdgeRows } from "./types";
 
 const DB_FILE_NAME = "cogni.duckdb";
 const DUCKDB_BUNDLES = duckdb.getJsDelivrBundles();
@@ -34,16 +36,53 @@ export async function attachReportDatabase(
   return conn;
 }
 
-/**
- * Create a minimal points table for the initial placeholder chart.
- */
-export async function createSamplePointsView(conn: duckdb.AsyncDuckDBConnection): Promise<void> {
-  await conn.query(`
-    CREATE OR REPLACE TABLE points AS
-    SELECT ts, value
-    FROM cogni.main.v_points
-    WHERE value IS NOT NULL
-    ORDER BY ts
-    LIMIT 200
+/** Query numeric metric definitions for the selector. */
+export async function listNumericMetrics(conn: duckdb.AsyncDuckDBConnection) {
+  const table = await conn.query(`
+    SELECT name, description, unit, physical_type
+    FROM cogni.main.metric_defs
+    WHERE physical_type IN ('DOUBLE','BIGINT')
+    ORDER BY name
   `);
+  return parseMetricDefRows(table.toArray());
+}
+
+/** Check whether revision_parents exists in the report DB. */
+export async function hasRevisionParents(conn: duckdb.AsyncDuckDBConnection): Promise<boolean> {
+  const table = await conn.query(`
+    SELECT COUNT(*) AS count\n
+    FROM information_schema.tables
+    WHERE table_schema = 'main'
+      AND table_name = 'revision_parents'
+  `);
+  const row = table.toArray()[0] as { count?: number } | undefined;
+  return Boolean(row && row.count && row.count > 0);
+}
+
+/** Create or replace the metric_points temp view. */
+export async function createMetricPointsView(
+  conn: duckdb.AsyncDuckDBConnection,
+  metric: string
+): Promise<void> {
+  await conn.query(buildMetricPointsViewSQL(metric));
+}
+
+/** Fetch metric points for the current selection. */
+export async function fetchMetricPoints(conn: duckdb.AsyncDuckDBConnection) {
+  const table = await conn.query(buildMetricPointsSelectSQL());
+  return parseMetricPointRows(table.toArray());
+}
+
+/** Fetch parent edges for a specific repo. */
+export async function fetchRevisionParents(
+  conn: duckdb.AsyncDuckDBConnection,
+  repoId: string
+) {
+  const repoLiteral = sqlStringLiteral(repoId);
+  const table = await conn.query(`
+    SELECT child_rev_id, parent_rev_id
+    FROM cogni.main.revision_parents
+    WHERE repo_id = ${repoLiteral}
+  `);
+  return parseParentEdgeRows(table.toArray());
 }

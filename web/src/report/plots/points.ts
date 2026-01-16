@@ -1,9 +1,9 @@
 import * as vg from "@uwdata/vgplot";
 
-/** Build a simple points plot from the `points` table. */
-export function buildPointsPlot(): HTMLElement {
+/** Build a points plot from the `metric_points` temp view. */
+export function buildPointsPlot(metricLabel: string): HTMLElement {
   return vg.plot(
-    vg.dot(vg.from("points"), {
+    vg.dot(vg.from("metric_points"), {
       x: "ts",
       y: "value",
       r: 4,
@@ -11,6 +11,6 @@ export function buildPointsPlot(): HTMLElement {
       stroke: "#1d1a16",
     }),
     vg.xLabel("Commit time"),
-    vg.yLabel("Metric value")
+    vg.yLabel(metricLabel)
   );
 }
