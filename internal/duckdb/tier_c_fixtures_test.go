@@ -5,13 +5,14 @@ package duckdb_test
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/google/uuid"
+	duckdb "github.com/duckdb/duckdb-go/v2"
 )
 
 // fixtureConfig describes a Tier C fixture specification.
@@ -30,9 +31,6 @@ type fixtureData struct {
 	FirstContextID string
 	FirstRevID     string
 }
-
-// fixtureNamespace ensures deterministic UUID generation.
-var fixtureNamespace = uuid.MustParse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
 // loadFixtureConfig reads a fixture config from tests/fixtures/duckdb.
 func loadFixtureConfig(name string) (fixtureConfig, error) {
@@ -57,53 +55,82 @@ func loadFixtureConfig(name string) (fixtureConfig, error) {
 
 // loadFixture inserts a deterministic dataset for Tier C tests.
 func loadFixture(ctx context.Context, db *sql.DB, cfg fixtureConfig) (fixtureData, error) {
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		return fixtureData{}, err
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(ctx, "BEGIN"); err != nil {
+		return fixtureData{}, err
+	}
+	committed := false
+	defer func() {
+		if committed {
+			return
+		}
+		_, _ = conn.ExecContext(context.Background(), "ROLLBACK")
+	}()
 	repoID := deterministicID("repo", 0)
-	if _, err := db.ExecContext(ctx, "INSERT INTO repos (repo_id, name, vcs) VALUES (?, ?, 'git')", repoID, "fixture-"+cfg.Name); err != nil {
+	if _, err := conn.ExecContext(ctx, "INSERT INTO repos (repo_id, name, vcs) VALUES (?, ?, 'git')", repoID, "fixture-"+cfg.Name); err != nil {
 		return fixtureData{}, err
 	}
 	runIDs := make([]string, 0, cfg.Runs)
+	runUUIDs := make([]duckdb.UUID, 0, cfg.Runs)
 	for i := 0; i < cfg.Runs; i++ {
 		runID := deterministicID("run", i)
+		runUUID, err := parseDuckDBUUID(runID)
+		if err != nil {
+			return fixtureData{}, err
+		}
 		runIDs = append(runIDs, runID)
-		if _, err := db.ExecContext(ctx, "INSERT INTO runs (run_id, repo_id, collected_at, tool_name) VALUES (?, ?, ?, 'cogni')", runID, repoID, time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)); err != nil {
+		runUUIDs = append(runUUIDs, runUUID)
+		if _, err := conn.ExecContext(ctx, "INSERT INTO runs (run_id, repo_id, collected_at, tool_name) VALUES (?, ?, ?, 'cogni')", runID, repoID, time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)); err != nil {
 			return fixtureData{}, err
 		}
 	}
 	metricIDs := make([]string, 0, cfg.Metrics)
+	metricUUIDs := make([]duckdb.UUID, 0, cfg.Metrics)
 	for i := 0; i < cfg.Metrics; i++ {
 		metricID := deterministicID("metric", i)
+		metricUUID, err := parseDuckDBUUID(metricID)
+		if err != nil {
+			return fixtureData{}, err
+		}
 		name := fmt.Sprintf("metric_%d", i)
 		if i == 0 {
 			name = "tokens"
 		}
 		metricIDs = append(metricIDs, metricID)
-		if _, err := db.ExecContext(ctx, "INSERT INTO metric_defs (metric_id, name, physical_type) VALUES (?, ?, 'BIGINT')", metricID, name); err != nil {
+		metricUUIDs = append(metricUUIDs, metricUUID)
+		if _, err := conn.ExecContext(ctx, "INSERT INTO metric_defs (metric_id, name, physical_type) VALUES (?, ?, 'BIGINT')", metricID, name); err != nil {
 			return fixtureData{}, err
 		}
 	}
 	firstContextID := deterministicID("context", 0)
 	firstRevID := fmt.Sprintf("rev-%06d", 0)
 	startTime := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return fixtureData{}, err
-	}
-	defer tx.Rollback()
-	revStmt, err := tx.PrepareContext(ctx, "INSERT INTO revisions (repo_id, rev_id, ts_utc) VALUES (?, ?, ?)")
+	revStmt, err := conn.PrepareContext(ctx, "INSERT INTO revisions (repo_id, rev_id, ts_utc) VALUES (?, ?, ?)")
 	if err != nil {
 		return fixtureData{}, err
 	}
 	defer revStmt.Close()
-	ctxStmt, err := tx.PrepareContext(ctx, "INSERT INTO contexts (context_id, context_key, repo_id, rev_id) VALUES (?, ?, ?, ?)")
+	ctxStmt, err := conn.PrepareContext(ctx, "INSERT INTO contexts (context_id, context_key, repo_id, rev_id) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return fixtureData{}, err
 	}
 	defer ctxStmt.Close()
-	measStmt, err := tx.PrepareContext(ctx, "INSERT INTO measurements (run_id, context_id, metric_id, value_bigint) VALUES (?, ?, ?, ?)")
+	measurementAppender, err := newMeasurementAppender(conn)
 	if err != nil {
 		return fixtureData{}, err
 	}
-	defer measStmt.Close()
+	defer func() {
+		if measurementAppender != nil {
+			_ = measurementAppender.Close()
+		}
+	}()
+	const sampleIndex = int32(0)
+	const statusOK = "ok"
+	var nullValue driver.Value
 	for i := 0; i < cfg.Revisions; i++ {
 		revID := fmt.Sprintf("rev-%06d", i)
 		ts := startTime.Add(time.Duration(i) * time.Minute)
@@ -115,22 +142,41 @@ func loadFixture(ctx context.Context, db *sql.DB, cfg fixtureConfig) (fixtureDat
 		if _, err := ctxStmt.ExecContext(ctx, contextID, contextKey, repoID, revID); err != nil {
 			return fixtureData{}, err
 		}
-		for _, runID := range runIDs {
-			for metricIndex, metricID := range metricIDs {
+		contextUUID, err := parseDuckDBUUID(contextID)
+		if err != nil {
+			return fixtureData{}, err
+		}
+		for _, runUUID := range runUUIDs {
+			for metricIndex, metricUUID := range metricUUIDs {
 				value := int64(i + metricIndex)
-				if _, err := measStmt.ExecContext(ctx, runID, contextID, metricID, value); err != nil {
+				if err := measurementAppender.AppendRow(
+					runUUID,
+					contextUUID,
+					metricUUID,
+					sampleIndex,
+					nullValue,
+					nullValue,
+					value,
+					nullValue,
+					nullValue,
+					nullValue,
+					nullValue,
+					statusOK,
+					nullValue,
+					nullValue,
+				); err != nil {
 					return fixtureData{}, err
 				}
 			}
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := measurementAppender.Close(); err != nil {
 		return fixtureData{}, err
 	}
+	measurementAppender = nil
+	if _, err := conn.ExecContext(ctx, "COMMIT"); err != nil {
+		return fixtureData{}, err
+	}
+	committed = true
 	return fixtureData{RepoID: repoID, RunIDs: runIDs, MetricIDs: metricIDs, FirstContextID: firstContextID, FirstRevID: firstRevID}, nil
-}
-
-// deterministicID generates a repeatable UUID from a prefix and index.
-func deterministicID(prefix string, index int) string {
-	return uuid.NewSHA1(fixtureNamespace, []byte(fmt.Sprintf("%s-%d", prefix, index))).String()
 }

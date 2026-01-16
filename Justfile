@@ -58,6 +58,6 @@ duckdb-tier-c-large:
 
 # Run DuckDB Tier D DuckDB-WASM smoke test.
 duckdb-tier-d:
-    go run ./scripts/duckdb/generate_fixture.go --config tests/fixtures/duckdb/medium.json --out tests/fixtures/duckdb/medium.duckdb
+    go run ./scripts/duckdb/... --config tests/fixtures/duckdb/medium.json --out tests/fixtures/duckdb/medium.duckdb
     if [ ! -d tests/duckdb/wasm/node_modules ]; then (cd tests/duckdb/wasm && npm install); fi
     node tests/duckdb/wasm/smoke_test.mjs tests/fixtures/duckdb/medium.duckdb
