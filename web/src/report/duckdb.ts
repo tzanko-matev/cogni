@@ -1,6 +1,8 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
+import { tableFromArrays } from "apache-arrow";
 import { buildMetricPointsSelectSQL, buildMetricPointsViewSQL, sqlStringLiteral } from "./sql";
 import { parseMetricDefRows, parseMetricPointRows, parseParentEdgeRows } from "./types";
+import type { EdgeXY } from "./types";
 
 const DB_FILE_NAME = "cogni.duckdb";
 const DUCKDB_BUNDLES = duckdb.getJsDelivrBundles();
@@ -50,7 +52,7 @@ export async function listNumericMetrics(conn: duckdb.AsyncDuckDBConnection) {
 /** Check whether revision_parents exists in the report DB. */
 export async function hasRevisionParents(conn: duckdb.AsyncDuckDBConnection): Promise<boolean> {
   const table = await conn.query(`
-    SELECT COUNT(*) AS count\n
+    SELECT COUNT(*) AS count
     FROM information_schema.tables
     WHERE table_schema = 'main'
       AND table_name = 'revision_parents'
@@ -85,4 +87,24 @@ export async function fetchRevisionParents(
     WHERE repo_id = ${repoLiteral}
   `);
   return parseParentEdgeRows(table.toArray());
+}
+
+/** Replace the edge_xy temp table with new link data. */
+export async function replaceEdgeXYTable(
+  conn: duckdb.AsyncDuckDBConnection,
+  edges: EdgeXY[]
+): Promise<void> {
+  await conn.query(
+    "CREATE OR REPLACE TEMP TABLE edge_xy (x1 TIMESTAMP, y1 DOUBLE, x2 TIMESTAMP, y2 DOUBLE)"
+  );
+  if (edges.length === 0) {
+    return;
+  }
+  const table = tableFromArrays({
+    x1: edges.map((edge) => edge.x1),
+    y1: edges.map((edge) => edge.y1),
+    x2: edges.map((edge) => edge.x2),
+    y2: edges.map((edge) => edge.y2),
+  });
+  await conn.insertArrowTable(table, { name: "edge_xy", create: false });
 }

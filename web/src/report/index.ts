@@ -3,14 +3,17 @@ import {
   attachReportDatabase,
   createMetricPointsView,
   fetchMetricPoints,
+  fetchRevisionParents,
   hasRevisionParents,
   initDuckDB,
   listNumericMetrics,
+  replaceEdgeXYTable,
 } from "./duckdb";
 import { formatMetricLabel } from "./format";
+import { buildEdgeXY, computeMinimalEdges } from "./graph";
 import { buildPointsPlot } from "./plots/points";
 import { normalizeBucketSize, normalizeViewMode, selectMetricName } from "./state";
-import type { BucketSize, ViewMode } from "./types";
+import type { BucketSize, ParentEdge, ViewMode } from "./types";
 import {
   buildShell,
   clearChart,
@@ -61,6 +64,9 @@ export async function bootstrapReport(): Promise<void> {
     }
 
     let renderToken = 0;
+    let parentEdges: ParentEdge[] | null = null;
+    let parentRepoId: string | null = null;
+
     const render = async (): Promise<void> => {
       renderToken += 1;
       const token = renderToken;
@@ -73,19 +79,31 @@ export async function bootstrapReport(): Promise<void> {
         return;
       }
 
+      let edgesAvailable = false;
+      if (parentsAvailable && points.length > 0) {
+        const repoId = points[0].repoId;
+        if (!parentEdges || parentRepoId !== repoId) {
+          parentEdges = await fetchRevisionParents(conn, repoId);
+          parentRepoId = repoId;
+        }
+        const minimalEdges = computeMinimalEdges(points, parentEdges ?? []);
+        const edgeXY = buildEdgeXY(points, minimalEdges);
+        await replaceEdgeXYTable(conn, edgeXY);
+        edgesAvailable = edgeXY.length > 0;
+      }
+
       clearChart(ui.chart);
       const metricLabel = formatMetricLabel(
         metrics.find((metric) => metric.name === selectedMetric) ?? metrics[0]
       );
-      ui.chart.appendChild(buildPointsPlot(metricLabel));
+      ui.chart.appendChild(buildPointsPlot(metricLabel, edgesAvailable));
 
       if (points.length === 0) {
         setDetails(ui.details, `Metric: ${selectedMetric} (no data).`);
+      } else if (!parentsAvailable) {
+        setDetails(ui.details, `Metric: ${selectedMetric} · View: Points · Edge data unavailable`);
       } else {
-        setDetails(
-          ui.details,
-          `Metric: ${selectedMetric} · View: ${viewMode === "points" ? "Points" : "Candles"}`
-        );
+        setDetails(ui.details, `Metric: ${selectedMetric} · View: Points`);
       }
       setStatus(ui.status, "ready", "Ready");
     };
