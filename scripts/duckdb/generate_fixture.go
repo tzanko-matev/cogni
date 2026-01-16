@@ -129,6 +129,11 @@ func generateFixture(ctx context.Context, path string, cfg fixtureConfig) error 
 		return err
 	}
 	defer revStmt.Close()
+	parentStmt, err := conn.PrepareContext(ctx, "INSERT INTO revision_parents (repo_id, child_rev_id, parent_rev_id) VALUES (?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer parentStmt.Close()
 	ctxStmt, err := conn.PrepareContext(ctx, "INSERT INTO contexts (context_id, context_key, repo_id, rev_id) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return err
@@ -151,6 +156,12 @@ func generateFixture(ctx context.Context, path string, cfg fixtureConfig) error 
 		ts := startTime.Add(time.Duration(i) * time.Minute)
 		if _, err := revStmt.ExecContext(ctx, repoID, revID, ts); err != nil {
 			return err
+		}
+		if i > 0 {
+			parentID := fmt.Sprintf("rev-%06d", i-1)
+			if _, err := parentStmt.ExecContext(ctx, repoID, revID, parentID); err != nil {
+				return err
+			}
 		}
 		contextID := deterministicID("context", i)
 		contextKey := deterministicID("context-key", i)
