@@ -1,7 +1,7 @@
 # Plan: Migrate to duckdb-go/v2 + speed up bulk inserts
 
 Date: 2026-01-16  
-Status: TODO
+Status: IN PROGRESS
 
 ## Goal
 - Migrate from `github.com/marcboeker/go-duckdb` to the official `github.com/duckdb/duckdb-go/v2` driver.
@@ -23,7 +23,7 @@ Status: TODO
 ```go
 // go.mod
 require (
-	github.com/marcboeker/go-duckdb v1.8.5 // indirect
+	github.com/duckdb/duckdb-go/v2 v2.5.4
 )
 ```
 
@@ -32,7 +32,7 @@ require (
 // internal/duckdb/testing/db.go
 import (
 	"database/sql"
-	_ "github.com/marcboeker/go-duckdb"
+	_ "github.com/duckdb/duckdb-go/v2"
 )
 
 conn, err := sql.Open("duckdb", dsn)

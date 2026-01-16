@@ -30,21 +30,21 @@ func TestJSONAndMapSemantics(t *testing.T) {
 	execSQL(t, ctx, db, "INSERT INTO contexts (context_id, context_key, repo_id, rev_id, dims) VALUES (?, 'context-dims', ?, 'rev', map(['benchmark'], ['tiny']))", uuid.NewString(), uuid.NewString())
 
 	var benchmark sql.NullString
-	if err := db.QueryRowContext(ctx, "SELECT CAST(list_extract(dims['benchmark'], 1) AS VARCHAR) FROM contexts WHERE context_key = 'context-dims'").Scan(&benchmark); err != nil {
+	if err := db.QueryRowContext(ctx, "SELECT dims['benchmark'] FROM contexts WHERE context_key = 'context-dims'").Scan(&benchmark); err != nil {
 		t.Fatalf("map extract failed: %v", err)
 	}
 	if !benchmark.Valid || benchmark.String != "tiny" {
 		t.Fatalf("expected benchmark tiny, got %v", benchmark.String)
 	}
 
-	if err := db.QueryRowContext(ctx, "SELECT CAST(list_extract(dims['missing'], 1) AS VARCHAR) FROM contexts WHERE context_key = 'context-dims'").Scan(&benchmark); err != nil {
+	if err := db.QueryRowContext(ctx, "SELECT dims['missing'] FROM contexts WHERE context_key = 'context-dims'").Scan(&benchmark); err != nil {
 		t.Fatalf("map missing key failed: %v", err)
 	}
 	if benchmark.Valid {
 		t.Fatalf("expected missing key to return NULL")
 	}
 
-	if err := db.QueryRowContext(ctx, "SELECT CAST(list_extract(dims['benchmark'], 1) AS VARCHAR) FROM contexts WHERE context_key = 'context-null'").Scan(&benchmark); err != nil {
+	if err := db.QueryRowContext(ctx, "SELECT dims['benchmark'] FROM contexts WHERE context_key = 'context-null'").Scan(&benchmark); err != nil {
 		t.Fatalf("map null dims failed: %v", err)
 	}
 	if benchmark.Valid {
