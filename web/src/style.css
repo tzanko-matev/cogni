@@ -28,6 +28,79 @@ body {
   margin-bottom: 12px;
 }
 
+.report-controls {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 12px;
+}
+
+@media (min-width: 720px) {
+  .report-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6f655a;
+}
+
+.control-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6f655a;
+}
+
+.control-select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e3d8cc;
+  background: #fffaf5;
+  font-size: 14px;
+  color: #1d1a16;
+}
+
+.control-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.control-toggle {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid #e3d8cc;
+  background: #fffaf5;
+  padding: 4px;
+  gap: 6px;
+}
+
+.control-toggle button {
+  border: none;
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6f655a;
+  cursor: pointer;
+}
+
+.control-toggle button.active {
+  background: #ffead7;
+  color: #8a4f2b;
+}
+
+.control-toggle button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .report-header h1 {
   margin: 0;
   font-size: 28px;

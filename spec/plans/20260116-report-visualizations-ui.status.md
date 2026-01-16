@@ -26,7 +26,7 @@ toggle, bucket size control, and client-side graph/component computation.
 
 ## Progress
 
-- Status: IN_PROGRESS
+- Status: DONE
 - Last updated: 2026-01-16
 - Completed:
   - Plan/status files created.
@@ -34,10 +34,10 @@ toggle, bucket size control, and client-side graph/component computation.
   - Step 2 metric selection: DuckDB queries, metric_points view, and selector wiring.
   - Step 3 points view edges: client-side minimal edges and edge_xy temp table.
   - Step 4 candlesticks: bucketed components, candles, and component links.
-- In progress:
-  - Step 5: UI polish + empty/error states.
+  - Step 5 UI polish: controls styling and updated empty/error states.
 
 ## Notes
 
 - Bucket size should default to Day on each load (no persistence).
-- Tests not run yet (vitest).
+- Tests: `npm test` (vitest) passed on 2026-01-16.
+- Fix: metric_points/edge tables created as non-temp to be visible to vgplot.

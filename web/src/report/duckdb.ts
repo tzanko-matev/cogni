@@ -95,7 +95,7 @@ export async function replaceEdgeXYTable(
   edges: EdgeXY[]
 ): Promise<void> {
   await conn.query(
-    "CREATE OR REPLACE TEMP TABLE edge_xy (x1 TIMESTAMP, y1 DOUBLE, x2 TIMESTAMP, y2 DOUBLE)"
+    "CREATE OR REPLACE TABLE edge_xy (x1 TIMESTAMP, y1 DOUBLE, x2 TIMESTAMP, y2 DOUBLE)"
   );
   if (edges.length === 0) {
     return;
@@ -115,7 +115,7 @@ export async function replaceCandlesTable(
   candles: Candle[]
 ): Promise<void> {
   await conn.query(
-    "CREATE OR REPLACE TEMP TABLE metric_candles (bucket VARCHAR, component_id VARCHAR, x TIMESTAMP, open DOUBLE, close DOUBLE, low DOUBLE, high DOUBLE)"
+    "CREATE OR REPLACE TABLE metric_candles (bucket VARCHAR, component_id VARCHAR, x TIMESTAMP, open DOUBLE, close DOUBLE, low DOUBLE, high DOUBLE)"
   );
   if (candles.length === 0) {
     return;
@@ -138,7 +138,7 @@ export async function replaceComponentEdgeTable(
   edges: ComponentEdgeXY[]
 ): Promise<void> {
   await conn.query(
-    "CREATE OR REPLACE TEMP TABLE component_edge_xy (x1 TIMESTAMP, y1 DOUBLE, x2 TIMESTAMP, y2 DOUBLE)"
+    "CREATE OR REPLACE TABLE component_edge_xy (x1 TIMESTAMP, y1 DOUBLE, x2 TIMESTAMP, y2 DOUBLE)"
   );
   if (edges.length === 0) {
     return;

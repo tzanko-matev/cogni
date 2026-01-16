@@ -8,11 +8,11 @@ export function sqlStringLiteral(value: string): string {
   return `'${escapeSqlString(value)}'`;
 }
 
-/** Build SQL for the metric_points temp view. */
+/** Build SQL for the metric_points view. */
 export function buildMetricPointsViewSQL(metric: string): string {
   const metricLiteral = sqlStringLiteral(metric);
   return `
-    CREATE OR REPLACE TEMP VIEW metric_points AS
+    CREATE OR REPLACE VIEW metric_points AS
     SELECT
       repo_id,
       rev_id,
