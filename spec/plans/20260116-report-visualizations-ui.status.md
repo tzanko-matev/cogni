@@ -37,3 +37,4 @@ toggle, bucket size control, and client-side graph/component computation.
 ## Notes
 
 - Bucket size should default to Day on each load (no persistence).
+- Tests not run yet (vitest).
