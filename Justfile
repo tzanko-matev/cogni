@@ -41,8 +41,20 @@ test-stress:
 test-chaos:
     go test -tags=chaos ./...
 
+# Run stress tests that require both stress + integration tags.
+test-stress-integration:
+    go test -tags=stress,integration ./internal/stress
+
+# Run chaos tests that require both chaos + integration tags.
+test-chaos-integration:
+    go test -tags=chaos,integration ./internal/chaos
+
+# Run python unit tests.
+test-python:
+    python -m pytest tests/entropy_agent
+
 # Run all test suites (unit + tagged).
-test-all: test test-live test-cucumber test-integration test-stress test-chaos
+test-all: test test-live test-cucumber test-integration test-stress test-chaos test-stress-integration test-chaos-integration test-python duckdb-tier-all
 
 # Run DuckDB Tier B fuzz/property tests.
 duckdb-tier-b:
@@ -61,3 +73,6 @@ duckdb-tier-d:
     go run ./scripts/duckdb/... --config tests/fixtures/duckdb/medium.json --out tests/fixtures/duckdb/medium.duckdb
     if [ ! -d tests/duckdb/wasm/node_modules ]; then (cd tests/duckdb/wasm && npm install); fi
     node tests/duckdb/wasm/smoke_test.mjs tests/fixtures/duckdb/medium.duckdb
+
+# Run all DuckDB test tiers.
+duckdb-tier-all: duckdb-tier-b duckdb-tier-c duckdb-tier-c-large duckdb-tier-d
