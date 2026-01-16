@@ -68,7 +68,7 @@ on:
 
 ## Development environment notes
 
-If we use the Go DuckDB driver (`github.com/marcboeker/go-duckdb`) we may need:
+If we use the Go DuckDB driver (`github.com/duckdb/duckdb-go/v2`) we may need:
 - `duckdb` (CLI and library) in the Nix dev shell
 - a C toolchain for CGO (`clang`/`gcc` + `pkg-config`)
 

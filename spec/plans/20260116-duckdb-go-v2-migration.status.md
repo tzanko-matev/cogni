@@ -2,12 +2,12 @@
 
 ID: 20260116-duckdb-go-v2-migration.status  
 Created: 2026-01-16  
-Status: IN PROGRESS
+Status: DONE
 
 Linked plan: `spec/plans/20260116-duckdb-go-v2-migration.plan.md`
 
 ## Current status
-- IN PROGRESS. Bulk insert optimization complete; doc updates remain.
+- DONE. Migrated to duckdb-go/v2 and optimized bulk inserts with Appenders.
 
 ## What was done so far
 - Captured baseline: `TestTierCMediumPerformance` timed out at the 30s deadline (2026-01-16).
@@ -15,10 +15,11 @@ Linked plan: `spec/plans/20260116-duckdb-go-v2-migration.plan.md`
 - Aligned MAP extraction test SQL with `MAP(VARCHAR, VARCHAR)` semantics.
 - Added DuckDB Appender-based inserts for measurement fixtures in tests and scripts.
 - Added UUID conversion helpers for appender rows.
-- Tests: `go test ./internal/duckdb/...` (pass), `go test -tags duckdbtierc -run TestTierCMediumPerformance -count=1 ./internal/duckdb` (pass; total ~3.5s on 2026-01-16).
+- Updated docs that referenced the old driver.
+- Tests: `go test ./internal/duckdb/...` (pass), `go test -tags duckdbtierc -run TestTierCMediumPerformance -count=1 ./internal/duckdb` (pass; total ~3.5s on 2026-01-16), `just duckdb-tier-d` (pass).
 
 ## Next steps
-- Update docs/plan status to DONE.
+- None.
 
 ## Relevant source files (current or planned)
 - `go.mod`

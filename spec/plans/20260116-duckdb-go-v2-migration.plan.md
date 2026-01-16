@@ -1,7 +1,7 @@
 # Plan: Migrate to duckdb-go/v2 + speed up bulk inserts
 
 Date: 2026-01-16  
-Status: IN PROGRESS
+Status: DONE
 
 ## Goal
 - Migrate from `github.com/marcboeker/go-duckdb` to the official `github.com/duckdb/duckdb-go/v2` driver.

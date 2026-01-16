@@ -13,7 +13,7 @@ as defined in `spec/features/duckdb-schema/`, including manual `just` commands.
 
 ## Decisions
 - Keep the DDL in `internal/duckdb/schema.sql` and load it from Go.
-- Use `github.com/marcboeker/go-duckdb` for local testing.
+- Use `github.com/duckdb/duckdb-go/v2` for local testing.
 - Use deterministic, seed-based fixture generation for medium/large fixtures,
   stored as fixture definitions under `tests/fixtures/duckdb/`.
 
