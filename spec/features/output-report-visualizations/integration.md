@@ -98,6 +98,10 @@ WHERE physical_type IN ('DOUBLE','BIGINT')
 ORDER BY name;
 ```
 
+Note: `$metric` in this document is a string literal placeholder. Use a small
+SQL-escape helper (e.g., replace `'` with `''`) before interpolation to avoid
+SQL injection and syntax errors.
+
 ### Latest-per-commit points
 
 To avoid multiple points per commit when multiple runs exist, build a temp view
