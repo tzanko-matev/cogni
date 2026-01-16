@@ -2,7 +2,7 @@ import * as duckdb from "@duckdb/duckdb-wasm";
 import { tableFromArrays } from "apache-arrow";
 import { buildMetricPointsSelectSQL, buildMetricPointsViewSQL, sqlStringLiteral } from "./sql";
 import { parseMetricDefRows, parseMetricPointRows, parseParentEdgeRows } from "./types";
-import type { EdgeXY } from "./types";
+import type { Candle, ComponentEdgeXY, EdgeXY } from "./types";
 
 const DB_FILE_NAME = "cogni.duckdb";
 const DUCKDB_BUNDLES = duckdb.getJsDelivrBundles();
@@ -107,4 +107,47 @@ export async function replaceEdgeXYTable(
     y2: edges.map((edge) => edge.y2),
   });
   await conn.insertArrowTable(table, { name: "edge_xy", create: false });
+}
+
+/** Replace the metric_candles temp table with new candle data. */
+export async function replaceCandlesTable(
+  conn: duckdb.AsyncDuckDBConnection,
+  candles: Candle[]
+): Promise<void> {
+  await conn.query(
+    "CREATE OR REPLACE TEMP TABLE metric_candles (bucket VARCHAR, component_id VARCHAR, x TIMESTAMP, open DOUBLE, close DOUBLE, low DOUBLE, high DOUBLE)"
+  );
+  if (candles.length === 0) {
+    return;
+  }
+  const table = tableFromArrays({
+    bucket: candles.map((candle) => candle.bucket),
+    component_id: candles.map((candle) => candle.componentId),
+    x: candles.map((candle) => candle.x),
+    open: candles.map((candle) => candle.open),
+    close: candles.map((candle) => candle.close),
+    low: candles.map((candle) => candle.low),
+    high: candles.map((candle) => candle.high),
+  });
+  await conn.insertArrowTable(table, { name: "metric_candles", create: false });
+}
+
+/** Replace the component_edge_xy temp table with link data. */
+export async function replaceComponentEdgeTable(
+  conn: duckdb.AsyncDuckDBConnection,
+  edges: ComponentEdgeXY[]
+): Promise<void> {
+  await conn.query(
+    "CREATE OR REPLACE TEMP TABLE component_edge_xy (x1 TIMESTAMP, y1 DOUBLE, x2 TIMESTAMP, y2 DOUBLE)"
+  );
+  if (edges.length === 0) {
+    return;
+  }
+  const table = tableFromArrays({
+    x1: edges.map((edge) => edge.x1),
+    y1: edges.map((edge) => edge.y1),
+    x2: edges.map((edge) => edge.x2),
+    y2: edges.map((edge) => edge.y2),
+  });
+  await conn.insertArrowTable(table, { name: "component_edge_xy", create: false });
 }

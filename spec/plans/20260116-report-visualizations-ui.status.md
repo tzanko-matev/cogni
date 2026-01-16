@@ -33,8 +33,9 @@ toggle, bucket size control, and client-side graph/component computation.
   - Step 1 scaffolding: report modules, Zod types, Vitest config, and a format label test.
   - Step 2 metric selection: DuckDB queries, metric_points view, and selector wiring.
   - Step 3 points view edges: client-side minimal edges and edge_xy temp table.
+  - Step 4 candlesticks: bucketed components, candles, and component links.
 - In progress:
-  - Step 4: Candlestick components + bucket-size aggregation.
+  - Step 5: UI polish + empty/error states.
 
 ## Notes
 

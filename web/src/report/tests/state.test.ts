@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterNumericMetrics, selectMetricName } from "../state";
+import { filterNumericMetrics, normalizeBucketSize, selectMetricName } from "../state";
 import type { MetricDef } from "../types";
 
 describe("metric selection", () => {
@@ -28,5 +28,18 @@ describe("metric selection", () => {
     ];
 
     expect(selectMetricName(metrics, "latency")).toBe("latency");
+  });
+});
+
+describe("bucket size selection", () => {
+  it("defaults to day for unknown values", () => {
+    expect(normalizeBucketSize("")).toBe("day");
+    expect(normalizeBucketSize(undefined)).toBe("day");
+  });
+
+  it("accepts day/week/month values", () => {
+    expect(normalizeBucketSize("day")).toBe("day");
+    expect(normalizeBucketSize("week")).toBe("week");
+    expect(normalizeBucketSize("month")).toBe("month");
   });
 });

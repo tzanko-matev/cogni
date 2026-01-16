@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEdgeXY, computeMinimalEdges } from "../graph";
+import { bucketKey, buildEdgeXY, computeMinimalEdges } from "../graph";
 import type { MetricPoint, ParentEdge } from "../types";
 
 describe("computeMinimalEdges", () => {
@@ -28,5 +28,22 @@ describe("computeMinimalEdges", () => {
     expect(edgeXY).toHaveLength(1);
     expect(edgeXY[0].y1).toBe(1);
     expect(edgeXY[0].y2).toBe(2);
+  });
+});
+
+describe("bucketKey", () => {
+  it("formats day buckets in UTC", () => {
+    const ts = new Date("2024-02-03T10:00:00Z");
+    expect(bucketKey(ts, "day")).toBe("2024-02-03");
+  });
+
+  it("formats month buckets in UTC", () => {
+    const ts = new Date("2024-02-03T10:00:00Z");
+    expect(bucketKey(ts, "month")).toBe("2024-02");
+  });
+
+  it("formats ISO week buckets in UTC", () => {
+    const ts = new Date("2024-01-03T10:00:00Z");
+    expect(bucketKey(ts, "week")).toBe("2024-W01");
   });
 });

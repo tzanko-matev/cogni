@@ -7,10 +7,14 @@ import {
   hasRevisionParents,
   initDuckDB,
   listNumericMetrics,
+  replaceCandlesTable,
+  replaceComponentEdgeTable,
   replaceEdgeXYTable,
 } from "./duckdb";
+import { computeCandles, computeComponentLinks, computeComponents } from "./components";
 import { formatMetricLabel } from "./format";
 import { buildEdgeXY, computeMinimalEdges } from "./graph";
+import { buildCandlesPlot } from "./plots/candles";
 import { buildPointsPlot } from "./plots/points";
 import { normalizeBucketSize, normalizeViewMode, selectMetricName } from "./state";
 import type { BucketSize, ParentEdge, ViewMode } from "./types";
@@ -80,13 +84,14 @@ export async function bootstrapReport(): Promise<void> {
       }
 
       let edgesAvailable = false;
+      let minimalEdges: Array<{ parentRevId: string; childRevId: string }> = [];
       if (parentsAvailable && points.length > 0) {
         const repoId = points[0].repoId;
         if (!parentEdges || parentRepoId !== repoId) {
           parentEdges = await fetchRevisionParents(conn, repoId);
           parentRepoId = repoId;
         }
-        const minimalEdges = computeMinimalEdges(points, parentEdges ?? []);
+        minimalEdges = computeMinimalEdges(points, parentEdges ?? []);
         const edgeXY = buildEdgeXY(points, minimalEdges);
         await replaceEdgeXYTable(conn, edgeXY);
         edgesAvailable = edgeXY.length > 0;
@@ -96,14 +101,35 @@ export async function bootstrapReport(): Promise<void> {
       const metricLabel = formatMetricLabel(
         metrics.find((metric) => metric.name === selectedMetric) ?? metrics[0]
       );
-      ui.chart.appendChild(buildPointsPlot(metricLabel, edgesAvailable));
 
+      if (viewMode === "candles") {
+        if (!parentsAvailable) {
+          setDetails(ui.details, `Metric: ${selectedMetric} · Candles unavailable (missing graph data).`);
+          setStatus(ui.status, "ready", "Ready");
+          return;
+        }
+        const { componentByRev, components } = computeComponents(points, minimalEdges, bucketSize);
+        const candles = computeCandles(points, components);
+        await replaceCandlesTable(conn, candles);
+        const componentLinks = computeComponentLinks(minimalEdges, componentByRev, candles);
+        await replaceComponentEdgeTable(conn, componentLinks);
+        ui.chart.appendChild(buildCandlesPlot(metricLabel, componentLinks.length > 0));
+        if (candles.length === 0) {
+          setDetails(ui.details, `Metric: ${selectedMetric} · Candles (no data).`);
+        } else {
+          setDetails(ui.details, `Metric: ${selectedMetric} · Candles · Bucket: ${bucketSize}`);
+        }
+        setStatus(ui.status, "ready", "Ready");
+        return;
+      }
+
+      ui.chart.appendChild(buildPointsPlot(metricLabel, edgesAvailable));
       if (points.length === 0) {
         setDetails(ui.details, `Metric: ${selectedMetric} (no data).`);
       } else if (!parentsAvailable) {
-        setDetails(ui.details, `Metric: ${selectedMetric} · View: Points · Edge data unavailable`);
+        setDetails(ui.details, `Metric: ${selectedMetric} · Points · Edge data unavailable`);
       } else {
-        setDetails(ui.details, `Metric: ${selectedMetric} · View: Points`);
+        setDetails(ui.details, `Metric: ${selectedMetric} · Points`);
       }
       setStatus(ui.status, "ready", "Ready");
     };
