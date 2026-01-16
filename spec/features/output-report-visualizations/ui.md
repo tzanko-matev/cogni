@@ -47,7 +47,10 @@ Keep the look aligned with the existing palette and typography in
 - Use `ruleX` for the wick (low -> high).
 - Use `ruleX` for the body (open -> close) with thicker stroke.
 - Color by component id (or lineage id, if present).
-- If `v_component_edges` is available:
+- Candles are grouped by a **bucket window** (v1: UTC day). The computation is
+  client-side, so future week/month grouping only requires changing the bucket
+  size and recomputing components.
+- If component links are computed (requires `revision_parents`):
   - draw thin links between component midpoints.
 - If candles are missing or empty:
   - show an empty-state message in the details line and clear the chart.

@@ -18,16 +18,14 @@ Timeout: 1s.
 
 - `escapeSqlString` properly quotes metric names containing `'`.
 - `buildMetricPointsViewSQL(metric)` includes status and value filters.
-- `buildEdgeViewSQL(metric)` and `buildCandleViewSQL(metric)` include metric
-  filter and correct joins.
 
 Timeout: 1s.
 
 ### 3) Table detection
 
-- `detectTables` returns `true` for `v_edges`, `v_candles`,
-  `v_component_edges` when present.
-- Missing `v_candles` disables the Candles view and triggers an empty state.
+- `detectTables` returns `true` for `revision_parents` when present.
+- Missing `revision_parents` disables edges and Candles view and triggers a
+  warning state.
 
 Timeout: 1s.
 
@@ -35,6 +33,16 @@ Timeout: 1s.
 
 - `formatMetricLabel` includes the unit when provided ("Tokens (count)").
 - Falls back to metric name alone when unit is empty.
+
+Timeout: 1s.
+
+### 5) Graph + component computation
+
+- `bucketKey` produces correct UTC day/week/month keys.
+- `computeMinimalEdges` stops at the first measured ancestor.
+- `computeComponents` groups nodes only when edges are within the same bucket.
+- `computeCandles` returns correct open/close/high/low for a component.
+- `computeComponentLinks` deduplicates links across buckets.
 
 Timeout: 1s.
 
@@ -50,4 +58,3 @@ If automation is added later, ensure each test has a 2s timeout.
 ## BDD scenarios
 
 Behavior is described in `spec/features/output-report-visualizations/testing.feature`.
-

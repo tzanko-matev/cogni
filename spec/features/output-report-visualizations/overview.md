@@ -38,13 +38,15 @@ The user must be able to choose a metric and swap between these two views.
 - Uses DuckDB-WASM for data access and vgplot for rendering.
 - Uses the DuckDB report file served at `/data/db.duckdb`.
 - Supports **numeric metrics only** (`physical_type` DOUBLE or BIGINT).
+- Computes edges and per-bucket components **client-side** so the grouping
+  window (day/week/month) can change without regenerating the report file.
 
 ## Non-goals (v1)
 
-- Computing git/jj graph algorithms in the browser (edges, components).
 - Changing the DuckDB schema or report generation pipeline.
 - Advanced interactions (brush/zoom, pan, multi-metric overlays).
 - Cross-repo selection (assume a single repo in the report file).
+- Moving the graph/component computation into SQL or a server process.
 
 ## Decisions (source of truth)
 
@@ -54,6 +56,9 @@ The user must be able to choose a metric and swap between these two views.
 - Only plot rows with `status = 'ok'` and `value IS NOT NULL`.
 - Build **temporary views** in DuckDB per selected metric; do not materialize
   new tables on disk.
+- Compute minimal ancestor edges and connected components **in the browser**
+  from `revision_parents` and the selected metric points.
+- Components are bucketed by a configurable time window (v1 default: UTC day).
 - If required tables for edges or candles are missing, show a clear warning and
   degrade gracefully (dots-only or empty-state) instead of failing.
 

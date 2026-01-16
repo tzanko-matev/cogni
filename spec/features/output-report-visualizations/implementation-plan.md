@@ -12,21 +12,23 @@
 - Load numeric metrics from `metric_defs`.
 - Default to the first metric (alphabetical) and render the points view.
 - Build `metric_points` temp view and render `vg.dot`.
-- If `v_edges` exists, add `edge_xy` and render `vg.link`.
-- Tests: metric selection logic + SQL builder safety.
+- If `revision_parents` exists, compute minimal edges client-side, load
+  `edge_xy`, and render `vg.link`.
+- Tests: metric selection logic + SQL builder safety + edge computation.
 
 ## Step 3: Candlestick view
 
 - Add view toggle (Points | Candles).
-- Build `metric_candles` temp view and render wick + body `ruleX` layers.
-- If `v_component_edges` exists, add `component_edge_xy` and render links.
-- Tests: table detection + candles SQL builder.
+- Compute per-bucket components client-side and load `metric_candles` temp
+  table; render wick + body `ruleX` layers.
+- Compute cross-bucket component links and load `component_edge_xy`.
+- Tests: component bucketing + candle computation + link dedupe.
 
 ## Step 4: Empty + error states
 
 - When no metrics exist: show empty state and keep chart blank.
-- When candles view selected but `v_candles` missing: show warning and blank
-  chart (no crash).
+- When `revision_parents` is missing: disable edges and Candles view; show a
+  warning and keep the chart stable (no crash).
 - Update details line for warnings and missing-data messages.
 - Tests: table detection scenarios and empty state behavior.
 
