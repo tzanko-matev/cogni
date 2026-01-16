@@ -201,6 +201,14 @@ function bucketKey(ts: Date, bucketSize: 'day'|'week'|'month'): string {
 
 Store `bucketByRev` for quick lookup.
 
+### Step 3b: Bucket-size control
+
+When the user changes the bucket size:
+
+- Recompute `bucketByRev`, components, candles, and component links.
+- Rebuild the temp tables (`metric_candles`, `component_edge_xy`).
+- Redraw only the Candles view (points view does not change).
+
 ### Step 4: Connected components per bucket
 
 For each bucket, compute connected components using the **undirected** version

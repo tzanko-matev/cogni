@@ -29,6 +29,13 @@ Feature: report visualizations (points + candles)
     And the view is set to "Candles"
     Then the chart shows candlestick wicks and bodies
 
+  Scenario: Bucket size changes recompute candles
+    Given a DuckDB report file with v_points and revision_parents
+    When I select a metric
+    And the view is set to "Candles"
+    And I change the bucket size to "Week"
+    Then the chart updates to the weekly candlestick aggregation
+
   Scenario: Candles view reports missing data
     Given a DuckDB report file without revision_parents
     When I select a metric

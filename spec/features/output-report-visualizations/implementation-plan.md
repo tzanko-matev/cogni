@@ -19,10 +19,12 @@
 ## Step 3: Candlestick view
 
 - Add view toggle (Points | Candles).
+- Add bucket-size selector (Day | Week | Month), default Day.
 - Compute per-bucket components client-side and load `metric_candles` temp
   table; render wick + body `ruleX` layers.
 - Compute cross-bucket component links and load `component_edge_xy`.
-- Tests: component bucketing + candle computation + link dedupe.
+- Tests: bucket selector + component bucketing + candle computation + link
+  dedupe.
 
 ## Step 4: Empty + error states
 

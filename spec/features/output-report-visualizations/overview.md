@@ -23,12 +23,13 @@ visualizations described in:
 
 ## Goal
 
-Add a metric picker and two view modes to the report UI:
+Add a metric picker, bucket-size control, and two view modes to the report UI:
 
 1) **Point view**: measured commits as dots, with minimal ancestor edges when
    available.
 2) **Candlestick view**: per-day connected-component candles, with optional thin
    links between components.
+3) **Bucket size**: choose how candles are aggregated (day/week/month).
 
 The user must be able to choose a metric and swap between these two views.
 
@@ -65,6 +66,7 @@ The user must be able to choose a metric and swap between these two views.
 ## Deliverables
 
 - Refactored `web/src` UI with a metric selector + view toggle.
+- Bucket-size selector (day/week/month) wired to the candlestick view.
 - Point view rendering using `v_points` and optional `v_edges`.
 - Candlestick view rendering using `v_candles` and optional
   `v_component_edges`.

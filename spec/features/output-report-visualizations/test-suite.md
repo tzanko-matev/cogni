@@ -14,6 +14,14 @@ Add a lightweight test runner (Vitest recommended) under `web/`.
 
 Timeout: 1s.
 
+### 1b) Bucket size selection
+
+- Defaults to `day` on first load.
+- Supports `day`, `week`, and `month` values only.
+- Changing the bucket size triggers a candle recompute call.
+
+Timeout: 1s.
+
 ### 2) SQL builder safety
 
 - `escapeSqlString` properly quotes metric names containing `'`.

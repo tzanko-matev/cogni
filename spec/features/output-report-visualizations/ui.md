@@ -10,6 +10,7 @@ Top to bottom inside the existing `report-shell`:
 2) **Controls row** (new):
    - Metric selector (dropdown).
    - View toggle (segmented buttons: Points | Candles).
+   - Bucket size selector (dropdown: Day | Week | Month).
 3) **Details line** (existing): status / warnings / empty-state messages.
 4) **Chart panel** (existing): vgplot renders here.
 
@@ -31,6 +32,13 @@ Keep the look aligned with the existing palette and typography in
 - Two options: **Points** and **Candles**.
 - Default to **Points**.
 - Switching view re-renders the chart without reloading the DB.
+
+### Bucket size selector
+
+- Options: **Day**, **Week**, **Month**.
+- Default to **Day** (UTC).
+- Only affects the Candles view (points view is unchanged).
+- Changing the bucket size recomputes components and redraws the candles.
 
 ## Chart behavior
 
